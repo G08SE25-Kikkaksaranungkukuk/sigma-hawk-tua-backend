@@ -1,0 +1,12 @@
+name : sigmahawk-docker
+services :
+  db :
+    image : postgres
+    restart : always
+    shm_size : 128mb
+    environment :
+      POSTGRES_PASSWORD: strongpassword
+      POSTGRES_USER: sigma
+      POSTGRES_DB: sigmadb
+    ports :
+      - 5432:5432	
