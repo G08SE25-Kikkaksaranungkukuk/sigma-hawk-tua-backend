@@ -8,4 +8,5 @@ dist/
 coverage/
 *.tmp
 *.swp
-*.bak 
+*.bak
+generated/

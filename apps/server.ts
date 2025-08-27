@@ -3,7 +3,6 @@ import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 const app = express();
-const PORT = 8080;
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -22,10 +21,12 @@ app.get("/healthz", (_req: Request, res: Response) => {
   });
 });
 
+
 async function startServer() {
   try {
+    const PORT = process.env.PORT || 8080;
     app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`🚀 Server is running on http://localhost:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
     });
   } catch (error) {

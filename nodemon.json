@@ -1,0 +1,11 @@
+{
+  "watch": ["apps", "prisma"],
+  "ext": "ts,js,json",
+  "ignore": ["node_modules", "dist", "generated"],
+  "exec": "ts-node apps/server.ts",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": 1000,
+  "verbose": true
+}
