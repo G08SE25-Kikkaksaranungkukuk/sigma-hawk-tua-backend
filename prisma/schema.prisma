@@ -13,3 +13,111 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// User model (known as traveler)
+model User {
+  user_id       Int       @id @default(autoincrement())
+  first_name    String
+  middle_name   String?
+  last_name     String
+  birth_date    DateTime
+  sex           String
+  phone         String
+  profile_url   String?
+  social_credit Int       @default(0)
+  interest      Interest[] 
+
+  // Relations
+  groups        Group[]           @relation("Belongs")
+  requests      RequestJoin[]
+  headOf        Group[]           @relation("IsHeadOf")
+
+  Interaction Interaction[]
+}
+
+// Group model
+model Group {
+  group_id     Int       @id @default(autoincrement())
+  group_name   String
+  interest_field String?
+  group_leader_id    Int
+
+  // Relations
+  leader       User     @relation("IsHeadOf", fields: [group_leader_id], references: [user_id])
+  members      User[]    @relation("Belongs")
+  itineraries  GroupItinerary[]
+  requests     RequestJoin[]
+}
+
+// Request Join
+model RequestJoin {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [user_id], references: [user_id])
+  user_id   Int
+  group     Group    @relation(fields: [group_id], references: [group_id])
+  group_id  Int
+
+}
+
+// Interaction (like, dislike, comment, etc.)
+model Interaction {
+  id        Int      @id @default(autoincrement())
+  message   String?
+  like      Boolean? 
+  dislike   Boolean? 
+  picture   String?
+  user      User     @relation(fields: [user_id], references: [user_id])
+  user_id   Int
+}
+
+// Place
+model Place {
+  place_id    Int      @id @default(autoincrement())
+  name        String
+  description String?
+  place_type  String?
+  latitude    Float?
+  longitude   Float?
+  picture_url String?
+  phone_num   String?
+  social_media String?
+
+  Itinerary Itinerary[] @relation("CreateEditItinerary")
+}
+
+// Itinerary
+model Itinerary {
+  itinerary_id Int      @id @default(autoincrement())
+  start_date   DateTime
+  end_date     DateTime
+  places       Place[]  @relation("CreateEditItinerary")
+  groups       GroupItinerary[]
+}
+
+// Group Itinerary (link between Group and Itinerary)
+model GroupItinerary {
+  id           Int       @id @default(autoincrement())
+  group        Group     @relation(fields: [group_id], references: [group_id])
+  group_id     Int
+  itinerary    Itinerary @relation(fields: [itinerary_id], references: [itinerary_id])
+  itinerary_id Int
+}
+
+enum Interest {
+  SEA            // ทะเล
+  MOUNTAIN       // ภูเขา
+  WATERFALL      // น้ำตก
+  NATIONAL_PARK  // อุทยานแห่งชาติ
+  ISLAND         // เกาะ
+  TEMPLE         // วัด / สถานที่ศาสนา
+  SHOPPING_MALL  // ห้างสรรพสินค้า
+  MARKET         // ตลาด
+  CAFE           // คาเฟ่
+  HISTORICAL     // สถานที่ประวัติศาสตร์
+  AMUSEMENT_PARK // สวนสนุก
+  ZOO            // สวนสัตว์ / อควาเรียม
+  FESTIVAL       // งานเทศกาล / งานประเพณี
+  MUSEUM         // พิพิธภัณฑ์
+  FOOD_STREET    // แหล่งกินอาหาร / ถนนคนเดิน
+  BEACH_BAR      // บาร์/ร้านอาหารริมทะเล
+}
