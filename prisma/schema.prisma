@@ -25,7 +25,11 @@ model User {
   phone         String
   profile_url   String?
   social_credit Int       @default(0)
-  interest      Interest[] 
+  interests     Interest[]
+  travel_styles TravelStyle[]
+  password      String
+  salt          String 
+  email         String    @unique
 
   // Relations
   groups        Group[]           @relation("Belongs")
@@ -120,4 +124,9 @@ enum Interest {
   MUSEUM         // พิพิธภัณฑ์
   FOOD_STREET    // แหล่งกินอาหาร / ถนนคนเดิน
   BEACH_BAR      // บาร์/ร้านอาหารริมทะเล
+  THEATRE        // โรงหนััง 
+}
+
+enum TravelStyle {
+  BUDGET // งบน้อย
 }
