@@ -9,9 +9,18 @@ export const createNewUser =  async (payload : authRegisterReq) => {
     return user
 }
 
-export const retrieveUser = async (_email : string) => {
+export const retrieveUser = async (_email : string , without_sentitive_fields : boolean = false) => {
     const user = await prisma.user.findFirst({
-        where : {email : _email}
+        where : {email : _email},
+        omit : {
+            password : without_sentitive_fields,
+            salt : without_sentitive_fields,
+            user_id : without_sentitive_fields,
+            sex : without_sentitive_fields,
+            social_credit : without_sentitive_fields,
+            phone : without_sentitive_fields,
+            birth_date : without_sentitive_fields
+        }
     })
     return user
 }

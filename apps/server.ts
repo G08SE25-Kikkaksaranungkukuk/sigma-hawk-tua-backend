@@ -2,11 +2,13 @@ import "dotenv/config";
 import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { authRouter } from "./routes/authRouter";
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use(cookieParser())
 
 // router integration
 app.use("/auth",authRouter);
