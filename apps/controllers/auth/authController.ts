@@ -1,5 +1,5 @@
-import { prisma } from "../../config/prismaClient"
-import { authRegisterReq } from "../../types/auth/authRequest"
+import { prisma } from "@/config/prismaClient"
+import { authRegisterReq } from "@/types/auth/authRequest"
 import { type User } from "../../../generated/prisma"
 
 export const createNewUser =  async (payload : authRegisterReq) => {

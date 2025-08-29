@@ -1,9 +1,9 @@
 import {Request , Response} from "express"
-import { authRegReqSchema, validateRegisterInput } from "../../utils/RegisterValidation";
-import { createNewUser, retrieveUser } from "../../controllers/auth/authController";
+import { authRegReqSchema, validateRegisterInput } from "@/utils/RegisterValidation";
+import { createNewUser, retrieveUser } from "@/controllers/auth/authController";
 import bcrypt from "bcrypt"
-import { authRegisterReq } from "../../types/auth/authRequest";
-import { userLoginSchema } from "../../utils/LoginValidation";
+import { authRegisterReq } from "@/types/auth/authRequest";
+import { userLoginSchema } from "@/utils/LoginValidation";
 import * as jwt from "jsonwebtoken";
 
 

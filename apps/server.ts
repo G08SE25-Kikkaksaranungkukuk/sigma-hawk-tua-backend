@@ -3,7 +3,7 @@ import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { authRouter } from "./routes/authRouter";
+import { authRouter } from "@/routes/authRouter";
 const app = express();
 
 app.use(cors());
