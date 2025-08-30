@@ -1,12 +1,18 @@
 import { Router } from "express";
 import {
-    authAuthenticate,
-    authRefresh,
-    authRegister,
-} from "@/services/auth/authService";
+    createInterests,
+    getInterests,
+    updateInterests,
+    deleteInterests,
+} from "@/services/interest/interestService";
 
-export const authRouter: Router = Router();
+import { authMiddleware } from "@/middlewares/interestMiddleware";
 
-authRouter.post("/register", authRegister);
-authRouter.post("/login", authAuthenticate);
-authRouter.post("/refresh", authRefresh);
+export const interestRouter: Router = Router();
+
+interestRouter.use(authMiddleware);
+
+interestRouter.post("/users/interests:id/", createInterests);
+interestRouter.get("/users/interests:id/", getInterests);
+interestRouter.put("/users/interests:id/", updateInterests);
+interestRouter.delete("/users/interests:id/", deleteInterests);
