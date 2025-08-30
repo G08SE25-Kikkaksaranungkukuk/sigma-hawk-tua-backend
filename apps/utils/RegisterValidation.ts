@@ -1,3 +1,5 @@
+import {z} from "zod"
+
 const validatePhoneNumber = (phoneNumber: string): boolean => {
   const regex = /^(0\d{9})$/;
   return regex.test(phoneNumber) && phoneNumber.length === 10;
@@ -18,4 +20,18 @@ export const validateRegisterInput = (phoneNumber: string, email: string, passwo
     isValid : validatePhoneNumber(phoneNumber) && validateEmail(email) && validatePassword(password)
   }
 };
+
+// schema for the authRegister Request
+export const authRegReqSchema = z.object({
+    first_name : z.string(),
+    middle_name : z.string().optional(),
+    last_name : z.string(),
+    birth_date : z.iso.date(),
+    sex : z.string(),
+    interests : z.array(z.string()),
+    travel_styles : z.array(z.string()),
+    phone : z.string(),
+    email : z.email(),
+    password : z.string()
+});
 
