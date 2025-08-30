@@ -1,93 +1,99 @@
 import {Request , Response} from "express"
 import { authRegReqSchema, validateRegisterInput } from "@/utils/RegisterValidation";
-import { createNewUser, retrieveUser } from "@/controllers/auth/authController";
 import bcrypt from "bcrypt"
 import { authRegisterReq } from "@/types/auth/authRequest";
 import { userLoginSchema } from "@/utils/LoginValidation";
 import * as jwt from "jsonwebtoken";
+import {config } from "@/config/config";
+import { UserRepository } from "@/repository/User/userRepository";
+import { AppError } from "@/types/error/AppError";
+import { User } from "@/prisma/wasm";
 
+export class AuthService {
+    private userRepository: UserRepository;
 
-// register user to the system
-export const authRegister = async (req : Request , res : Response) => {
-    try {
-        const parsed_body = authRegReqSchema.parse(req.body);
-        const {isValid} = validateRegisterInput(parsed_body.phone,parsed_body.email,parsed_body.password);
-        if(!isValid) throw "Validation error";
-        const salt = await bcrypt.genSalt(Number((process.env.PASSWORD_SALT_ROUNDS as number|undefined)) ?? 12)
-        const hashed_password = await bcrypt.hash(parsed_body.password,salt)
-        const processed_body = {
-            ...parsed_body,
-            "password" : hashed_password,
-            "salt" : salt,
-            "birth_date" : new Date(parsed_body.birth_date)
+    constructor() {
+        this.userRepository = new UserRepository();
+    }
+
+    async register(req: authRegisterReq) {
+        //validate input
+        if(validateRegisterInput(req.phone,req.email,req.password).isValid == false) {
+            throw new AppError("Validation error", 400);
         }
-        await createNewUser(processed_body as unknown as authRegisterReq)
-        return res.sendStatus(200)
-    }
-    catch(e) {
-        // console.error(e) // debug
-        return res.sendStatus(400); // bad request
-    }
-};
+        
+        //find if user already exists
+        const existingUser = await this.userRepository.findExistingUser(req.email);
+        if (existingUser) {
+            throw new AppError("User with this email already exists", 409);
+        }
 
-// authenticate to get token
-export const authAuthenticate = async (req : Request , res : Response) => {
-    try {
-        const parsed_body = userLoginSchema.parse(req.body);
-        const password = parsed_body.password;
-        const user = await retrieveUser(parsed_body.email);
-        const salt = user?.salt ?? "";
-        const isAuthenticated = (await bcrypt.hash(password,salt)) == (user?.password);
-        if(!isAuthenticated) throw "Not authenticated";
-        const user_safe = await retrieveUser(parsed_body.email,true);
-        const accessToken = jwt.sign(user_safe as Object,process.env.ACCESSTOKEN_SECRET as string,{
+        // bcrypt automatically generates and includes salt in the hash
+        const hashed_password = await bcrypt.hash(req.password, config.PASSWORD_SALT_ROUNDS)
+        const processed_body = {
+            ...req,
+            "password" : hashed_password,
+            "birth_date" : new Date(req.birth_date)
+        }
+        const user: User = await this.userRepository.createNewUser(processed_body as authRegisterReq);
+        const { password: _, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+        
+    }
+
+    // authenticate to get token (Login)
+    async login(loginData: any): Promise<{ accessToken: string, refreshToken: string }> {
+        const parsed_body = userLoginSchema.parse(loginData);
+        const user = await this.userRepository.retrieveUser(parsed_body.email);
+        if(!user){
+            throw new AppError("User not found",404);
+        }
+        const isAuthenticated = await bcrypt.compare(parsed_body.password,user.password);
+        if(!isAuthenticated) {
+            throw new AppError("Invalid Password",401);
+        }
+
+        // generate jwt token
+        const {password : _, ...user_safe} = user
+        const accessToken = jwt.sign(user_safe as Object,config.ACCESSTOKEN_SECRET,{
             expiresIn : 60 * 60 * 24
         })
-        const refreshToken = jwt.sign(user_safe as Object,process.env.REFRESHTOKEN_SECRET as string,{
+        const refreshToken = jwt.sign(user_safe as Object,config.REFRESHTOKEN_SECRET,{
             expiresIn : 60 * 60 * 24 * 30
         })
-        res.cookie("accessToken",accessToken,{
-            maxAge : 60 * 60 * 24
-        })
-        res.cookie("refreshToken",refreshToken,{
-            maxAge : 60 * 60 * 24 * 30
-        })
-        return res.json({
-            accessToken,refreshToken
-        })
+        
+        return { accessToken, refreshToken };
     }
-    catch(e) {
-        // console.error(e) // debug
-        return res.sendStatus(403); // unauthorized
-    }
-};
 
-// refresh user accesstoken and refreshtoken
-export const authRefresh = async (req : Request , res : Response) => {
-    try {
-        const {refreshToken, accessToken} = req.cookies
-        const jwt_dat = jwt.verify(refreshToken,process.env.REFRESHTOKEN_SECRET as string) as Record<string,any>
-        const user_email = jwt_dat.email
-        const user_safe = await retrieveUser(user_email,true)
-        const _accessToken = jwt.sign( user_safe as Object,process.env.ACCESSTOKEN_SECRET as string,{
-            expiresIn : 60 * 60 * 24
-        })
-        const _refreshToken = jwt.sign(user_safe as Object,process.env.REFRESHTOKEN_SECRET as string,{
-            expiresIn : 60 * 60 * 24 * 30
-        })
-        res.cookie("accessToken",_accessToken,{
-            maxAge : 60 * 60 * 24
-        })
-        res.cookie("refreshToken",_refreshToken,{
-            maxAge : 60 * 60 * 24 * 30
-        })
-        return res.json({
-            "accessToken" : _accessToken,
-            "refreshToken" : _refreshToken
-        })
+    //refresh user accesstoken and refreshtoken
+    async refreshTokens(refreshToken: string): Promise<{ accessToken: string, refreshToken: string }> {
+        try {
+            const jwt_dat = jwt.verify(refreshToken,config.REFRESHTOKEN_SECRET) as Record<string,any>
+            const user_email = jwt_dat.email
+            const user_safe = await this.userRepository.retrieveUser(user_email,true)
+            const _accessToken = jwt.sign( user_safe as Object,config.ACCESSTOKEN_SECRET,{
+                expiresIn : 60 * 60 * 24
+            })
+            const _refreshToken = jwt.sign(user_safe as Object,config.REFRESHTOKEN_SECRET,{
+                expiresIn : 60 * 60 * 24 * 30
+            })
+            
+            return {
+                "accessToken" : _accessToken,
+                "refreshToken" : _refreshToken
+            }
+        }
+        catch(e) {
+            throw new AppError("Invalid refresh token", 403);
+        }
     }
-    catch(e) {
-        // console.error(e) // debug
-        return res.sendStatus(403); // unauthorized
+
+    async forgotPassword(email: string): Promise<boolean> {
+        // TODO: Implement forgot password logic
+        // For now, just return true
+        return true;
     }
-};
+
+
+}
+

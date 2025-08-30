@@ -28,7 +28,6 @@ model User {
   interests     Interest[]
   travel_styles TravelStyle[]
   password      String
-  salt          String 
   email         String    @unique
 
   // Relations
