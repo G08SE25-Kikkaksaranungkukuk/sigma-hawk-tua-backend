@@ -16,10 +16,34 @@
     "moduleResolution": "node",
     "declaration": true,
     "sourceMap": true,
-    "baseUrl": "./apps",
+    "baseUrl": "./",
     "paths": {
       "@/*": [
-        "*"
+        "apps/*"
+      ],
+      "@/controllers/*": [
+        "apps/controllers/*"
+      ],
+      "@/services/*": [
+        "apps/services/*"
+      ],
+      "@/utils/*": [
+        "apps/utils/*"
+      ],
+      "@/types/*": [
+        "apps/types/*"
+      ],
+      "@/middlewares/*": [
+        "apps/middlewares/*"
+      ],
+      "@/routes/*": [
+        "apps/routes/*"
+      ],
+      "@/config/*": [
+        "apps/config/*"
+      ],
+      "@/prisma/*": [
+        "generated/prisma/*"
       ]
     }
   },

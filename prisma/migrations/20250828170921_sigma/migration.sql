@@ -1,5 +1,8 @@
 -- CreateEnum
-CREATE TYPE "public"."Interest" AS ENUM ('SEA', 'MOUNTAIN', 'WATERFALL', 'NATIONAL_PARK', 'ISLAND', 'TEMPLE', 'SHOPPING_MALL', 'MARKET', 'CAFE', 'HISTORICAL', 'AMUSEMENT_PARK', 'ZOO', 'FESTIVAL', 'MUSEUM', 'FOOD_STREET', 'BEACH_BAR');
+CREATE TYPE "public"."Interest" AS ENUM ('SEA', 'MOUNTAIN', 'WATERFALL', 'NATIONAL_PARK', 'ISLAND', 'TEMPLE', 'SHOPPING_MALL', 'MARKET', 'CAFE', 'HISTORICAL', 'AMUSEMENT_PARK', 'ZOO', 'FESTIVAL', 'MUSEUM', 'FOOD_STREET', 'BEACH_BAR', 'THEATRE');
+
+-- CreateEnum
+CREATE TYPE "public"."TravelStyle" AS ENUM ('BUDGET');
 
 -- CreateTable
 CREATE TABLE "public"."User" (
@@ -12,7 +15,11 @@ CREATE TABLE "public"."User" (
     "phone" TEXT NOT NULL,
     "profile_url" TEXT,
     "social_credit" INTEGER NOT NULL DEFAULT 0,
-    "interest" "public"."Interest"[],
+    "interests" "public"."Interest"[],
+    "travel_styles" "public"."TravelStyle"[],
+    "password" TEXT NOT NULL,
+    "salt" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("user_id")
 );
@@ -96,6 +103,9 @@ CREATE TABLE "public"."_CreateEditItinerary" (
 
     CONSTRAINT "_CreateEditItinerary_AB_pkey" PRIMARY KEY ("A","B")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "public"."User"("email");
 
 -- CreateIndex
 CREATE INDEX "_Belongs_B_index" ON "public"."_Belongs"("B");

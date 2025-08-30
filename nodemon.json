@@ -2,7 +2,7 @@
   "watch": ["apps", "prisma"],
   "ext": "ts,js,json",
   "ignore": ["node_modules", "dist", "generated"],
-  "exec": "ts-node apps/server.ts",
+  "exec": "ts-node -r tsconfig-paths/register apps/server.ts",
   "env": {
     "NODE_ENV": "development"
   },
