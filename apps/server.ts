@@ -7,6 +7,8 @@ import { interestRouter } from "@/routes/interestRouter";
 
 import cookieParser from "cookie-parser";
 import { RouterManager } from "@/routes/RouterManager";
+import { setupSwagger } from "@/docs/swagger";
+
 const app = express();
 
 app.use(cors());
@@ -23,6 +25,35 @@ app.use((req, res, next) => {
 const routerManager = new RouterManager();
 app.use(routerManager.getRouter());
 
+// Setup Swagger documentation
+setupSwagger(app);
+
+/**
+ * @swagger
+ * /healthz:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Health check
+ *     description: Check if the server is running and healthy
+ *     responses:
+ *       '200':
+ *         description: Server is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: healthy
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 uptime:
+ *                   type: number
+ *                   description: Server uptime in seconds
+ */
 app.get("/healthz", (_req: Request, res: Response) => {
     res.json({
         status: "healthy",
@@ -37,7 +68,11 @@ async function startServer() {
         app.listen(PORT, () => {
             console.log(`🚀 Server is running on http://localhost:${PORT}`);
             console.log(
-                `📊 Environment: ${process.env.NODE_ENV || "development"}`
+                `� API Documentation: http://localhost:${PORT}/api-docs`
+            );
+            console.log(`🏥 Health Check: http://localhost:${PORT}/healthz`);
+            console.log(
+                `�📊 Environment: ${process.env.NODE_ENV || "development"}`
             );
         });
     } catch (error) {

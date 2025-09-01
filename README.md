@@ -4,7 +4,8 @@ to setup the database for the backend development, firstly, you need to install 
 ```
 docker compose up -d
 pnpm i
-pnpx prisma db:migrate
-pnpx prisma db:generate
+pnpx prisma migrate reset
+pnpx prisma init --db
+pnpx prisma migrate dev
 ```
 at the root of this folder
