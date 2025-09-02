@@ -34,15 +34,19 @@ export class UserRepository {
         });
         return user;
     }
-    public async findUserInterests(userId: number) {
+
+    async getUserInterests(userId: number): Promise<Interest[]> {
         const user = await prisma.user.findUnique({
             where: { user_id: userId },
             select: { interests: true },
         });
-        return user?.interests ?? null;
+        return user?.interests ?? [];
     }
 
-    public async updateUserInterests(userId: number, interests: Interest[]) {
+    async updateUserInterests(
+        userId: number,
+        interests: Interest[]
+    ): Promise<Interest[]> {
         const user = await prisma.user.update({
             where: { user_id: userId },
             data: { interests: interests },
