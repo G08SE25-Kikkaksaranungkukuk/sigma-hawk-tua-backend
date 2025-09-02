@@ -9,16 +9,9 @@ export class UserController {
         this.service = new UserService();
     }
 
-    public getInterests = async (
-        req: Request,
-        res: Response
-    ): Promise<void> => {
+    async getInterests(req: Request, res: Response): Promise<void> {
         try {
             const userId = Number(req.params.id);
-            if (isNaN(userId)) {
-                throw new AppError("Invalid user id", 400);
-            }
-
             const interests = await this.service.getUserInterests(userId);
             res.status(200).json({ userId: userId, interests: interests });
         } catch (error: unknown) {
@@ -30,22 +23,12 @@ export class UserController {
             console.error("Unexpected error:", error);
             res.status(500).json({ message: "Internal server error" });
         }
-    };
+    }
 
-    public patchInterests = async (
-        req: Request,
-        res: Response
-    ): Promise<void> => {
+    async patchInterests(req: Request, res: Response): Promise<void> {
         try {
             const userId = Number(req.params.id);
-            if (isNaN(userId)) {
-                throw new AppError("Invalid user id", 400);
-            }
-
             const { interests } = req.body;
-            if (!Array.isArray(interests)) {
-                throw new AppError("Interests must be an array", 400);
-            }
 
             const updated = await this.service.updateUserInterests(
                 userId,
@@ -65,5 +48,5 @@ export class UserController {
             console.error("Unexpected error:", error);
             res.status(500).json({ message: "Internal server error" });
         }
-    };
+    }
 }
