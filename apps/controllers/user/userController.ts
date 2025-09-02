@@ -11,9 +11,9 @@ export class UserController {
 
     async getInterests(req: Request, res: Response): Promise<void> {
         try {
-            const userId = Number(req.params.id);
-            const interests = await this.service.getUserInterests(userId);
-            res.status(200).json({ userId: userId, interests: interests });
+            const _email = req.body._email;
+            const interests = await this.service.getUserInterests(_email);
+            res.status(200).json({ _email: _email, interests: interests });
         } catch (error: unknown) {
             if (error instanceof AppError) {
                 res.status(error.statusCode).json({ message: error.message });
@@ -27,15 +27,15 @@ export class UserController {
 
     async patchInterests(req: Request, res: Response): Promise<void> {
         try {
-            const userId = Number(req.params.id);
+            const _email = req.body._email;
             const { interests } = req.body;
 
             const updated = await this.service.updateUserInterests(
-                userId,
+                _email,
                 interests
             );
             res.status(200).json({
-                userId: userId,
+                _email: _email,
                 message: "Interests updated",
                 updated,
             });

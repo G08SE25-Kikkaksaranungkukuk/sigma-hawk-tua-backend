@@ -1,20 +1,26 @@
 import { Router } from "express";
 import { UserController } from "@/controllers/user/userController";
+import { BaseRouter } from "./baseRouter";
 
-export class UserRouter {
-    private router: Router;
+export class UserRouter extends BaseRouter {
     private controller: UserController;
 
     constructor() {
-        this.router = Router();
+        super();
         this.controller = new UserController();
         this.initializeRoutes();
     }
 
     private initializeRoutes(): void {
         // Define routes for user interests
-        this.router.get("/interests/:id", this.controller.getInterests);
-        this.router.patch("/interests/:id", this.controller.patchInterests);
+        this.router.get(
+            "/interests",
+            this.controller.getInterests.bind(this.controller)
+        );
+        this.router.patch(
+            "/interests",
+            this.controller.patchInterests.bind(this.controller)
+        );
     }
 
     public getRouter(): Router {

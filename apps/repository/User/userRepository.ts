@@ -35,23 +35,21 @@ export class UserRepository {
         return user;
     }
 
-    async getUserInterests(userId: number): Promise<Interest[]> {
-        const user = await prisma.user.findUnique({
-            where: { user_id: userId },
+    async getUserInterestsByEmail(email: string): Promise<Interest[]> {
+        const user = await prisma.user.findFirst({
+            where: { email },
             select: { interests: true },
         });
-        return user?.interests ?? [];
+        return user?.interests || [];
     }
 
-    async updateUserInterests(
-        userId: number,
+    async updateUserInterestsByEmail(
+        email: string,
         interests: Interest[]
-    ): Promise<Interest[]> {
-        const user = await prisma.user.update({
-            where: { user_id: userId },
-            data: { interests: interests },
-            select: { interests: true },
+    ): Promise<User> {
+        return await prisma.user.update({
+            where: { email },
+            data: { interests },
         });
-        return user.interests;
     }
 }
