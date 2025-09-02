@@ -10,6 +10,7 @@ export interface authRegisterReq {
     phone : string
     email : string
     password : string
+    role?: string
 };
 
 // request body of the auth's login

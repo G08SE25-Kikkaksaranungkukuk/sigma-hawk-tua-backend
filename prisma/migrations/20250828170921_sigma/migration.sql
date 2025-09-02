@@ -20,7 +20,7 @@ CREATE TABLE "public"."User" (
     "password" TEXT NOT NULL,
     "salt" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "role" TEXT NOT NULL DEFAULT 'USER',
+    "role" TEXT DEFAULT 'USER',
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("user_id")
 );
