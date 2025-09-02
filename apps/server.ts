@@ -3,8 +3,6 @@ import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 
-import { interestRouter } from "@/routes/interestRouter";
-
 import cookieParser from "cookie-parser";
 import { RouterManager } from "@/routes/RouterManager";
 import { setupSwagger } from "@/docs/swagger";
