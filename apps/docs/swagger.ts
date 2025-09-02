@@ -1,6 +1,7 @@
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { Express } from "express";
+import { Param } from "@prisma/client/runtime/library";
 
 const options = {
     definition: {
@@ -529,15 +530,16 @@ const options = {
                 get: {
                     tags: ["User"],
                     summary: "Get user interests",
-                    description: "Retrieve a user's interests",
+                    description: "Retrieve the interests of a user",
                     parameters: [
                         {
-                            name: "id",
-                            in: "path",
+                            name: "email",
+                            in: "body",
                             required: true,
-                            description: "User ID",
+                            description:
+                                "Email of the user to retrieve interests for",
                             schema: {
-                                type: "integer",
+                                type: "string",
                             },
                         },
                     ],
@@ -550,9 +552,6 @@ const options = {
                                     schema: {
                                         type: "object",
                                         properties: {
-                                            userId: {
-                                                type: "integer",
-                                            },
                                             interests: {
                                                 type: "array",
                                                 items: {
@@ -565,7 +564,8 @@ const options = {
                             },
                         },
                         "404": {
-                            description: "User not found",
+                            description:
+                                "User not found and Interests not found",
                             content: {
                                 "application/json": {
                                     schema: {
@@ -589,36 +589,31 @@ const options = {
                 patch: {
                     tags: ["User"],
                     summary: "Update user interests",
-                    description: "Update a user's interests",
+                    description: "Update the interests of a user",
                     parameters: [
                         {
-                            name: "id",
-                            in: "path",
+                            name: "email",
+                            in: "body",
                             required: true,
-                            description: "User ID",
+                            description:
+                                "Email of the user to update interests for",
                             schema: {
-                                type: "integer",
+                                type: "string",
                             },
                         },
-                    ],
-                    requestBody: {
-                        required: true,
-                        content: {
-                            "application/json": {
-                                schema: {
-                                    type: "object",
-                                    properties: {
-                                        interests: {
-                                            type: "array",
-                                            items: {
-                                                type: "string",
-                                            },
-                                        },
-                                    },
+                        {
+                            name: "interests",
+                            in: "body",
+                            required: true,
+                            description: "New interests for the user",
+                            schema: {
+                                type: "array",
+                                items: {
+                                    type: "string",
                                 },
                             },
                         },
-                    },
+                    ],
                     responses: {
                         "200": {
                             description: "User interests updated successfully",
@@ -627,14 +622,11 @@ const options = {
                                     schema: {
                                         type: "object",
                                         properties: {
-                                            userId: {
-                                                type: "integer",
-                                            },
-                                            message: {
-                                                type: "string",
-                                            },
-                                            updated: {
-                                                type: "boolean",
+                                            interests: {
+                                                type: "array",
+                                                items: {
+                                                    type: "string",
+                                                },
                                             },
                                         },
                                     },
@@ -642,7 +634,8 @@ const options = {
                             },
                         },
                         "404": {
-                            description: "User not found",
+                            description:
+                                "User not found and Interests not found",
                             content: {
                                 "application/json": {
                                     schema: {
