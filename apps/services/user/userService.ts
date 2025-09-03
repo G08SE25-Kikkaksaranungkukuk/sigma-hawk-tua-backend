@@ -34,7 +34,9 @@ export class UserService {
             const invalidFields = Object.entries(data).filter(
                 ([key, value]) =>
                     !allowedBlankFields.includes(key) &&
-                    (value == null || value === "")
+                    (value == null ||
+                        value === "" ||
+                        (Array.isArray(value) && value.length === 0))
             );
 
             if (invalidFields.length > 0) {
