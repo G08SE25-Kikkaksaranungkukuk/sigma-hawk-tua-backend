@@ -13,7 +13,7 @@ export class RouterManager {
     private initializeRouters(): void {
         const authRouter = new AuthRouter();
         const userRouter = new UserRouter();
-        this.router.use("/users", userRouter.getRouter());
+        this.router.use("/user", userRouter.getRouter());
         this.router.use("/auth", authRouter.getRouter());
     }
 
