@@ -1,12 +1,12 @@
-import { authRegisterReq } from "@/types/auth/authRequest";
+import { groupCreateReq } from "@/types/group/groupRequest";
 import { prisma } from "@/config/prismaClient";
-import { Interest, User } from "@/prisma/index";
+import { Group } from "@/prisma/index";
 
 export class GroupRepository {
-    async createNewGroup(payload: authRegisterReq): Promise<User> {
-        const user = await prisma.user.create({
-            data: payload as User,
+    async createNewGroup(group_data: groupCreateReq): Promise<Group> {
+        const group = await prisma.group.create({
+            data: group_data as Group,
         });
-        return user;
+        return group;
     }
 }
