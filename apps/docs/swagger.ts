@@ -526,6 +526,154 @@ const options = {
                     },
                 },
             },
+            "/user": {
+                get: {
+                    tags: ["User"],
+                    summary: "Get user profile",
+                    description: "Retrieve the profile information of a user",
+                    parameters: [
+                        {
+                            name: "email",
+                            in: "query",
+                            required: true,
+                            description: "Email of the user to retrieve",
+                            schema: {
+                                type: "string",
+                            },
+                        },
+                    ],
+                    responses: {
+                        "200": {
+                            description: "User profile retrieved successfully",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        first_name: "nuttea",
+                                        middle_name: null,
+                                        last_name: "algo",
+                                        birth_date: "1995-05-15T00:00:00.000Z",
+                                        sex: "male",
+                                        phone: "0812345678",
+                                        profile_url: null,
+                                        social_credit: 0,
+                                        interests: ["TEMPLE", "FESTIVAL"],
+                                        travel_styles: ["BUDGET"],
+                                    },
+                                },
+                            },
+                        },
+                        "404": {
+                            description: "User not found",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        $ref: "#/components/schemas/Error",
+                                    },
+                                },
+                            },
+                        },
+                        "500": {
+                            description: "Internal server error",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        $ref: "#/components/schemas/Error",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                patch: {
+                    tags: ["User"],
+                    summary: "Update user profile",
+                    description: "Update the profile information of a user",
+                    parameters: [
+                        {
+                            name: "email",
+                            in: "query",
+                            required: true,
+                            description: "Email of the user to update",
+                            schema: {
+                                type: "string",
+                            },
+                        },
+                    ],
+                    requestBody: {
+                        required: true,
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: "object",
+                                    properties: {
+                                        name: {
+                                            type: "string",
+                                        },
+                                        age: {
+                                            type: "integer",
+                                        },
+                                        // Add other user properties as needed
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    responses: {
+                        "200": {
+                            description: "User profile updated successfully",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        user_id: 2,
+                                        first_name: "nuttea",
+                                        middle_name: null,
+                                        last_name: "algo",
+                                        birth_date: "1995-05-15T00:00:00.000Z",
+                                        sex: "male",
+                                        phone: "0812345678",
+                                        profile_url: null,
+                                        social_credit: 0,
+                                        interests: ["TEMPLE", "FESTIVAL"],
+                                        travel_styles: ["BUDGET"],
+                                        password: "$2b$12$sodmgwkrngmvlkwn",
+                                        email: "nuttea@example.com",
+                                    },
+                                },
+                            },
+                        },
+                        "400": {
+                            description: "Invalid request data",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        $ref: "#/components/schemas/Error",
+                                    },
+                                },
+                            },
+                        },
+                        "404": {
+                            description: "User not found",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        $ref: "#/components/schemas/Error",
+                                    },
+                                },
+                            },
+                        },
+                        "500": {
+                            description: "Internal server error",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        $ref: "#/components/schemas/Error",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
             "/user/interests": {
                 get: {
                     tags: ["User"],
