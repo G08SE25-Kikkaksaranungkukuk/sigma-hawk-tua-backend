@@ -47,9 +47,10 @@ export class UserRepository {
         email: string,
         interests: Interest[]
     ): Promise<User> {
-        return await prisma.user.update({
+        const updatedUser = await prisma.user.update({
             where: { email },
             data: { interests },
         });
+        return updatedUser;
     }
 }
