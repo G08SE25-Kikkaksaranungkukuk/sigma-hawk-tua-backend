@@ -564,8 +564,7 @@ const options = {
                             },
                         },
                         "404": {
-                            description:
-                                "User not found and Interests not found",
+                            description: "User not found",
                             content: {
                                 "application/json": {
                                     schema: {
@@ -634,8 +633,7 @@ const options = {
                             },
                         },
                         "404": {
-                            description:
-                                "User not found and Interests not found",
+                            description: "User not found",
                             content: {
                                 "application/json": {
                                     schema: {
