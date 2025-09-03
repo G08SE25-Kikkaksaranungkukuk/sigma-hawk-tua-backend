@@ -11,7 +11,7 @@ export class UserService {
 
     async getUser(email: string) {
         try {
-            const user = await this.repo.retrieveUser(email);
+            const user = await this.repo.getUserProfile(email);
             if (!user) {
                 throw new AppError("User not found", 404);
             }
@@ -23,6 +23,29 @@ export class UserService {
 
     async updateUser(email: string, data: Partial<User>) {
         try {
+            if (!data) {
+                throw new AppError("Invalid data: no data provided", 400);
+            }
+
+            // Define fields that are allowed to be null or blank
+            const allowedBlankFields = ["middle_name", "profile_url"];
+
+            // Validate data, excluding allowed blank fields
+            const invalidFields = Object.entries(data).filter(
+                ([key, value]) =>
+                    !allowedBlankFields.includes(key) &&
+                    (value == null || value === "")
+            );
+
+            if (invalidFields.length > 0) {
+                throw new AppError(
+                    `Invalid data: contains null or empty values in fields: ${invalidFields
+                        .map(([key]) => key)
+                        .join(", ")}`,
+                    400
+                );
+            }
+
             const user = await this.repo.retrieveUser(email);
             if (!user) {
                 throw new AppError("User not found", 404);
