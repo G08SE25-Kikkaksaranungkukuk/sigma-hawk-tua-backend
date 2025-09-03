@@ -35,6 +35,25 @@ export class UserRepository {
         return user;
     }
 
+    async getUserProfile(email: string): Promise<Partial<User> | null> {
+        const user = await prisma.user.findFirst({
+            where: { email: email },
+            select: {
+                first_name: true,
+                middle_name: true,
+                last_name: true,
+                birth_date: true,
+                sex: true,
+                phone: true,
+                profile_url: true,
+                social_credit: true,
+                interests: true,
+                travel_styles: true,
+            },
+        });
+        return user;
+    }
+
     async updateUser(email: string, data: Partial<User>): Promise<User> {
         const updatedUser = await prisma.user.update({
             where: { email },
