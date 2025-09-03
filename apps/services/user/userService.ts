@@ -17,12 +17,6 @@ export class UserService {
                 throw new AppError("User not found", 404);
             }
             const interests = await this.repo.getUserInterestsByEmail(_email);
-            if (!interests) {
-                throw new AppError(
-                    `Interests for email ${_email} not found`,
-                    404
-                );
-            }
             return interests;
         } catch (error: any) {
             throw new AppError(
