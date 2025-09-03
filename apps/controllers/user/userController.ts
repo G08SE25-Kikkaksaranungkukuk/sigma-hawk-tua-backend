@@ -9,6 +9,40 @@ export class UserController {
         this.service = new UserService();
     }
 
+    async getUser(req: Request, res: Response): Promise<void> {
+        try {
+            const email = req.body.email;
+            const user = await this.service.getUser(email);
+            res.status(200).json({ user });
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                res.status(error.statusCode).json({ message: error.message });
+                return;
+            }
+
+            console.error("Unexpected error:", error);
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }
+
+    async updateUser(req: Request, res: Response): Promise<void> {
+        try {
+            const email = req.body.email;
+            const userData = req.body.data;
+
+            const updatedUser = await this.service.updateUser(email, userData);
+            res.status(200).json({ user: updatedUser });
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                res.status(error.statusCode).json({ message: error.message });
+                return;
+            }
+
+            console.error("Unexpected error:", error);
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }
+
     async getInterests(req: Request, res: Response): Promise<void> {
         try {
             const _email = req.body._email;
