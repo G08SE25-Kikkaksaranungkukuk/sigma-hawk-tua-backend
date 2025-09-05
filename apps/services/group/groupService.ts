@@ -38,4 +38,11 @@ export class GroupService {
         return userRemove;
     }
 
+    async transferOwnership(group_id : number , user_id : number , target_id : number) {
+        const groupData = await this.grouprepository.findGroup(group_id);
+        const leaderAuthorize = await this.grouprepository.isGroupLeader({group_id , user_id});
+        const ownerTransfer = await this.grouprepository.transferGroupOwner({group_id , "user_id" : target_id}) 
+        return ownerTransfer
+    }
+
 }

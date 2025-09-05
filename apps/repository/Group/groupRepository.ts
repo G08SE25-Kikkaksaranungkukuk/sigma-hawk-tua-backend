@@ -67,4 +67,18 @@ export class GroupRepository {
             throw new AppError("Not a group leader",403);
         }
     }
+
+    async transferGroupOwner({group_id , user_id} : groupMemberReq) {
+        const ret = await prisma.group.update({
+            where: {
+                group_id
+            },
+            data : {
+                group_leader_id : {
+                    set : user_id
+                }
+            }
+        })
+        return ret
+    }
 }

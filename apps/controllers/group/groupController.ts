@@ -23,7 +23,7 @@ export class GroupController {
                 return;
             }
 
-            console.error("Unexpected error:", error);
+            // console.error("Unexpected error:", error);
             res.status(500).json({ message: "Internal server error" });
         }
     }
@@ -50,6 +50,23 @@ export class GroupController {
             const joinGroup = await this.groupService.removeGroupUser(Number(id),req.user?.user_id ?? -1,payload.user_id)
             res.status(200).json({message : "group user removed"})
         } catch(error : unknown) {
+            if (error instanceof AppError) {
+                res.status(error.statusCode).json({ message: error.message });
+                return;
+            }
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }
+
+    async transferGroupOwner(req : Request , res : Response) : Promise<void> {
+        try {
+            const {id} = req.params;
+            const {user_id} = req.body
+            const payload = {group_id : Number(id) , user_id : Number(user_id)} as GroupMemberReq
+            const transferOwner = await this.groupService.transferOwnership(Number(id),req.user?.user_id ?? -1,payload.user_id)
+            res.status(200).json({message : "group owner transfered to user " + payload.user_id})
+        } catch(error : unknown) {
+            // console.log(error)
             if (error instanceof AppError) {
                 res.status(error.statusCode).json({ message: error.message });
                 return;

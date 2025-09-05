@@ -23,15 +23,21 @@ export class GroupRouter extends BaseRouter {
         );
 
         this.router.put(
-            "/member/:id",
+            "/:id/member",
             groupMiddleware,
             this.groupController.addGroupUser.bind(this.groupController)
         );
 
         this.router.delete(
-            "/member/:id",
+            "/:id/member",
             groupMiddleware,
             this.groupController.removeGroupUser.bind(this.groupController)
         );
+
+        this.router.patch(
+            "/:id/owner",
+            groupMiddleware,
+            this.groupController.transferGroupOwner.bind(this.groupController)
+        )
     }
 }
