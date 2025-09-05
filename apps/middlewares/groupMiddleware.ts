@@ -10,6 +10,7 @@ declare module "express" {
     user?: {
       user_id: number;
       email: string;
+      role: string;
     };
   }
 }
