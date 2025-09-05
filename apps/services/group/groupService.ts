@@ -1,12 +1,22 @@
 import { GroupRepository } from "@/repository/Group/groupRepository";
 import { AppError } from "@/types/error/AppError";
-import { groupCreateReq } from "@/types/group/groupRequest";
+import { groupCreateReq, groupGetReq } from "@/types/group/groupRequest";
 
 export class GroupService {
     private grouprepository: GroupRepository;
 
     constructor() {
         this.grouprepository = new GroupRepository();
+    }
+
+    async getGroup(group_data: groupGetReq) {
+        try {
+            const group = await this.grouprepository.findGroup(group_data.group_id);
+            return group;
+        } catch (error : unknown) {
+            //console.error(error)
+            throw new AppError("Failed to get group", 500);
+        }
     }
 
     async createNewGroup(group_data: groupCreateReq) {

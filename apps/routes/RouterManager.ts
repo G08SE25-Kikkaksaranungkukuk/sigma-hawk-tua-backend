@@ -17,7 +17,7 @@ export class RouterManager {
         const groupRouter = new GroupRouter();
         this.router.use("/user", userRouter.getRouter());
         this.router.use("/auth", authRouter.getRouter());
-        this.router.use("/group",groupRouter.getRouter())
+        this.router.use("/groups", groupRouter.getRouter())
     }
 
     public getRouter(): Router {

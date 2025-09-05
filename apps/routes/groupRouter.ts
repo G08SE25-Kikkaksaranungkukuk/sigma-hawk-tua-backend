@@ -8,7 +8,7 @@ export class GroupRouter extends BaseRouter {
 
     constructor() {
         super({
-            prefix : ""
+            prefix : "/groups"
         });
         this.groupController = new GroupController();
         this.setupRoutes();
@@ -20,6 +20,11 @@ export class GroupRouter extends BaseRouter {
             "",
             groupMiddleware,
             this.groupController.createGroup.bind(this.groupController)
+        );
+
+        this.router.get(
+            "/:groupId",
+            this.groupController.getGroup.bind(this.groupController)
         );
     }
 }

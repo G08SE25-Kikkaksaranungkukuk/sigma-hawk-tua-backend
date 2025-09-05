@@ -38,4 +38,19 @@ export class GroupController {
             }
         }
     }
+
+    async getGroup(req : Request , res : Response) : Promise<void> {
+        try {
+            const groupId = Number(req.params.groupId);
+            const group = await this.groupService.getGroup({ group_id: groupId})
+            res.status(200).json(group);
+        } catch(error : unknown) {
+            if (error instanceof AppError) {
+                res.status(error.statusCode).json({ message: error.message});
+                return;
+            }
+            console.error("Unexpected error:", error);
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }
 }

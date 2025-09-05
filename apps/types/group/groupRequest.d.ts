@@ -1,3 +1,5 @@
+import e from "express";
+
 // request body of the group creation
 export interface groupCreateReq {
   group_name: string;
@@ -8,4 +10,8 @@ export interface groupCreateReq {
 export interface groupMemberAddReq {
   group_id : number; 
   user_id : number;
+}
+
+export interface groupGetReq{
+  group_id : number;
 }
