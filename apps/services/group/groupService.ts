@@ -14,7 +14,12 @@ export class GroupService {
             const newGroup = await this.grouprepository.createNewGroup(group_data);
             return newGroup;
         } catch (error) {
+            console.error(error)
             throw new AppError("Failed to create group", 500);
         }
+    }
+
+    async joinGroup(group_id : number) {
+        
     }
 }
