@@ -29,7 +29,7 @@ model User {
   travel_styles TravelStyle[]
   password      String
   email         String    @unique
-  role          String?   @default("USER")
+  role          String    @default("USER")
 
   // Relations
   groups        Group[]           @relation("Belongs")

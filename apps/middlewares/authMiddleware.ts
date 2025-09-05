@@ -1,6 +1,7 @@
 import { AppError } from "@/types/error/AppError";
 import { verifyJwt } from "@/utils/jwt";
 import { config } from "@/config/config";
+import { UserRole } from "@/types/auth/authRequest";
 
 import type { Request, Response, NextFunction } from "express";
 
@@ -37,9 +38,8 @@ export function authMiddleware(
   }
 }
 
-type AllowedRoles = "ADMIN" | "USER";
 
-export function checkRole(allowedRoles: AllowedRoles[]) {
+export function checkRole(allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       throw new AppError("Unauthorized: No user found", 401);
@@ -49,7 +49,7 @@ export function checkRole(allowedRoles: AllowedRoles[]) {
       throw new AppError("Forbidden: User role not specified", 403);
     }
 
-    if (!allowedRoles.includes(req.user.role as AllowedRoles)) {
+    if (!allowedRoles.includes(req.user.role as UserRole)) {
       throw new AppError(
         `Forbidden: Required role: ${allowedRoles.join(" or ")}`, 
         403

@@ -5,14 +5,21 @@ export interface authRegisterReq {
     last_name : string
     birth_date : Date
     sex : string
-    interests : string[]
-    travel_styles : string[]
     phone : string
     email : string
     password : string
-    role?: string
+    role: string
 };
 
+export interface UserPreferences {
+    interests: string[];
+    travel_styles: string[];
+}
+
+export enum UserRole {
+  ADMIN = "admin",
+  USER = "user"
+}
 // request body of the auth's login
 export interface authLoginReq {
     email : string
