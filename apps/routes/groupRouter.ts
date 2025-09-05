@@ -21,5 +21,17 @@ export class GroupRouter extends BaseRouter {
             groupMiddleware,
             this.groupController.createGroup.bind(this.groupController)
         );
+
+        this.router.put(
+            "/member/:id",
+            groupMiddleware,
+            this.groupController.addGroupUser.bind(this.groupController)
+        );
+
+        this.router.delete(
+            "/member/:id",
+            groupMiddleware,
+            this.groupController.removeGroupUser.bind(this.groupController)
+        );
     }
 }

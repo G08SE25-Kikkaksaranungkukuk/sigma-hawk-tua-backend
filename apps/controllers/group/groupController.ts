@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AppError } from "@/types/error/AppError";
 import { GroupService } from "@/services/group/groupService";
-import { groupCreateReq } from "@/types/group/groupRequest";
+import { groupCreateReq, GroupMemberReq } from "@/types/group/groupRequest";
 import { groupCreateSchema } from "@/utils/groupValidation";
 
 export class GroupController {
@@ -30,12 +30,31 @@ export class GroupController {
 
     async addGroupUser(req : Request , res : Response) : Promise<void> {
         try {
-            
+            const {id} = req.params;
+            const joinGroup = await this.groupService.joinGroup(Number(id),req.user?.user_id ?? -1)
+            res.status(200).json({message : "group joined"})
         } catch(error : unknown) {
             if (error instanceof AppError) {
                 res.status(error.statusCode).json({ message: error.message });
                 return;
             }
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }
+
+    async removeGroupUser(req : Request , res : Response) : Promise<void> {
+        try {
+            const {id} = req.params;
+            const {user_id} = req.body
+            const payload = {group_id : Number(id) , user_id : Number(user_id)} as GroupMemberReq
+            const joinGroup = await this.groupService.removeGroupUser(Number(id),req.user?.user_id ?? -1,payload.user_id)
+            res.status(200).json({message : "group user removed"})
+        } catch(error : unknown) {
+            if (error instanceof AppError) {
+                res.status(error.statusCode).json({ message: error.message });
+                return;
+            }
+            res.status(500).json({ message: "Internal server error" });
         }
     }
 }

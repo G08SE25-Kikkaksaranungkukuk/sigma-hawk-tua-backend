@@ -1,6 +1,7 @@
-import { groupCreateReq, groupMemberAddReq } from "@/types/group/groupRequest";
+import { groupCreateReq, groupMemberReq } from "@/types/group/groupRequest";
 import { prisma } from "@/config/prismaClient";
 import { Group } from "@/prisma/index";
+import { AppError } from "@/types/error/AppError";
 
 export class GroupRepository {
     async createNewGroup(group_data: groupCreateReq): Promise<Group> {
@@ -11,15 +12,20 @@ export class GroupRepository {
     }
 
     async findGroup(group_id : number) {
-        const group = await prisma.group.findFirstOrThrow({
-            where : {
-                group_id
-            }
-        })
-        return group;
+        try {
+            const group = await prisma.group.findFirstOrThrow({
+                where : {
+                    group_id
+                }
+            })
+            return group;
+        }
+        catch {
+            throw new AppError("Cannot find specified group",404);
+        }
     }
 
-    async GroupMemberAdd({group_id , user_id} : groupMemberAddReq) {
+    async GroupMemberAdd({group_id , user_id} : groupMemberReq) {
         const belongs = await prisma.user.update({
             where : {
                 user_id
@@ -33,7 +39,7 @@ export class GroupRepository {
         return belongs
     }
 
-    async GroupMemberRemove({group_id , user_id} : groupMemberAddReq) {
+    async GroupMemberRemove({group_id , user_id} : groupMemberReq) {
         const belongs = await prisma.user.update({
             where : {
                 user_id
@@ -45,5 +51,20 @@ export class GroupRepository {
             }
         })
         return belongs
+    }
+
+    async isGroupLeader({group_id , user_id} : groupMemberReq) {
+        try {
+            const belongs = await prisma.group.findFirstOrThrow({
+                where : {
+                    group_id,
+                    group_leader_id : user_id
+                }
+            })
+            return belongs
+        }
+        catch {
+            throw new AppError("Not a group leader",403);
+        }
     }
 }
