@@ -26,7 +26,6 @@ model User {
   Interaction   Interaction[]
   requests      RequestJoin[]
   groups        Group[]       @relation("Belongs")
-  role          String        @default("USER")
 }
 
 model Group {
