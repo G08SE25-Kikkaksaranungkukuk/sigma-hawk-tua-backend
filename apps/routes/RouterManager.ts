@@ -1,25 +1,26 @@
 import { Router } from "express";
-
 import { AuthRouter } from "./authRouter";
-
+import { UserRouter } from "./userRouter";
+import { GroupRouter } from "./groupRouter";
 
 export class RouterManager {
-  private router: Router;
+    private router: Router;
 
-  constructor() {
-    this.router = Router();
-    this.initializeRouters();
-  }
+    constructor() {
+        this.router = Router();
+        this.initializeRouters();
+    }
 
-  private initializeRouters(): void {
-    const authRouter = new AuthRouter();
+    private initializeRouters(): void {
+        const authRouter = new AuthRouter();
+        const userRouter = new UserRouter();
+        const groupRouter = new GroupRouter();
+        this.router.use("/user", userRouter.getRouter());
+        this.router.use("/auth", authRouter.getRouter());
+        this.router.use("/group",groupRouter.getRouter())
+    }
 
-
-    this.router.use("/auth", authRouter.getRouter());
-  }
-
-  public getRouter(): Router {
-    return this.router;
-  }
+    public getRouter(): Router {
+        return this.router;
+    }
 }
-
