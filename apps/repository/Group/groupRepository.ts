@@ -19,7 +19,7 @@ export class GroupRepository {
         return group;
     }
 
-    async GroupMemberAdd({group_id , user_id} : groupMemberAddReq) : Promise<any> {
+    async GroupMemberAdd({group_id , user_id} : groupMemberAddReq) {
         const belongs = await prisma.user.update({
             where : {
                 user_id

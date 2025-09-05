@@ -27,4 +27,15 @@ export class GroupController {
             res.status(500).json({ message: "Internal server error" });
         }
     }
+
+    async addGroupUser(req : Request , res : Response) : Promise<void> {
+        try {
+            
+        } catch(error : unknown) {
+            if (error instanceof AppError) {
+                res.status(error.statusCode).json({ message: error.message });
+                return;
+            }
+        }
+    }
 }
