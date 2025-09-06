@@ -78,9 +78,9 @@ export class UserService {
         }
     }
 
-    async updateUserInterests(_email: string, interests: Interest[]) {
+    async updateUserInterests(email: string, interests: Interest[]) {
         try {
-            const user = await this.repo.retrieveUser(_email);
+            const user = await this.repo.retrieveUser(email);
             if (!user) {
                 throw new AppError("User not found", 404);
             }
@@ -88,7 +88,7 @@ export class UserService {
                 throw new AppError("Interests must be a non-empty array", 400);
             }
             return await this.repo.updateUserInterestsByEmail(
-                _email,
+                email,
                 interests
             );
         } catch (error: any) {
