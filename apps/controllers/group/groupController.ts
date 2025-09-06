@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AppError } from "@/types/error/AppError";
 import { GroupService } from "@/services/group/groupService";
-import { groupCreateReq } from "@/types/group/groupRequest";
+import { groupCreateReq, groupFilterReq } from "@/types/group/groupRequest";
 import { groupCreateSchema } from "@/utils/groupValidation";
 
 export class GroupController {
@@ -53,4 +53,19 @@ export class GroupController {
             res.status(500).json({ message: "Internal server error" });
         }
     }
+
+    async filterGroups(req : Request , res : Response) : Promise<void> {
+        try {
+            const filter = req.query;
+            const groups = await this.groupService.filterGroups(filter as groupFilterReq);
+            res.status(200).json(groups);
+        } catch(error : unknown) {
+            if (error instanceof AppError) {
+                res.status(error.statusCode).json({ message: error.message});
+                return;
+            }
+            console.error("Unexpected error:", error);
+            res.status(500).json({ message: "Internal server error" });
+        }
+    }   
 }

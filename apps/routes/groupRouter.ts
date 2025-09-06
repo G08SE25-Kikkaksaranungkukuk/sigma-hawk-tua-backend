@@ -26,5 +26,11 @@ export class GroupRouter extends BaseRouter {
             "/:groupId",
             this.groupController.getGroup.bind(this.groupController)
         );
+
+        this.router.get(
+            "",
+            this.groupController.filterGroups.bind(this.groupController)
+        );
     }
+    
 }
