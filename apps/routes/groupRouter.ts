@@ -8,7 +8,7 @@ export class GroupRouter extends BaseRouter {
 
     constructor() {
         super({
-            prefix : "/groups"
+            prefix : ""
         });
         this.groupController = new GroupController();
         this.setupRoutes();
