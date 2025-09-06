@@ -64,4 +64,13 @@ export class GroupService {
             throw new AppError("Failed to filter groups", 500);
         }
     }
+
+    async getGroupMembers(group_id: number) {
+        try {
+            const members = await this.grouprepository.getGroupMembers(group_id);
+            return members;
+        } catch (error: unknown) {
+            throw new AppError("Failed to get group members", 500);
+        }
+    }
 }

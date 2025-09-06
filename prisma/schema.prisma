@@ -111,4 +111,7 @@ enum Interest {
 
 enum TravelStyle {
   BUDGET
+  COMFORT
+  LUXURY
+  BACKPACK
 }

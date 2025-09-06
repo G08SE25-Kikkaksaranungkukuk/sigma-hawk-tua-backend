@@ -50,7 +50,12 @@ export class GroupRouter extends BaseRouter {
             "/:id/owner",
             groupMiddleware,
             this.groupController.transferGroupOwner.bind(this.groupController)
-        )
+        );
+
+        this.router.get(
+            "/:id/members",
+            this.groupController.getGroupMembers.bind(this.groupController)
+        );
     }
     
 }
