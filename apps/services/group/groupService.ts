@@ -29,31 +29,30 @@ export class GroupService {
         }
     }
 
-    async joinGroup(group_id: number, user_id: number) {
-        try {
-            const groupData = await this.grouprepository.findGroup(group_id)
-            const joinGroup = await this.grouprepository.GroupMemberAdd({
-                user_id,
-                "group_id": groupData.group_id
-            })
-            return joinGroup;
-
-        } catch (error: unknown) {
-            throw new AppError("Failed to join group", 500);
-        }
+    async joinGroup(group_id : number,user_id : number) {
+        const groupData = await this.grouprepository.findGroup(group_id)
+        const joinGroup = await this.grouprepository.GroupMemberAdd({
+            user_id,
+            "group_id":groupData.group_id
+        })
+        return joinGroup;
     }
 
-    async removeGroupUser(group_id: number, user_id: number) {
-        try {
-            const groupData = await this.grouprepository.findGroup(group_id);
-            const userRemove = await this.grouprepository.GroupMemberRemove({
-                user_id,
-                "group_id": groupData.group_id
-            });
-            return userRemove;
-        } catch (error: unknown) {
-            throw new AppError("Failed to remove user from the group", 500);
-        }
+    async removeGroupUser(group_id : number , user_id : number , target_id : number) {
+        const groupData = await this.grouprepository.findGroup(group_id);
+        const leaderAuthorize = await this.grouprepository.isGroupLeader({group_id , user_id});
+        const userRemove = await this.grouprepository.GroupMemberRemove({
+            "user_id" : target_id,
+            "group_id" : groupData.group_id
+        });
+        return userRemove;
+    }
+
+    async transferOwnership(group_id : number , user_id : number , target_id : number) {
+        const groupData = await this.grouprepository.findGroup(group_id);
+        const leaderAuthorize = await this.grouprepository.isGroupLeader({group_id , user_id});
+        const ownerTransfer = await this.grouprepository.transferGroupOwner({group_id , "user_id" : target_id}) 
+        return ownerTransfer
     }
 
     async filterGroups(filter: groupFilterReq) {

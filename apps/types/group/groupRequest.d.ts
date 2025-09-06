@@ -7,7 +7,7 @@ export interface groupCreateReq {
   group_leader_id: number;
 }
 
-export interface groupMemberAddReq {
+export interface groupMemberReq {
   group_id : number; 
   user_id : number;
 }
@@ -31,4 +31,9 @@ export interface groupInfo {
 export interface groupFilterRes {
   group_array : groupInfo[];
   group_count : number;
+}
+
+export interface GroupMemberReq {
+  group_id : number;
+  user_id : number;
 }
