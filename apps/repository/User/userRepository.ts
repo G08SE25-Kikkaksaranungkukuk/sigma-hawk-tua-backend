@@ -17,6 +17,28 @@ export class UserRepository {
         return user != null;
     }
 
+    async softDelete(email: string): Promise<User>{
+        const deleteUser = prisma.user.update({
+            where: { email },
+            data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+            },
+        });
+        return deleteUser;
+    }
+
+    async getUserPassword(email: string): Promise<string> {
+        const user = await prisma.user.findFirst({
+            where: { email },
+            select: { password: true },
+        });
+        if (!user) {
+            throw new Error("User not found");
+        }
+        return user.password;
+    }
+
     async retrieveUser(
         email: string,
         without_sentitive_fields: boolean = false

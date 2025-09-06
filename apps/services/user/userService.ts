@@ -1,6 +1,7 @@
 import { Interest, User } from "@/prisma/index";
 import { UserRepository } from "@/repository/User/userRepository";
 import { AppError } from "@/types/error/AppError";
+import bcrypt from "bcrypt";
 
 export class UserService {
     private repo: UserRepository;
@@ -60,6 +61,15 @@ export class UserService {
             throw new AppError(`Failed to update user: ${error.message}`, 500);
         }
     }
+
+    async softDeleteUser(email: string, password: string){
+        const userPassword = await this.repo.getUserPassword(email);
+
+        const valid = await bcrypt.compare(password, userPassword);
+        if (!valid) throw new Error("Invalid password");
+
+        await this.repo.softDelete(email);
+        };
 
     // Methods related to user interests
     async getUserInterests(email: string) {

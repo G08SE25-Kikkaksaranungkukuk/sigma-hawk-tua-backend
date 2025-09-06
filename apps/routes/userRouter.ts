@@ -14,11 +14,8 @@ export class UserRouter extends BaseRouter {
     private initializeRoutes(): void {
         // Define routes for user profile
         this.router.get("/", this.controller.getUser.bind(this.controller));
-        this.router.patch(
-            "/",
-            this.controller.updateUser.bind(this.controller)
-        );
-
+        this.router.patch("/",this.controller.updateUser.bind(this.controller));
+        this.router.post("/delete", this.controller.updateUser.bind(this.controller));
         // Define routes for user interests
         this.router.get(
             "/interests",
