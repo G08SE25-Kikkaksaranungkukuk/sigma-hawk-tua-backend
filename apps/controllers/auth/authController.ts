@@ -1,126 +1,84 @@
 import { Request, Response } from "express";
-
-import { AppError } from "@/types/error/AppError";
 import { AuthService } from "@/services/auth/authService";
 import { authRegisterReq } from "@/types/auth/authRequest";
+import { BaseController } from "@/controllers/BaseController";
+import { AppError } from "@/types/error/AppError";
 
-export class AuthController {
+export class AuthController extends BaseController {
     private authService: AuthService;
 
     constructor() {
+        super();
         this.authService = new AuthService();
     }
 
     async register(req: Request, res: Response): Promise<void> {
         try {
-            const user = await this.authService.register(
-                req.body as authRegisterReq
-            );
-            res.status(201).json({ user });
-            return;
-        } catch (error: unknown) {
-            if (error instanceof AppError) {
-                res.status(error.statusCode).json({
-                    message: error.message,
-                });
-                return;
-            }
-
-            console.error("Unexpected error:", error);
-            res.status(500).json({
-                message: "Internal server error",
-            });
+            const user = await this.authService.register(req.body as authRegisterReq);
+            this.handleSuccess(res, { user }, 201, "User registered successfully");
+        } catch (error) {
+            this.handleError(error, res);
         }
     }
 
     async login(req: Request, res: Response): Promise<void> {
         try {
             const tokens = await this.authService.login(req.body);
-
-            res.cookie("accessToken", tokens.accessToken, {
-                maxAge: 60 * 60 * 24 * 1000, // 24 hours in milliseconds
-            });
-            res.cookie("refreshToken", tokens.refreshToken, {
-                maxAge: 60 * 60 * 24 * 30 * 1000, // 30 days in milliseconds
-            });
-
-            res.status(200).json(tokens);
-        } catch (error: unknown) {
-            if (error instanceof AppError) {
-                res.status(error.statusCode).json({
-                    message: error.message,
-                });
-                return;
-            }
-
-            console.error("Unexpected error:", error);
-            res.status(500).json({
-                message: "Internal server error",
-            });
+            
+            // Set secure cookies for tokens
+            this.setAuthCookies(res, tokens);
+            
+            this.handleSuccess(res, tokens, 200, "Login successful");
+        } catch (error) {
+            this.handleError(error, res);
         }
     }
 
     async forgotPassword(req: Request, res: Response): Promise<void> {
         try {
-            const status = await this.authService.forgotPassword(req.body);
-            if (status) {
-                res.status(200).json({
-                    message: "Your password has been reset.",
-                });
+            const result = await this.authService.forgotPassword(req.body);
+            
+            if (result) {
+                this.handleSuccess(
+                    res, 
+                    null, 
+                    200, 
+                    "Password reset instructions have been sent"
+                );
             }
-        } catch (error: unknown) {
-            if (error instanceof AppError) {
-                res.status(error.statusCode).json({
-                    message: error.message,
-                });
-                return;
-            }
-
-            console.error("Unexpected error:", error);
-            res.status(500).json({
-                message: "Internal server error",
-            });
+        } catch (error) {
+            this.handleError(error, res);
         }
     }
 
     async logout(req: Request, res: Response): Promise<void> {
-        res.clearCookie("accessToken", {});
-        res.clearCookie("refreshToken", {});
-
-        res.status(200).json({
-            message: "Logged out successfully",
-        });
+        try {
+            // Clear authentication cookies
+            this.clearAuthCookies(res);
+            
+            this.handleSuccess(res, null, 200, "Logged out successfully");
+        } catch (error) {
+            this.handleError(error, res);
+        }
     }
 
     async refreshTokens(req: Request, res: Response): Promise<void> {
         try {
-            const { refreshToken } = req.cookies;
-            if (!refreshToken) {
-                throw new AppError("No refresh token provided", 401);
+            const authHeader = req.headers.authorization;
+            if (!authHeader || !authHeader.startsWith("Bearer ")) {
+                throw new AppError("Unauthorized: No refresh token provided", 401);
             }
+
+            const refreshToken = authHeader.split(" ")[1];
 
             const tokens = await this.authService.refreshTokens(refreshToken);
-
-            res.cookie("accessToken", tokens.accessToken, {
-                maxAge: 60 * 60 * 24 * 1000, // 24 hours in milliseconds
-            });
-            res.cookie("refreshToken", tokens.refreshToken, {
-                maxAge: 60 * 60 * 24 * 30 * 1000, // 30 days in milliseconds
-            });
-
-            res.status(200).json(tokens);
-        } catch (error: unknown) {
-            if (error instanceof AppError) {
-                res.status(error.statusCode).json({
-                    message: error.message,
-                });
-                return;
-            }
-
-            console.error("Unexpected error:", error);
-            res.status(500).json({
-                message: "Internal server error",
-            });
+            
+            // Update cookies with new tokens
+            this.setAuthCookies(res, tokens);
+            
+            this.handleSuccess(res, tokens, 200, "Tokens refreshed successfully");
+        } catch (error) {
+            this.handleError(error, res);
         }
     }
 }

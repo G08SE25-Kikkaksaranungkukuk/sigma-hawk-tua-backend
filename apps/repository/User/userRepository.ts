@@ -12,17 +12,17 @@ export class UserRepository {
 
     async findExistingUser(email: string): Promise<boolean> {
         const user = await prisma.user.findFirst({
-            where: { email: email },
+            where: { email },
         });
         return user != null;
     }
 
     async retrieveUser(
-        _email: string,
+        email: string,
         without_sentitive_fields: boolean = false
     ): Promise<User | null> {
         const user = await prisma.user.findFirst({
-            where: { email: _email },
+            where: { email },
             omit: {
                 password: without_sentitive_fields,
                 user_id: without_sentitive_fields,
@@ -37,7 +37,7 @@ export class UserRepository {
 
     async getUserProfile(email: string): Promise<Partial<User> | null> {
         const user = await prisma.user.findFirst({
-            where: { email: email },
+            where: { email },
             select: {
                 first_name: true,
                 middle_name: true,
