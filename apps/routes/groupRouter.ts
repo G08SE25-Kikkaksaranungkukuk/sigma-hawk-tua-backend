@@ -22,6 +22,18 @@ export class GroupRouter extends BaseRouter {
             this.groupController.createGroup.bind(this.groupController)
         );
 
+        this.router.get(
+            "/:groupId",
+            this.groupController.getGroup.bind(this.groupController)
+        );
+
+        // Example GET
+        //
+        this.router.get(
+            "",
+            this.groupController.filterGroups.bind(this.groupController)
+        );
+
         this.router.put(
             "/:id/member",
             groupMiddleware,
@@ -40,4 +52,5 @@ export class GroupRouter extends BaseRouter {
             this.groupController.transferGroupOwner.bind(this.groupController)
         )
     }
+    
 }

@@ -1,4 +1,4 @@
-import { groupCreateReq, groupMemberReq } from "@/types/group/groupRequest";
+import { groupCreateReq, groupMemberReq, groupFilterReq, groupFilterRes } from "@/types/group/groupRequest";
 import { prisma } from "@/config/prismaClient";
 import { Group } from "@/prisma/index";
 import { AppError } from "@/types/error/AppError";
@@ -27,12 +27,12 @@ export class GroupRepository {
 
     async GroupMemberAdd({group_id , user_id} : groupMemberReq) {
         const belongs = await prisma.user.update({
-            where : {
+            where: {
                 user_id
             },
-            data : {
-                groups : {
-                    connect : {group_id}
+            data: {
+                groups: {
+                    connect: { group_id }
                 }
             }
         })
@@ -41,16 +41,70 @@ export class GroupRepository {
 
     async GroupMemberRemove({group_id , user_id} : groupMemberReq) {
         const belongs = await prisma.user.update({
-            where : {
+            where: {
                 user_id
             },
-            data : {
-                groups : {
-                    disconnect : {group_id}
+            data: {
+                groups: {
+                    disconnect: { group_id }
                 }
             }
         })
         return belongs
+    }
+
+    async GetFilteredGroups(filter: groupFilterReq): Promise<groupFilterRes> {
+        // Input validation and normalization
+        const page = Math.max(1, Number(filter.page) || 1);
+        const page_size = Math.min(100, Math.max(1, Number(filter.page_size) || 10)); // Cap at 100
+
+        const {
+            interest_fields,
+            group_name
+        } = filter;
+
+        // Build where clause more efficiently
+        const where: Record<string, any> = {};
+
+        if (interest_fields && interest_fields?.length > 0) {
+            where.interest_fields = {
+                hasEvery: Array.isArray(interest_fields) ? interest_fields : [interest_fields]
+            };
+        }
+
+        if (group_name?.trim()) {
+            where.group_name = {
+                contains: group_name.trim(),
+                mode: "insensitive"
+            };
+        }
+
+        // Single database query with aggregation (if your Prisma version supports it)
+        try {
+            const [groups, group_count] = await Promise.all([
+                prisma.group.findMany({
+                    where,
+                    skip: (page - 1) * page_size,
+                    take: page_size,
+                    select: {
+                        group_name: true,
+                        interest_fields: true
+                    },
+                    // Add ordering for consistent pagination
+                    orderBy: { group_name: 'asc' }
+                }),
+                prisma.group.count({ where })
+            ]);
+
+            return {
+                group_array: groups,
+                group_count
+            };
+        } catch (error) {
+            // Add proper error handling
+            console.error('Error fetching filtered groups:', error);
+            throw new Error('Failed to fetch groups');
+        }
     }
 
     async isGroupLeader({group_id , user_id} : groupMemberReq) {
