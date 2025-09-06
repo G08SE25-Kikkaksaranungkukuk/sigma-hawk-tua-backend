@@ -135,4 +135,27 @@ export class GroupRepository {
         })
         return ret
     }
+
+    async getGroupMembers(group_id: number) {
+        try {
+            const group = await prisma.group.findFirstOrThrow({
+                where: {
+                    group_id
+                },
+                include: {
+                    members: {
+                        select: {
+                            user_id: true,
+                            first_name: true,
+                            last_name: true,
+                            email: true
+                        }
+                    }
+                }
+            });
+            return group.members;
+        } catch {
+            throw new AppError("Cannot find specified group", 404);
+        }
+    }
 }
