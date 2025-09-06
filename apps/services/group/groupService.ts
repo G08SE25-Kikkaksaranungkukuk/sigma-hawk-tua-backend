@@ -61,8 +61,8 @@ export class GroupService {
             const result = await this.grouprepository.GetFilteredGroups(filter);
             return result;
         } catch (error: unknown) {
+            console.error(error);
             throw new AppError("Failed to filter groups", 500);
         }
     }
-
 }

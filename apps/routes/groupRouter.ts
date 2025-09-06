@@ -27,6 +27,8 @@ export class GroupRouter extends BaseRouter {
             this.groupController.getGroup.bind(this.groupController)
         );
 
+        // Example GET
+        //
         this.router.get(
             "",
             this.groupController.filterGroups.bind(this.groupController)

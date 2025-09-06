@@ -48,44 +48,56 @@ export class GroupRepository {
     }
 
     async GetFilteredGroups(filter: groupFilterReq): Promise<groupFilterRes> {
+        // Input validation and normalization
+        const page = Math.max(1, Number(filter.page) || 1);
+        const page_size = Math.min(100, Math.max(1, Number(filter.page_size) || 10)); // Cap at 100
+
         const {
             interest_fields,
-            group_name,
-            page = 1,
-            page_size = 10
+            group_name
         } = filter;
 
-        const where: any = {};
+        // Build where clause more efficiently
+        const where: Record<string, any> = {};
 
-        if (interest_fields && interest_fields.length > 0) {
+        if (interest_fields && interest_fields?.length > 0) {
             where.interest_fields = {
-                hasSome: interest_fields
+                hasEvery: Array.isArray(interest_fields) ? interest_fields : [interest_fields]
             };
         }
 
-        if (group_name) {
+        if (group_name?.trim()) {
             where.group_name = {
-                contains: group_name,
+                contains: group_name.trim(),
                 mode: "insensitive"
             };
         }
 
-        const [groups, group_count] = await Promise.all([
-            prisma.group.findMany({
-                where,
-                skip: (page - 1) * page_size,
-                take: page_size,
-                select: {
-                    group_name: true,
-                    interest_fields: true
-                }
-            }),
-            prisma.group.count({ where })
-        ]);
+        // Single database query with aggregation (if your Prisma version supports it)
+        try {
+            const [groups, group_count] = await Promise.all([
+                prisma.group.findMany({
+                    where,
+                    skip: (page - 1) * page_size,
+                    take: page_size,
+                    select: {
+                        group_name: true,
+                        interest_fields: true
+                    },
+                    // Add ordering for consistent pagination
+                    orderBy: { group_name: 'asc' }
+                }),
+                prisma.group.count({ where })
+            ]);
 
-        return {
-            group_array: groups,
-            group_count
-        };
+            return {
+                group_array: groups,
+                group_count
+            };
+        } catch (error) {
+            // Add proper error handling
+            console.error('Error fetching filtered groups:', error);
+            throw new Error('Failed to fetch groups');
+        }
     }
 }
