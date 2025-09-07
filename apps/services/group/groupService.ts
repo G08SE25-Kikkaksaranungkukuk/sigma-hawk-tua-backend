@@ -73,4 +73,25 @@ export class GroupService {
             throw new AppError("Failed to get group members", 500);
         }
     }
+
+    async leaveGroup(group_id: number, user_id: number) {
+        try {
+            const group = await this.grouprepository.findGroup(group_id);
+            if (group.group_leader_id === user_id) {
+                throw new AppError("Group leader cannot leave the group. Transfer ownership first.", 403);
+            }
+
+            const userRemove = await this.grouprepository.GroupMemberRemove({
+                "user_id": user_id,
+                "group_id": group_id
+            });
+            return userRemove;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError("Failed to leave group", 500);
+        }
+    }
 }
+
