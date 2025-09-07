@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import { BaseController } from "@/controllers/BaseController";
-import { InterestService } from "@/services/InterestService"; // Adjust path as needed
+import { InterestsService } from "@/services/interests/interestsService";
 
 export class InterestsController extends BaseController {
-    private interestService: InterestService;
+    private interestService: InterestsService;
 
     constructor() {
         super();
-        this.interestService = new InterestService();
+        this.interestService = new InterestsService();
     }
 
     async getAllInterests(req: Request, res: Response): Promise<void> {
