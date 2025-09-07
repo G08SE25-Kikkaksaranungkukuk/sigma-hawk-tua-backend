@@ -16,6 +16,21 @@ export class GroupRepository {
             const group = await prisma.group.findFirstOrThrow({
                 where : {
                     group_id
+                },
+                include : {
+                    members : {
+                        omit : {
+                            "birth_date": true,
+                            "social_credit": true,
+                            "password": true,
+                            "email": true,
+                            "phone" : true,
+                            "role" : true 
+                        }
+                    }
+                },
+                omit : {
+                    
                 }
             })
             return group;

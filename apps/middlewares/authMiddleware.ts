@@ -8,9 +8,9 @@ import type { Request, Response, NextFunction } from "express";
 declare module "express" {
   interface Request {
     user?: {
-        user_id: number;
-        email: string;
-        role: string;
+      user_id: number;
+      email: string;
+      role: string;
     };
   }
 }
@@ -20,13 +20,17 @@ export function authMiddleware(
   res: Response,
   next: NextFunction
 ): void {
-  const authHeader = req.headers.authorization;
+  const { accessToken } = req.cookies
+  let token;
+  if (!accessToken) {
+    const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new AppError("Unauthorized: No token provided", 401);
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new AppError("Unauthorized: No token provided", 401);
+    }
+    token = authHeader.split(" ")[1];
   }
-
-  const token = authHeader.split(" ")[1];
+  else token = accessToken
 
   try {
     const decoded = verifyJwt(token, config.ACCESSTOKEN_SECRET);
@@ -51,7 +55,7 @@ export function checkRole(allowedRoles: UserRole[]) {
 
     if (!allowedRoles.includes(req.user.role as UserRole)) {
       throw new AppError(
-        `Forbidden: Required role: ${allowedRoles.join(" or ")}`, 
+        `Forbidden: Required role: ${allowedRoles.join(" or ")}`,
         403
       );
     }
