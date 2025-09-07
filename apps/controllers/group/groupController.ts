@@ -33,6 +33,16 @@ export class GroupController extends BaseController {
         }
     }
 
+    async leaveGroup(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const leaveGroup = await this.groupService.leaveGroup(Number(id), req.user?.user_id ?? -1);
+            this.handleSuccess(res, null, 200, "Left group successfully");
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
     async removeGroupUser(req: Request, res: Response): Promise<void> {
         try {
             const { id } = req.params;
