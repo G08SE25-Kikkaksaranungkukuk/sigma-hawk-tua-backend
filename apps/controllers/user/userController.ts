@@ -34,9 +34,11 @@ export class UserController extends BaseController {
 
     async deleteUser(req: Request, res: Response): Promise<void> {
          try {
+            if(!req.user){
+                throw new Error("User not authenticated");
+            }
             const { password } = req.body;
-            const email = req.body.email; // from JWT/session middleware
-
+            const email = req.user.email; // from JWT/session middleware
             await this.service.softDeleteUser(email, password);
 
             res.json({ success: true, message: "Account soft deleted" });

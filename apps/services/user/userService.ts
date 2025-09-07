@@ -66,7 +66,7 @@ export class UserService {
         const userPassword = await this.repo.getUserPassword(email);
 
         const valid = await bcrypt.compare(password, userPassword);
-        if (!valid) throw new Error("Invalid password");
+        if (!valid) throw new AppError("Invalid password",401);
 
         await this.repo.softDelete(email);
         };
