@@ -81,4 +81,12 @@ export class AuthController extends BaseController {
             this.handleError(error, res);
         }
     }
+    async whoAmI(req : Request, res : Response) : Promise<void> {
+        try {
+            // const userData = await this.authService.whoami(req.cookies.accessToken);
+            this.handleSuccess(res,req.user,200,"Individual Verified");
+        } catch (error) {
+            this.handleError(error,res);
+        }
+    }
 }

@@ -8,6 +8,7 @@ import {config } from "@/config/config";
 import { UserRepository } from "@/repository/User/userRepository";
 import { AppError } from "@/types/error/AppError";
 import { User } from "@/prisma/wasm";
+import { verifyJwt } from "@/utils/jwt";
 
 export class AuthService {
     private userRepository: UserRepository;
@@ -92,6 +93,11 @@ export class AuthService {
         // TODO: Implement forgot password logic
         // For now, just return true
         return true;
+    }
+
+    async whoami(jwt : string) : Promise<Partial<User>> {
+        const ret = verifyJwt(jwt,config.ACCESSTOKEN_SECRET) as Partial<User>;
+        return ret
     }
 
 

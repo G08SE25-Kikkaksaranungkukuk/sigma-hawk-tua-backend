@@ -46,6 +46,12 @@ export class GroupRouter extends BaseRouter {
             this.groupController.removeGroupUser.bind(this.groupController)
         );
 
+        this.router.delete(
+            "/:id/leave",
+            groupMiddleware,
+            this.groupController.leaveGroup.bind(this.groupController)
+        );
+
         this.router.patch(
             "/:id/owner",
             groupMiddleware,

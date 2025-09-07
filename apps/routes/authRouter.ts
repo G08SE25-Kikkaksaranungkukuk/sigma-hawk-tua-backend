@@ -37,5 +37,10 @@ export class AuthRouter extends BaseRouter {
       "/refresh",
       this.authController.refreshTokens.bind(this.authController)
     );
+    this.router.get(
+      "/whoami",
+      authMiddleware,
+      this.authController.whoAmI.bind(this.authController)
+    );
   }
 }
