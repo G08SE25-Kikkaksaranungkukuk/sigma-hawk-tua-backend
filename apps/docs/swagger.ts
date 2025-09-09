@@ -534,7 +534,7 @@ const options = {
                     parameters: [
                         {
                             name: "email",
-                            in: "query",
+                            in: "params",
                             required: true,
                             description: "Email of the user to retrieve",
                             schema: {
@@ -588,31 +588,93 @@ const options = {
                     tags: ["User"],
                     summary: "Update user profile",
                     description: "Update the profile information of a user",
-                    parameters: [
-                        {
-                            name: "email",
-                            in: "query",
-                            required: true,
-                            description: "Email of the user to update",
-                            schema: {
-                                type: "string",
-                            },
-                        },
-                    ],
                     requestBody: {
                         required: true,
                         content: {
                             "application/json": {
                                 schema: {
                                     type: "object",
+                                    required: ["email"],
                                     properties: {
-                                        name: {
+                                        email: {
                                             type: "string",
+                                            format: "email",
+                                            example: "user@example.com",
+                                            description:
+                                                "Email of the user to update",
                                         },
-                                        age: {
-                                            type: "integer",
+                                        data: {
+                                            first_name: {
+                                                type: "string",
+                                                example: "John",
+                                            },
+                                            middle_name: {
+                                                type: "string",
+                                                example: "Michael",
+                                            },
+                                            last_name: {
+                                                type: "string",
+                                                example: "Doe",
+                                            },
+                                            birth_date: {
+                                                type: "string",
+                                                format: "date",
+                                                example: "1990-01-15",
+                                            },
+                                            sex: {
+                                                type: "string",
+                                                example: "male",
+                                            },
+                                            phone: {
+                                                type: "string",
+                                                pattern: "^0[0-9]{9}$",
+                                                example: "0812345678",
+                                            },
+                                            profile_url: {
+                                                type: "string",
+                                                example:
+                                                    "https://example.com/profile.jpg",
+                                            },
+                                            interests: {
+                                                type: "array",
+                                                items: {
+                                                    type: "string",
+                                                    enum: [
+                                                        "SEA",
+                                                        "MOUNTAIN",
+                                                        "WATERFALL",
+                                                        "NATIONAL_PARK",
+                                                        "ISLAND",
+                                                        "TEMPLE",
+                                                        "SHOPPING_MALL",
+                                                        "MARKET",
+                                                        "CAFE",
+                                                        "HISTORICAL",
+                                                        "AMUSEMENT_PARK",
+                                                        "ZOO",
+                                                        "FESTIVAL",
+                                                        "MUSEUM",
+                                                        "FOOD_STREET",
+                                                        "BEACH_BAR",
+                                                        "THEATRE",
+                                                    ],
+                                                },
+                                                example: ["TEMPLE", "FESTIVAL"],
+                                            },
+                                            travel_styles: {
+                                                type: "array",
+                                                items: {
+                                                    type: "string",
+                                                    enum: [
+                                                        "BUDGET",
+                                                        "COMFORT",
+                                                        "LUXURY",
+                                                        "BACKPACK",
+                                                    ],
+                                                },
+                                                example: ["BUDGET"],
+                                            },
                                         },
-                                        // Add other user properties as needed
                                     },
                                 },
                             },

@@ -12,7 +12,14 @@ export class UserController extends BaseController {
 
     async getUser(req: Request, res: Response): Promise<void> {
         try {
-            const email = req.params.email;
+            console.log(req.query);
+            const email =
+                typeof req.query.email === "string"
+                    ? req.query.email
+                    : undefined;
+            if (!email) {
+                return this.handleError(new Error("Email is required"), res);
+            }
             const user = await this.service.getUser(email);
             this.handleSuccess(res, { user }, 200);
         } catch (error) {
