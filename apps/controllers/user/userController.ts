@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { UserService } from "@/services/user/userService";
 import { BaseController } from "@/controllers/BaseController";
+import { verifyJwt } from "@/utils/jwt";
+import { config } from "@/config/config";
+import { User } from "@/prisma/index";
 
 export class UserController extends BaseController {
     private service: UserService;
@@ -58,5 +61,17 @@ export class UserController extends BaseController {
         } catch (error) {
             this.handleError(error, res);
         }
+    }
+
+    async uploadUserProfile(req : Request , res : Response) : Promise<void> {
+       try {
+            const {accessToken} = req.cookies;
+            const userInfo : Partial<User> = verifyJwt(accessToken,config.ACCESSTOKEN_SECRET);
+            this.service.uploadProfilePicture(userInfo.email ?? "",req.file)
+            this.handleSuccess(res, null, 200 , "uploaded");
+       }
+       catch (error) {
+            this.handleError(error,res);
+       }
     }
 }

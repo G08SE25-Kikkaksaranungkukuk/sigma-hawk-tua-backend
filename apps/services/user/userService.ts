@@ -98,4 +98,20 @@ export class UserService {
             );
         }
     }
+
+    async uploadProfilePicture(email : string , pic : Express.Multer.File | undefined) : Promise<void> {
+        try {
+            const user = await this.repo.retrieveUser(email);
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+            await this.repo.updateUserProfile(user,pic);
+        } catch (error : any) {
+            throw new AppError(
+                `Failed to upload new user profile: ${error.message}`,
+                500
+            );
+        }
+
+    }
 }

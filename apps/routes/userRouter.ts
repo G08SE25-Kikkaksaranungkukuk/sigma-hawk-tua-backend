@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { UserController } from "@/controllers/user/userController";
 import { BaseRouter } from "./baseRouter";
+import multer from "multer";
+
+const upload = multer({ dest: 'uploads/' , storage : multer.memoryStorage()})
 
 export class UserRouter extends BaseRouter {
     private controller: UserController;
@@ -28,6 +31,12 @@ export class UserRouter extends BaseRouter {
             "/interests",
             this.controller.patchInterests.bind(this.controller)
         );
+
+        this.router.post(
+            "/profile_pic",
+            upload.single("profile"),
+            this.controller.uploadUserProfile.bind(this.controller)
+        )
     }
 
     public getRouter(): Router {

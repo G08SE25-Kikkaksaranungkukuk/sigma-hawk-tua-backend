@@ -24,5 +24,14 @@ services:
         depends_on:
             - db
 
+    dufs:
+        image: sigoden/dufs
+        ports:
+            - 6969:5000
+        volumes:
+         - dufsdata:/data
+        command: /data -A
+
 volumes:
     pgdata:
+    dufsdata:
