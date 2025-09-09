@@ -22,9 +22,7 @@ export class UserController extends BaseController {
 
     async updateUser(req: Request, res: Response): Promise<void> {
         try {
-            console.log("Request Body:", req.body);
             const email = req.body.profileData.email;
-            console.log("Fetching user with email:", email);
             const userData = req.body.profileData.data;
 
             const updatedUser = await this.service.updateUser(email, userData);
