@@ -12,7 +12,9 @@ export class UserController extends BaseController {
 
     async getUser(req: Request, res: Response): Promise<void> {
         try {
-            const email = req.body.email;
+            console.log("Request Body:", req.body);
+            const email = req.params.email;
+            console.log("Fetching user with email:", email);
             const user = await this.service.getUser(email);
             this.handleSuccess(res, { user }, 200);
         } catch (error) {
@@ -51,10 +53,15 @@ export class UserController extends BaseController {
                 email,
                 interests
             );
-            this.handleSuccess(res, {
-                email: email,
-                updated
-            }, 200, "Interests updated");
+            this.handleSuccess(
+                res,
+                {
+                    email: email,
+                    updated,
+                },
+                200,
+                "Interests updated"
+            );
         } catch (error) {
             this.handleError(error, res);
         }
