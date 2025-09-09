@@ -93,5 +93,17 @@ export class GroupService {
             throw new AppError("Failed to leave group", 500);
         }
     }
+
+    async getMyGroups(user_id: number) {
+        try {
+            const groups = await this.grouprepository.getUserGroups(user_id);
+            return groups;
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError("Failed to get user's groups", 500);
+        }
+    }
 }
 
