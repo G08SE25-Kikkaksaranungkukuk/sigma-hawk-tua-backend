@@ -12,8 +12,13 @@ export interface authRegisterReq {
 };
 
 export interface UserPreferences {
-    interests: string[];
-    travel_styles: string[];
+    interest_ids: number[];
+    travel_style_ids: number[];
+}
+
+export interface UserPreferencesWithData {
+    interests: Array<{ id: number; key: string; label: string; emoji: string; color: string; }>;
+    travel_styles: Array<{ id: number; key: string; label: string; emoji: string; color: string; }>;
 }
 
 export enum UserRole {

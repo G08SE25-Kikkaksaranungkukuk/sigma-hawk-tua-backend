@@ -1,4 +1,4 @@
-import { Interest, User } from "@/prisma/index";
+import { Interest, User, TravelStyle } from "@/prisma/index";
 import { UserRepository } from "@/repository/User/userRepository";
 import { AppError } from "@/types/error/AppError";
 
@@ -78,22 +78,59 @@ export class UserService {
         }
     }
 
-    async updateUserInterests(email: string, interests: Interest[]) {
+    async updateUserInterests(email: string, interestIds: number[]) {
         try {
             const user = await this.repo.retrieveUser(email);
             if (!user) {
                 throw new AppError("User not found", 404);
             }
-            if (!Array.isArray(interests) || interests.length === 0) {
-                throw new AppError("Interests must be a non-empty array", 400);
+            if (!Array.isArray(interestIds)) {
+                throw new AppError("Interest IDs must be an array", 400);
             }
             return await this.repo.updateUserInterestsByEmail(
                 email,
-                interests
+                interestIds
             );
         } catch (error: any) {
             throw new AppError(
                 `Failed to update user interests: ${error.message}`,
+                500
+            );
+        }
+    }
+
+    async getUserTravelStyles(email: string) {
+        try {
+            const user = await this.repo.retrieveUser(email);
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+            const travelStyles = await this.repo.getUserTravelStylesByEmail(email);
+            return travelStyles;
+        } catch (error: any) {
+            throw new AppError(
+                `Failed to fetch user travel styles: ${error.message}`,
+                500
+            );
+        }
+    }
+
+    async updateUserTravelStyles(email: string, travelStyleIds: number[]) {
+        try {
+            const user = await this.repo.retrieveUser(email);
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+            if (!Array.isArray(travelStyleIds)) {
+                throw new AppError("Travel style IDs must be an array", 400);
+            }
+            return await this.repo.updateUserTravelStylesByEmail(
+                email,
+                travelStyleIds
+            );
+        } catch (error: any) {
+            throw new AppError(
+                `Failed to update user travel styles: ${error.message}`,
                 500
             );
         }
