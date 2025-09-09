@@ -39,6 +39,7 @@ export class UserRepository {
         const user = await prisma.user.findFirst({
             where: { email },
             select: {
+                email: true,
                 first_name: true,
                 middle_name: true,
                 last_name: true,
