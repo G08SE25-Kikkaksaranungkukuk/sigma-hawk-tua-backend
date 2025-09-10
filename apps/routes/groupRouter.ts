@@ -62,6 +62,12 @@ export class GroupRouter extends BaseRouter {
             "/:id/members",
             this.groupController.getGroupMembers.bind(this.groupController)
         );
+
+        this.router.get(
+            "/my/groups",
+            groupMiddleware,
+            this.groupController.getMyGroups.bind(this.groupController)
+        );
     }
     
 }
