@@ -9,7 +9,7 @@ interface EnvConfig {
   REFRESHTOKEN_SECRET: string;
   PASSWORD_SALT_ROUNDS: number;
   NODE_ENV: string;
-
+  FILE_SERVER_URL : string;
 }
 
 export const config:EnvConfig = {
@@ -19,4 +19,5 @@ export const config:EnvConfig = {
     REFRESHTOKEN_SECRET: process.env.REFRESHTOKEN_SECRET as string,
     PASSWORD_SALT_ROUNDS: Number(process.env.PASSWORD_SALT_ROUNDS),
     NODE_ENV: process.env.NODE_ENV || 'development',
+    FILE_SERVER_URL : process.env.FILE_SERVER_URL as string
 };

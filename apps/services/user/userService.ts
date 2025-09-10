@@ -99,12 +99,22 @@ export class UserService {
         }
     }
 
-    async getUserTravelStyles(email: string) {
+    async uploadProfilePicture(email : string , pic : Express.Multer.File | undefined) : Promise<void> {
         try {
             const user = await this.repo.retrieveUser(email);
             if (!user) {
                 throw new AppError("User not found", 404);
-            }
+            }            await this.repo.updateUserProfile(user,pic);
+        } catch (error : any) {
+            throw new AppError(
+                `Failed to upload new user profile: ${error.message}`,
+                500
+            );
+        }
+    }
+
+    async getUserTravelStyles(email: string) {
+        try {
             const travelStyles = await this.repo.getUserTravelStylesByEmail(email);
             return travelStyles;
         } catch (error: any) {
@@ -114,6 +124,7 @@ export class UserService {
             );
         }
     }
+
 
     async updateUserTravelStyles(email: string, travelStyleIds: number[]) {
         try {
@@ -135,4 +146,5 @@ export class UserService {
             );
         }
     }
+    
 }
