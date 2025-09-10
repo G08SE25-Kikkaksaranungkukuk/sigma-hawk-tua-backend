@@ -8,13 +8,22 @@ async function main() {
   // Seed Interests
   const interests = [
     { key: 'SEA', label: 'Sea & Beach', emoji: '🏖️', color: '#4FC3F7', description: 'Beaches, coastal areas, and marine activities' },
-    { key: 'MOUNTAIN', label: 'Mountain & Nature', emoji: '🏔️', color: '#81C784', description: 'Mountains, hiking, and natural landscapes' },
-    { key: 'CULTURE', label: 'Culture & History', emoji: '🏛️', color: '#FFB74D', description: 'Museums, temples, historical sites' },
-    { key: 'FOOD', label: 'Food & Culinary', emoji: '🍜', color: '#F06292', description: 'Local cuisine, food markets, restaurants' },
-    { key: 'CITY', label: 'City & Urban', emoji: '🏙️', color: '#9575CD', description: 'Shopping, nightlife, urban attractions' },
-    { key: 'WILDLIFE', label: 'Wildlife & Safari', emoji: '🦁', color: '#AED581', description: 'National parks, wildlife watching' },
-    { key: 'ADVENTURE', label: 'Adventure Sports', emoji: '🧗', color: '#FF8A65', description: 'Extreme sports, rock climbing, adventure activities' },
-    { key: 'FAMILY', label: 'Family Activities', emoji: '👨‍👩‍👧‍👦', color: '#64B5F6', description: 'Family-friendly attractions and activities' }
+    { key: 'MOUNTAIN', label: 'Mountain & Hills', emoji: '⛰️', color: '#66BB6A', description: 'Mountain ranges, hiking trails, and scenic viewpoints' },
+    { key: 'WATERFALL', label: 'Waterfalls', emoji: '💧', color: '#42A5F5', description: 'Natural waterfalls and cascades' },
+    { key: 'NATIONAL_PARK', label: 'National Parks', emoji: '🏞️', color: '#26A69A', description: 'Protected natural areas and wildlife reserves' },
+    { key: 'ISLAND', label: 'Islands', emoji: '🏝️', color: '#29B6F6', description: 'Tropical islands and archipelagos' },
+    { key: 'TEMPLE', label: 'Temples & Shrines', emoji: '🙏', color: '#7986CB', description: 'Religious sites, temples, and spiritual places' },
+    { key: 'SHOPPING_MALL', label: 'Shopping Malls', emoji: '🛍️', color: '#BA68C8', description: 'Modern shopping centers and retail complexes' },
+    { key: 'MARKET', label: 'Local Markets', emoji: '🏪', color: '#FF9800', description: 'Traditional markets and street vendors' },
+    { key: 'CAFE', label: 'Cafes & Coffee', emoji: '☕', color: '#FFB74D', description: 'Coffee shops, cafes, and local beverages' },
+    { key: 'HISTORICAL', label: 'Historical Sites', emoji: '🏛️', color: '#FFEB3B', description: 'Ancient ruins, historical buildings, and heritage sites' },
+    { key: 'AMUSEMENT_PARK', label: 'Amusement Parks', emoji: '🎢', color: '#F06292', description: 'Theme parks, roller coasters, and entertainment venues' },
+    { key: 'ZOO', label: 'Zoos & Wildlife', emoji: '🦁', color: '#4CAF50', description: 'Zoos, safari parks, and animal sanctuaries' },
+    { key: 'FESTIVAL', label: 'Festivals & Events', emoji: '🎉', color: '#F44336', description: 'Cultural festivals, celebrations, and local events' },
+    { key: 'MUSEUM', label: 'Museums & Galleries', emoji: '🏛️', color: '#9C27B0', description: 'Art galleries, museums, and cultural exhibitions' },
+    { key: 'FOOD_STREET', label: 'Food Streets', emoji: '🍴', color: '#E91E63', description: 'Street food, food courts, and culinary experiences' },
+    { key: 'BEACH_BAR', label: 'Beach Bars', emoji: '🍹', color: '#00BCD4', description: 'Beachside bars, cocktails, and nightlife by the sea' },
+    { key: 'THEATRE', label: 'Theatre & Shows', emoji: '🎭', color: '#607D8B', description: 'Theaters, live performances, and cultural shows' }
   ];
 
   console.log('📍 Seeding interests...');

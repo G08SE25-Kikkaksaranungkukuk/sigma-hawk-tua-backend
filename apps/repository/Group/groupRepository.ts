@@ -1,18 +1,11 @@
-import { groupCreateReq, groupCreateWithInterestsReq, groupMemberReq, groupFilterReq, groupFilterRes } from "@/types/group/groupRequest";
+import { groupCreateReq, groupMemberReq, groupFilterReq, groupFilterRes } from "@/types/group/groupRequest";
 import { prisma } from "@/config/prismaClient";
 import { Group } from "@/prisma/index";
 import { AppError } from "@/types/error/AppError";
 
 export class GroupRepository {
     async createNewGroup(group_data: groupCreateReq): Promise<Group> {
-        const group = await prisma.group.create({
-            data: group_data,
-        });
-        return group;
-    }
-
-    async createNewGroupWithInterests(group_data: groupCreateWithInterestsReq): Promise<Group> {
-        const { interest_ids, ...groupData } = group_data;
+        const { interest_fields, ...groupData } = group_data;
         
         // Create group first
         const group = await prisma.group.create({
@@ -20,8 +13,8 @@ export class GroupRepository {
         });
 
         // Add interests if provided
-        if (interest_ids && interest_ids.length > 0) {
-            await this.addGroupInterests(group.group_id, interest_ids);
+        if (interest_fields && interest_fields.length > 0) {
+            await this.addGroupInterestsByKeys(group.group_id, interest_fields);
         }
 
         return group;
@@ -329,22 +322,80 @@ export class GroupRepository {
                     user_id
                 },
                 include: {
-                    groups: {
+                    Belongs: {
                         include: {
-                            members: {
+                            groups: {
                                 select: {
-                                    user_id: true,
-                                    first_name: true,
-                                    last_name: true
+                                    group_id: true,
+                                    group_name: true,
+                                    group_leader_id: true,
+                                    description: true,
+                                    max_members: true,
+                                    created_at: true,
+                                    updated_at: true
                                 }
                             }
                         }
                     }
                 }
             });
-            return user.groups;
+            return user.Belongs.map(b => b.groups);
         } catch {
             throw new AppError("Failed to fetch user's groups", 404);
+        }
+    }
+    // Utility method to add interests to a group by keys
+    async addGroupInterestsByKeys(group_id: number, interest_keys: string[]) {
+        try {
+            // Convert interest keys to IDs
+            const interests = await prisma.interest.findMany({
+                where: {
+                    key: { in: interest_keys }
+                },
+                select: { id: true }
+            });
+
+            const interest_ids = interests.map(interest => interest.id);
+
+            if (interest_ids.length > 0) {
+                await prisma.groupInterest.createMany({
+                    data: interest_ids.map(interest_id => ({
+                        group_id,
+                        interest_id
+                    })),
+                    skipDuplicates: true
+                });
+            }
+        } catch (error) {
+            throw new AppError("Failed to add interests to group", 500);
+        }
+    }
+
+    // Utility method to remove interests from a group by keys
+    async removeGroupInterestsByKeys(group_id: number, interest_keys: string[]) {
+        try {
+            // Convert interest keys to IDs
+            const interests = await prisma.interest.findMany({
+                where: {
+                    key: { in: interest_keys }
+                },
+                select: { id: true }
+            });
+
+            const interest_ids = interests.map(interest => interest.id);
+
+            if (interest_ids.length > 0) {
+                await prisma.groupInterest.deleteMany({
+                    where: {
+                        group_id,
+                        interest_id: {
+                            in: interest_ids
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            throw new AppError("Failed to remove interests from group", 500);
         }
     }
 }

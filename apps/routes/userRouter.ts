@@ -32,6 +32,16 @@ export class UserRouter extends BaseRouter {
             this.controller.patchInterests.bind(this.controller)
         );
 
+        // Define routes for user travel styles
+        this.router.get(
+            "/travel-styles",
+            this.controller.getTravelStyles.bind(this.controller)
+        );
+        this.router.patch(
+            "/travel-styles",
+            this.controller.patchTravelStyles.bind(this.controller)
+        );
+
         this.router.post(
             "/profile_pic",
             upload.single("profile"),

@@ -6,10 +6,7 @@ export interface groupCreateReq {
   group_leader_id: number;
   description?: string;
   max_members?: number;
-}
-
-export interface groupCreateWithInterestsReq extends groupCreateReq {
-  interest_ids: number[];
+  interest_fields?: string[];  // Changed from interest_ids to interest_fields
 }
 
 export interface groupMemberReq {
