@@ -17,6 +17,7 @@ export class AuthController extends BaseController {
             const user = await this.authService.register(req.body as authRegisterReq);
             this.handleSuccess(res, { user }, 201, "User registered successfully");
         } catch (error) {
+            console.error("Error during registration:", error);
             this.handleError(error, res);
         }
     }

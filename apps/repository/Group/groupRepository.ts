@@ -173,4 +173,30 @@ export class GroupRepository {
             throw new AppError("Cannot find specified group", 404);
         }
     }
+
+    async getUserGroups(user_id: number) {
+        try {
+            const user = await prisma.user.findUniqueOrThrow({
+                where: {
+                    user_id
+                },
+                include: {
+                    groups: {
+                        include: {
+                            members: {
+                                select: {
+                                    user_id: true,
+                                    first_name: true,
+                                    last_name: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            return user.groups;
+        } catch {
+            throw new AppError("Failed to fetch user's groups", 404);
+        }
+    }
 }
