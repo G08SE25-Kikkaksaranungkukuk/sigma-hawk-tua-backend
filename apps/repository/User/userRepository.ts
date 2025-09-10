@@ -4,9 +4,57 @@ import { Interest, User, TravelStyle } from "@/prisma/index";
 
 export class UserRepository {
     async createNewUser(payload: authRegisterReq): Promise<User> {
+        // แยก interests และ travel_styles ออกจาก payload
+        const { interests, travel_styles, ...userData } = payload;
+        
+        // สร้าง user ก่อน
         const user = await prisma.user.create({
-            data: payload as User,
+            data: {
+                ...userData,
+                role: userData.role || 'USER'
+            },
         });
+
+        // จัดการ interests ถ้ามี
+        if (interests && interests.length > 0) {
+            // หา interest IDs จาก keys
+            const interestRecords = await prisma.interest.findMany({
+                where: {
+                    key: { in: interests }
+                }
+            });
+
+            // สร้าง UserInterest records
+            if (interestRecords.length > 0) {
+                await prisma.userInterest.createMany({
+                    data: interestRecords.map(interest => ({
+                        user_id: user.user_id,
+                        interest_id: interest.id
+                    }))
+                });
+            }
+        }
+
+        // จัดการ travel_styles ถ้ามี
+        if (travel_styles && travel_styles.length > 0) {
+            // หา travel style IDs จาก keys
+            const travelStyleRecords = await prisma.travelStyle.findMany({
+                where: {
+                    key: { in: travel_styles }
+                }
+            });
+
+            // สร้าง UserTravelStyle records
+            if (travelStyleRecords.length > 0) {
+                await prisma.userTravelStyle.createMany({
+                    data: travelStyleRecords.map(travelStyle => ({
+                        user_id: user.user_id,
+                        travel_style_id: travelStyle.id
+                    }))
+                });
+            }
+        }
+
         return user;
     }
 

@@ -8,7 +8,9 @@ export interface authRegisterReq {
     phone : string
     email : string
     password : string
-    role: string
+    role?: string
+    interests?: string[]
+    travel_styles?: string[]
 };
 
 export interface UserPreferences {
