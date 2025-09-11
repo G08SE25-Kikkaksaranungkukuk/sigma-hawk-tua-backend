@@ -27,11 +27,33 @@ export class UserService {
                 throw new AppError("Invalid data: no data provided", 400);
             }
 
+            const user = await this.repo.retrieveUser(email);
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+
+            // Extract interests and travel_styles from data if they exist
+            const { interests, travel_styles, ...userProfileData } = data as any;
+
+            // Define allowed user profile fields (exclude system fields)
+            const allowedFields = [
+                "first_name", "middle_name", "last_name", 
+                "birth_date", "sex", "phone", "profile_url"
+            ];
+
             // Define fields that are allowed to be null or blank
             const allowedBlankFields = ["middle_name", "profile_url"];
 
+            // Filter only allowed fields
+            const filteredData: any = {};
+            Object.entries(userProfileData).forEach(([key, value]) => {
+                if (allowedFields.includes(key)) {
+                    filteredData[key] = value;
+                }
+            });
+
             // Validate data, excluding allowed blank fields
-            const invalidFields = Object.entries(data).filter(
+            const invalidFields = Object.entries(filteredData).filter(
                 ([key, value]) =>
                     !allowedBlankFields.includes(key) &&
                     (value == null ||
@@ -48,14 +70,20 @@ export class UserService {
                 );
             }
 
-            const user = await this.repo.retrieveUser(email);
-            if (!user) {
-                throw new AppError("User not found", 404);
+            // Update user profile
+            const updatedUser = await this.repo.updateUser(email, filteredData);
+
+            // Handle interests update if provided
+            if (interests && Array.isArray(interests)) {
+                await this.repo.updateUserInterestsByKeys(email, interests);
             }
 
-            // Merge existing user data with the new data
-            const updatedData = { ...user, ...data };
-            return await this.repo.updateUser(email, updatedData);
+            // Handle travel styles update if provided
+            if (travel_styles && Array.isArray(travel_styles)) {
+                await this.repo.updateUserTravelStylesByKeys(email, travel_styles);
+            }
+
+            return updatedUser;
         } catch (error: any) {
             throw new AppError(`Failed to update user: ${error.message}`, 500);
         }

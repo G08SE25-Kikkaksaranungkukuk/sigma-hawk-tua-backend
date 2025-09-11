@@ -392,4 +392,106 @@ export class UserRepository {
             travel_styles: user.userTravelStyles.map(uts => uts.travel_style),
         };
     }
+
+    // Update user interests by keys (string array)
+    async updateUserInterestsByKeys(email: string, interestKeys: string[]) {
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: { user_id: true },
+        });
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        // Convert interest keys to IDs
+        const interests = await prisma.interest.findMany({
+            where: {
+                key: { in: interestKeys }
+            },
+            select: { id: true }
+        });
+
+        const interestIds = interests.map(interest => interest.id);
+
+        // Remove all existing interests for the user
+        await prisma.userInterest.deleteMany({
+            where: { user_id: user.user_id },
+        });
+
+        // Add new interests
+        if (interestIds.length > 0) {
+            await prisma.userInterest.createMany({
+                data: interestIds.map(interestId => ({
+                    user_id: user.user_id,
+                    interest_id: interestId,
+                })),
+            });
+        }
+
+        // Return updated user with interests
+        const updatedUser = await prisma.user.findUnique({
+            where: { email },
+            include: {
+                userInterests: {
+                    include: {
+                        interest: true,
+                    },
+                },
+            },
+        });
+
+        return updatedUser!;
+    }
+
+    // Update user travel styles by keys (string array)
+    async updateUserTravelStylesByKeys(email: string, travelStyleKeys: string[]) {
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: { user_id: true },
+        });
+
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        // Convert travel style keys to IDs
+        const travelStyles = await prisma.travelStyle.findMany({
+            where: {
+                key: { in: travelStyleKeys }
+            },
+            select: { id: true }
+        });
+
+        const travelStyleIds = travelStyles.map(travelStyle => travelStyle.id);
+
+        // Remove all existing travel styles for the user
+        await prisma.userTravelStyle.deleteMany({
+            where: { user_id: user.user_id },
+        });
+
+        // Add new travel styles
+        if (travelStyleIds.length > 0) {
+            await prisma.userTravelStyle.createMany({
+                data: travelStyleIds.map(travelStyleId => ({
+                    user_id: user.user_id,
+                    travel_style_id: travelStyleId,
+                })),
+            });
+        }
+
+        // Return updated user with travel styles
+        const updatedUser = await prisma.user.findUnique({
+            where: { email },
+            include: {
+                userTravelStyles: {
+                    include: {
+                        travel_style: true,
+                    },
+                },
+            },
+        });
+
+        return updatedUser!;
+    }
 }
