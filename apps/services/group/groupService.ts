@@ -21,6 +21,7 @@ export class GroupService {
 
     async createNewGroup(group_data: groupCreateReq) {
         try {
+            console.log(group_data);
             const newGroup = await this.grouprepository.createNewGroup(group_data);
             const memberAdd = await this.grouprepository.GroupMemberAdd({
                 user_id: group_data.group_leader_id,
