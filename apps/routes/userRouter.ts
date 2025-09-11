@@ -22,6 +22,16 @@ export class UserRouter extends BaseRouter {
             this.controller.updateUser.bind(this.controller)
         );
 
+        this.router.get(
+            "/interests/all",
+            this.controller.getAllInterests.bind(this.controller)
+        );
+
+        this.router.get(
+            "/travel-styles/all",
+            this.controller.getAllTravelStyles.bind(this.controller)
+        );
+
         // Define routes for user interests
         this.router.get(
             "/interests",

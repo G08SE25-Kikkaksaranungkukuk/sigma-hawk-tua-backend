@@ -4,6 +4,9 @@ import { Interest, User, TravelStyle } from "@/prisma/index";
 import { AppError } from "@/types/error/AppError";
 import axios from "axios";
 import { config } from "@/config/config";
+import { omit } from "zod/v4/core/util.cjs";
+import { de, id } from "zod/v4/locales/index.cjs";
+import { create } from "domain";
 
 export class UserRepository {
     async createNewUser(payload: authRegisterReq): Promise<User> {
@@ -59,6 +62,40 @@ export class UserRepository {
         }
 
         return user;
+    }
+
+    async getAllTravelStyles() : Promise<Partial<TravelStyle>[]> {
+        try {
+            const travelStyles = await prisma.travelStyle.findMany({
+                omit: {
+                    id: true,
+                    key: true,
+                    description: true,
+                    created_at: true,
+                    updated_at: true
+                },
+            });
+            return travelStyles;
+        } catch (error : any) {
+            throw new AppError(`Failed to fetch all travel styles: ${error.message}`, 500);
+        }
+    }
+
+    async getAllInterests() : Promise<Partial<Interest>[]> {
+        try {
+            const interests = await prisma.interest.findMany({
+                omit: {
+                    id: true,
+                    key: true,
+                    description: true,
+                    created_at: true,
+                    updated_at: true
+                },
+        });
+        return interests;
+        } catch (error : any) {
+            throw new AppError(`Failed to fetch all interests: ${error.message}`, 500);
+        }
     }
 
     async findExistingUser(email: string): Promise<boolean> {

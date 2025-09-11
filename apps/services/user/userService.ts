@@ -90,6 +90,25 @@ export class UserService {
     }
 
     // Methods related to user interests
+
+    async getAllTravelStyles() : Promise<Partial<TravelStyle>[]> {
+        try {
+            const travelStyles = await this.repo.getAllTravelStyles();
+            return travelStyles;
+        } catch (error : any) {
+            throw new AppError(`Failed to fetch all travel styles: ${error.message}`, 500);
+        }
+    }
+
+    async getAllInterests() : Promise<Partial<Interest>[]> {
+        try {
+            const interests = await this.repo.getAllInterests();
+            return interests;
+        } catch (error : any) {
+            throw new AppError(`Failed to fetch all interests: ${error.message}`, 500);
+        }
+    }
+
     async getUserInterests(email: string) {
         try {
             const user = await this.repo.retrieveUser(email);
