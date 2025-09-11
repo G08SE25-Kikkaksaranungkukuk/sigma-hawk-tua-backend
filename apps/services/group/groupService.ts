@@ -11,7 +11,7 @@ export class GroupService {
 
     async getGroup(group_data: groupGetReq) {
         try {
-            const group = await this.grouprepository.findGroup(group_data.group_id);
+            const group = await this.grouprepository.getGroupWithDetails(group_data.group_id);
             return group;
         } catch (error: unknown) {
             //console.error(error)

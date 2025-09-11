@@ -304,12 +304,13 @@ export class GroupRepository {
                     }
                 }
             });
-
-            return {
-                ...group,
-                members: group.Belongs.map(b => b.User),
-                interests: group.groupInterests.map(gi => gi.interest)
+            const { Belongs, groupInterests, ...groupWithoutExcludedKeys } = group;
+            let payload = {
+                ...groupWithoutExcludedKeys,
+                members: Belongs.map(b => b.User),
+                interests: groupInterests.map(gi => gi.interest)
             };
+            return payload;
         } catch {
             throw new AppError("Cannot find specified group", 404);
         }
