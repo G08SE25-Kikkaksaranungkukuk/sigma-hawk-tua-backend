@@ -40,6 +40,7 @@ export class UserController extends BaseController {
             const { password } = req.body;
             const email = req.user.email; // from JWT/session middleware
             await this.service.DeleteUser(email, password);
+            this.clearAuthCookies(res);
 
             res.json({ success: true, message: "Account deleted" });
         } catch (error) {
