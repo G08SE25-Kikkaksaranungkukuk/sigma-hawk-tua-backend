@@ -97,7 +97,7 @@ export class UserService {
         if (!valid) throw new AppError("Invalid password",401);
 
         await this.repo.Delete(email);
-        };
+        }
 
     // Methods related to user interests
 

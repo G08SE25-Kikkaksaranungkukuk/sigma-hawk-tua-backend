@@ -108,8 +108,6 @@ export class UserRepository {
     async Delete(email: string){
         await prisma.user.delete({
             where: { email },
-            select: { email: true, first_name: true, last_name: true
-            },
         });
     }
 
