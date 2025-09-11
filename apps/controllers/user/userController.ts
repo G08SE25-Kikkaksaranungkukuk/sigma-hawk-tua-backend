@@ -35,6 +35,24 @@ export class UserController extends BaseController {
         }
     }
 
+    async getAllTravelStyles(req: Request, res: Response): Promise<void> {
+        try {
+            const travelStyles = await this.service.getAllTravelStyles();
+            this.handleSuccess(res, { travelStyles }, 200);
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async getAllInterests(req: Request, res: Response): Promise<void> {
+        try {
+            const interests = await this.service.getAllInterests();
+            this.handleSuccess(res, { interests }, 200);
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
     async getInterests(req: Request, res: Response): Promise<void> {
         try {
             const email = req.body.email;
