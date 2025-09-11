@@ -63,11 +63,12 @@ export class UserController extends BaseController {
             await this.service.DeleteUser(email, password);
             this.clearAuthCookies(res);
 
-            res.json({ success: true, message: "Account deleted" });
+            this.handleSuccess(res, null, 200, "Account deleted");
+            //res.json({ success: true, message: "Account deleted" });
         } catch (error) {
             this.handleError(error, res);
         }
-        };
+    }
 
     async getInterests(req: Request, res: Response): Promise<void> {
         try {
