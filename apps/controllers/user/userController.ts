@@ -63,6 +63,34 @@ export class UserController extends BaseController {
         }
     }
 
+    async getTravelStyles(req: Request, res: Response): Promise<void> {
+        try {
+            const email = req.body.email;
+            const travelStyles = await this.service.getUserTravelStyles(email);
+            this.handleSuccess(res, { email, travelStyles }, 200);
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async patchTravelStyles(req: Request, res: Response): Promise<void> {
+        try {
+            const email = req.body.email;
+            const { travelStyles } = req.body;
+
+            const updated = await this.service.updateUserTravelStyles(
+                email,
+                travelStyles
+            );
+            this.handleSuccess(res, {
+                email: email,
+                updated
+            }, 200, "Travel styles updated");
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
     async uploadUserProfile(req : Request , res : Response) : Promise<void> {
        try {
             const {accessToken} = req.cookies;

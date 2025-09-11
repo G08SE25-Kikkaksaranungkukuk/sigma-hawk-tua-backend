@@ -9,107 +9,202 @@ datasource db {
 }
 
 model User {
-  user_id       Int           @id @default(autoincrement())
-  first_name    String
-  middle_name   String?
-  last_name     String
-  birth_date    DateTime
-  sex           String
-  phone         String
-  profile_url   String?
-  social_credit Int           @default(0)
-  interests     Interest[]
-  travel_styles TravelStyle[]
-  password      String
-  email         String        @unique
-  headOf        Group[]       @relation("IsHeadOf")
-  Interaction   Interaction[]
-  requests      RequestJoin[]
-  groups        Group[]       @relation("Belongs")
-  role          String        @default("USER")
+  user_id          Int               @id @default(autoincrement())
+  first_name       String
+  middle_name      String?
+  last_name        String
+  birth_date       DateTime
+  sex              String
+  phone            String
+  profile_url      String?
+  social_credit    Int               @default(0)
+  password         String
+  email            String            @unique
+  role             String            @default("USER")
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  Belongs          Belongs[]
+  headOf           Group[]           @relation("IsHeadOf")
+  Interaction      Interaction[]     @relation("UserInteractions")
+  requests         RequestJoin[]     @relation("UserRequests")
+  userInterests    UserInterest[]    @relation("UserHasInterests")
+  userTravelStyles UserTravelStyle[] @relation("UserHasTravelStyles")
+}
+
+model Interest {
+  id             Int             @id @default(autoincrement())
+  key            String          @unique
+  label          String
+  emoji          String
+  color          String
+  description    String?
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+  groupInterests GroupInterest[] @relation("InterestBelongsToGroups")
+  placeInterests PlaceInterest[] @relation("InterestBelongsToPlaces")
+  userInterests  UserInterest[]  @relation("InterestBelongsToUsers")
+
+  @@map("interests")
+}
+
+model TravelStyle {
+  id               Int               @id @default(autoincrement())
+  key              String            @unique
+  label            String
+  emoji            String
+  color            String
+  description      String?
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  userTravelStyles UserTravelStyle[] @relation("TravelStyleBelongsToUsers")
+
+  @@map("travel_styles")
+}
+
+model UserInterest {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  interest_id Int
+  created_at  DateTime @default(now())
+  interest    Interest @relation("InterestBelongsToUsers", fields: [interest_id], references: [id], onDelete: Cascade)
+  user        User     @relation("UserHasInterests", fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@unique([user_id, interest_id])
+  @@map("user_interests")
+}
+
+model UserTravelStyle {
+  id              Int         @id @default(autoincrement())
+  user_id         Int
+  travel_style_id Int
+  created_at      DateTime    @default(now())
+  travel_style    TravelStyle @relation("TravelStyleBelongsToUsers", fields: [travel_style_id], references: [id], onDelete: Cascade)
+  user            User        @relation("UserHasTravelStyles", fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@unique([user_id, travel_style_id])
+  @@map("user_travel_styles")
 }
 
 model Group {
   group_id        Int              @id @default(autoincrement())
   group_name      String
   group_leader_id Int
-  interest_fields String[]
+  description     String?
+  max_members     Int?             @default(10)
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+  Belongs         Belongs[]
+  groupInterests  GroupInterest[]  @relation("GroupHasInterests")
+  itineraries     GroupItinerary[] @relation("GroupHasItineraries")
   leader          User             @relation("IsHeadOf", fields: [group_leader_id], references: [user_id])
-  itineraries     GroupItinerary[]
-  requests        RequestJoin[]
-  members         User[]           @relation("Belongs")
+  requests        RequestJoin[]    @relation("GroupReceivesRequests")
+
+  @@map("groups")
 }
 
 model RequestJoin {
-  id       Int   @id @default(autoincrement())
-  user_id  Int
-  group_id Int
-  group    Group @relation(fields: [group_id], references: [group_id])
-  user     User  @relation(fields: [user_id], references: [user_id])
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  group_id   Int
+  status     String   @default("PENDING")
+  created_at DateTime @default(now())
+  group      Group    @relation("GroupReceivesRequests", fields: [group_id], references: [group_id], onDelete: Cascade)
+  user       User     @relation("UserRequests", fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@unique([user_id, group_id])
+  @@map("request_joins")
 }
 
 model Interaction {
-  id      Int      @id @default(autoincrement())
-  message String?
-  like    Boolean?
-  dislike Boolean?
-  picture String?
-  user_id Int
-  user    User     @relation(fields: [user_id], references: [user_id])
+  id         Int      @id @default(autoincrement())
+  message    String?
+  like       Boolean?
+  dislike    Boolean?
+  picture    String?
+  user_id    Int
+  created_at DateTime @default(now())
+  user       User     @relation("UserInteractions", fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@map("interactions")
 }
 
 model Place {
-  place_id     Int         @id @default(autoincrement())
-  name         String
-  description  String?
-  place_type   String?
-  latitude     Float?
-  longitude    Float?
-  picture_url  String?
-  phone_num    String?
-  social_media String?
-  Itinerary    Itinerary[] @relation("CreateEditItinerary")
+  place_id       Int             @id @default(autoincrement())
+  name           String
+  description    String?
+  place_type     String?
+  latitude       Float?
+  longitude      Float?
+  picture_url    String?
+  phone_num      String?
+  social_media   String?
+  address        String?
+  rating         Float?          @default(0)
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+  placeInterests PlaceInterest[] @relation("PlaceHasInterests")
+  Itinerary      Itinerary[]     @relation("CreateEditItinerary")
+
+  @@map("places")
 }
 
 model Itinerary {
   itinerary_id Int              @id @default(autoincrement())
+  title        String?
+  description  String?
   start_date   DateTime
   end_date     DateTime
-  groups       GroupItinerary[]
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+  groups       GroupItinerary[] @relation("ItineraryBelongsToGroups")
   places       Place[]          @relation("CreateEditItinerary")
+
+  @@map("itineraries")
 }
 
 model GroupItinerary {
   id           Int       @id @default(autoincrement())
   group_id     Int
   itinerary_id Int
-  group        Group     @relation(fields: [group_id], references: [group_id])
-  itinerary    Itinerary @relation(fields: [itinerary_id], references: [itinerary_id])
+  created_at   DateTime  @default(now())
+  group        Group     @relation("GroupHasItineraries", fields: [group_id], references: [group_id], onDelete: Cascade)
+  itinerary    Itinerary @relation("ItineraryBelongsToGroups", fields: [itinerary_id], references: [itinerary_id], onDelete: Cascade)
+
+  @@unique([group_id, itinerary_id])
+  @@map("group_itineraries")
 }
 
-enum Interest {
-  SEA
-  MOUNTAIN
-  WATERFALL
-  NATIONAL_PARK
-  ISLAND
-  TEMPLE
-  SHOPPING_MALL
-  MARKET
-  CAFE
-  HISTORICAL
-  AMUSEMENT_PARK
-  ZOO
-  FESTIVAL
-  MUSEUM
-  FOOD_STREET
-  BEACH_BAR
-  THEATRE
+model GroupInterest {
+  id          Int      @id @default(autoincrement())
+  group_id    Int
+  interest_id Int
+  created_at  DateTime @default(now())
+  group       Group    @relation("GroupHasInterests", fields: [group_id], references: [group_id], onDelete: Cascade)
+  interest    Interest @relation("InterestBelongsToGroups", fields: [interest_id], references: [id], onDelete: Cascade)
+
+  @@unique([group_id, interest_id])
+  @@map("group_interests")
 }
 
-enum TravelStyle {
-  BUDGET
-  COMFORT
-  LUXURY
-  BACKPACK
+model PlaceInterest {
+  id          Int      @id @default(autoincrement())
+  place_id    Int
+  interest_id Int
+  created_at  DateTime @default(now())
+  interest    Interest @relation("InterestBelongsToPlaces", fields: [interest_id], references: [id], onDelete: Cascade)
+  place       Place    @relation("PlaceHasInterests", fields: [place_id], references: [place_id], onDelete: Cascade)
+
+  @@unique([place_id, interest_id])
+  @@map("place_interests")
+}
+
+model Belongs {
+  A      Int
+  B      Int
+  groups Group @relation(fields: [A], references: [group_id], onDelete: Cascade)
+  User   User  @relation(fields: [B], references: [user_id], onDelete: Cascade)
+
+  @@id([A, B], map: "_Belongs_AB_pkey")
+  @@index([B], map: "_Belongs_B_index")
+  @@map("_Belongs")
 }
