@@ -17,15 +17,12 @@ export class UserRepository {
         return user != null;
     }
 
-    async softDelete(email: string): Promise<User>{
-        const deleteUser = prisma.user.update({
+    async Delete(email: string){
+        await prisma.user.delete({
             where: { email },
-            data: {
-            isDeleted: true,
-            deletedAt: new Date(),
+            select: { email: true, first_name: true, last_name: true
             },
         });
-        return deleteUser;
     }
 
     async getUserPassword(email: string): Promise<string> {

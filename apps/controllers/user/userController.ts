@@ -39,9 +39,9 @@ export class UserController extends BaseController {
             }
             const { password } = req.body;
             const email = req.user.email; // from JWT/session middleware
-            await this.service.softDeleteUser(email, password);
+            await this.service.DeleteUser(email, password);
 
-            res.json({ success: true, message: "Account soft deleted" });
+            res.json({ success: true, message: "Account deleted" });
         } catch (error) {
             this.handleError(error, res);
         }

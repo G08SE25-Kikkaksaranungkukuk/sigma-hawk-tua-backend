@@ -27,8 +27,6 @@ model User {
   requests      RequestJoin[]
   groups        Group[]       @relation("Belongs")
   role          String        @default("USER")
-  deletedAt     DateTime?
-  isDeleted     Boolean       @default(false)
 }
 
 model Group {

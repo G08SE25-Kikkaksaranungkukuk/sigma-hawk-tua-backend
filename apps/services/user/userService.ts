@@ -62,13 +62,13 @@ export class UserService {
         }
     }
 
-    async softDeleteUser(email: string, password: string){
+    async DeleteUser(email: string, password: string){
         const userPassword = await this.repo.getUserPassword(email);
 
         const valid = await bcrypt.compare(password, userPassword);
         if (!valid) throw new AppError("Invalid password",401);
 
-        await this.repo.softDelete(email);
+        await this.repo.Delete(email);
         };
 
     // Methods related to user interests
