@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { UserService } from "@/services/user/userService";
 import { BaseController } from "@/controllers/BaseController";
+import { verifyJwt } from "@/utils/jwt";
+import { config } from "@/config/config";
+import { User } from "@/prisma/index";
 
 export class UserController extends BaseController {
     private service: UserService;
@@ -27,6 +30,24 @@ export class UserController extends BaseController {
 
             const updatedUser = await this.service.updateUser(email, userData);
             this.handleSuccess(res, { user: updatedUser }, 200);
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async getAllTravelStyles(req: Request, res: Response): Promise<void> {
+        try {
+            const travelStyles = await this.service.getAllTravelStyles();
+            this.handleSuccess(res, { travelStyles }, 200);
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async getAllInterests(req: Request, res: Response): Promise<void> {
+        try {
+            const interests = await this.service.getAllInterests();
+            this.handleSuccess(res, { interests }, 200);
         } catch (error) {
             this.handleError(error, res);
         }
@@ -74,5 +95,45 @@ export class UserController extends BaseController {
         } catch (error) {
             this.handleError(error, res);
         }
+    }
+
+    async getTravelStyles(req: Request, res: Response): Promise<void> {
+        try {
+            const email = req.body.email;
+            const travelStyles = await this.service.getUserTravelStyles(email);
+            this.handleSuccess(res, { email, travelStyles }, 200);
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async patchTravelStyles(req: Request, res: Response): Promise<void> {
+        try {
+            const email = req.body.email;
+            const { travelStyles } = req.body;
+
+            const updated = await this.service.updateUserTravelStyles(
+                email,
+                travelStyles
+            );
+            this.handleSuccess(res, {
+                email: email,
+                updated
+            }, 200, "Travel styles updated");
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async uploadUserProfile(req : Request , res : Response) : Promise<void> {
+       try {
+            const {accessToken} = req.cookies;
+            const userInfo : Partial<User> = verifyJwt(accessToken,config.ACCESSTOKEN_SECRET);
+            this.service.uploadProfilePicture(userInfo.email ?? "",req.file)
+            this.handleSuccess(res, null, 200 , "uploaded");
+       }
+       catch (error) {
+            this.handleError(error,res);
+       }
     }
 }

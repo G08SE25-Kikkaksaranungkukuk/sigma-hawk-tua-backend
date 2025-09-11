@@ -11,7 +11,7 @@ export class GroupService {
 
     async getGroup(group_data: groupGetReq) {
         try {
-            const group = await this.grouprepository.findGroup(group_data.group_id);
+            const group = await this.grouprepository.getGroupWithDetails(group_data.group_id);
             return group;
         } catch (error: unknown) {
             //console.error(error)
@@ -22,9 +22,13 @@ export class GroupService {
     async createNewGroup(group_data: groupCreateReq) {
         try {
             const newGroup = await this.grouprepository.createNewGroup(group_data);
+            const memberAdd = await this.grouprepository.GroupMemberAdd({
+                user_id: group_data.group_leader_id,
+                group_id: newGroup.group_id
+            });
             return newGroup;
         } catch (error: unknown) {
-            // console.error(error)
+            console.error(error)
             throw new AppError("Failed to create group", 500);
         }
     }
@@ -91,6 +95,18 @@ export class GroupService {
                 throw error;
             }
             throw new AppError("Failed to leave group", 500);
+        }
+    }
+
+    async getMyGroups(user_id: number) {
+        try {
+            const groups = await this.grouprepository.getUserGroups(user_id);
+            return groups;
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError("Failed to get user's groups", 500);
         }
     }
 }

@@ -3,8 +3,10 @@ import e from "express";
 // request body of the group creation
 export interface groupCreateReq {
   group_name: string;
-  interest_fields: string[];
   group_leader_id: number;
+  description?: string;
+  max_members?: number;
+  interest_fields?: string[];  // Changed from interest_ids to interest_fields
 }
 
 export interface groupMemberReq {

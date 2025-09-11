@@ -96,4 +96,14 @@ export class GroupController extends BaseController {
             this.handleError(error, res);
         }
     }
+
+    async getMyGroups(req: Request, res: Response): Promise<void> {
+        try {
+            const userId = req.user?.user_id ?? -1;
+            const groups = await this.groupService.getMyGroups(userId);
+            this.handleSuccess(res, groups, 200, "User groups retrieved successfully");
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
 }

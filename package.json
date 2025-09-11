@@ -9,12 +9,15 @@
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
 		"db:push": "prisma db push",
-		"db:studio": "prisma studio"
+		"db:reset": "prisma migrate reset --force",
+		"db:studio": "prisma studio",
+		"db:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
 	},
 	"dependencies": {
 		"@prisma/client": "^6.14.0",
 		"@prisma/extension-accelerate": "^2.0.2",
 		"@types/bcrypt": "^6.0.0",
+		"axios": "^1.11.0",
 		"bcrypt": "^6.0.0",
 		"body-parser": "^2.2.0",
 		"cookie-parser": "^1.4.7",
@@ -22,6 +25,7 @@
 		"dotenv": "^17.2.1",
 		"express": "^5.1.0",
 		"jsonwebtoken": "^9.0.2",
+		"multer": "^2.0.2",
 		"swagger-jsdoc": "^6.2.8",
 		"swagger-ui-express": "^5.0.1",
 		"zod": "^4.1.4"
@@ -32,6 +36,7 @@
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.3",
 		"@types/jsonwebtoken": "^9.0.10",
+		"@types/multer": "^2.0.0",
 		"@types/node": "^24.3.0",
 		"@types/swagger-jsdoc": "^6.0.4",
 		"@types/swagger-ui-express": "^4.1.8",
@@ -40,5 +45,8 @@
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.9.2"
+	},
+	"prisma": {
+		"seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
 	}
 }
