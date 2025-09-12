@@ -31,7 +31,6 @@ export class GroupRepository {
                         include: {
                             User: {
                                 omit : {
-                                    "birth_date": true,
                                     "social_credit": true,
                                     "password": true,
                                     "email": true,
@@ -197,7 +196,8 @@ export class GroupRepository {
                                     user_id: true,
                                     first_name: true,
                                     last_name: true,
-                                    email: true
+                                    email: true,
+                                    birth_date: true
                                 }
                             }
                         }
@@ -282,7 +282,8 @@ export class GroupRepository {
                             user_id: true,
                             first_name: true,
                             last_name: true,
-                            email: true
+                            email: true,
+                            birth_date: true
                         }
                     },
                     Belongs: {
@@ -292,7 +293,8 @@ export class GroupRepository {
                                     user_id: true,
                                     first_name: true,
                                     last_name: true,
-                                    email: true
+                                    email: true,
+                                    birth_date: true
                                 }
                             }
                         }
