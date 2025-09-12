@@ -4,6 +4,7 @@ import { BaseRouter } from "./baseRouter";
 import multer from "multer";
 
 const upload = multer({ dest: "uploads/", storage: multer.memoryStorage() });
+import { userMiddleware } from "@/middlewares/userMiddleware";
 
 export class UserRouter extends BaseRouter {
     private controller: UserController;
@@ -32,6 +33,11 @@ export class UserRouter extends BaseRouter {
             this.controller.getAllTravelStyles.bind(this.controller)
         );
 
+        this.router.post(
+            "/delete",
+            userMiddleware,
+            this.controller.deleteUser.bind(this.controller)
+        );
         // Define routes for user interests
         this.router.get(
             "/interests",

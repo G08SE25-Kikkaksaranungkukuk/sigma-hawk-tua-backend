@@ -5,7 +5,7 @@
 ## 📋 Quick Start
 
 ### Prerequisites
-- Node.js (v18+)
+- Node.js (v18+ or LTS is desirable)
 - PostgreSQL
 - pnpm
 
@@ -15,11 +15,12 @@
 pnpm install
 
 # 2. Setup environment
-cp .env.example .env  # แก้ไขค่า config
+cp .env.example .env  # แก้ไขค่า config หรือ นำไฟล์จากเพื่อนของคุณ
 
 # 3. Setup database
-pnpm db:migrate
-pnpm db:seed
+pnpx prisma init --db # optional: for newly created docker only
+pnpx prisma migrate reset
+pnpx prisma migrate dev
 
 # 4. Start development server
 pnpm dev
@@ -42,11 +43,9 @@ pnpm build            # Build for production
 pnpm start            # Start production server
 
 # Database
-pnpm db:generate      # Generate Prisma client
-pnpm db:migrate       # Run migrations
-pnpm db:seed          # Seed initial data
-pnpm db:reset         # Reset database
-pnpm db:studio        # Open Prisma Studio
+pnpx prisma init --db # optional: for newly created docker only
+pnpx prisma migrate reset
+pnpx prisma migrate dev
 
 # Testing
 pnpm test             # Run unit tests
@@ -166,4 +165,4 @@ NODE_ENV=development
 
 ---
 
-Made with ❤️ by Sigma Hawk Team
+Made with ❤️ by Sigma Hawk Tour Team
