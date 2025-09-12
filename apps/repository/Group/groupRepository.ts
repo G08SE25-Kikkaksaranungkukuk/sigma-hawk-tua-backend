@@ -83,10 +83,10 @@ export class GroupRepository {
             group_name
         } = filter;
 
-        // Build where clause more efficiently
+        // Build where clause
         const where: Record<string, any> = {};
 
-        if (interest_fields && interest_fields?.length > 0) {
+        if (interest_fields && interest_fields.length > 0) {
             const interestKeys = Array.isArray(interest_fields) ? interest_fields : [interest_fields];
             where.groupInterests = {
                 some: {
@@ -106,7 +106,6 @@ export class GroupRepository {
             };
         }
 
-        // Single database query with aggregation (if your Prisma version supports it)
         try {
             const [groups, group_count] = await Promise.all([
                 prisma.group.findMany({
@@ -131,7 +130,6 @@ export class GroupRepository {
                             }
                         }
                     },
-                    // Add ordering for consistent pagination
                     orderBy: { group_name: 'asc' }
                 }),
                 prisma.group.count({ where })
@@ -148,7 +146,6 @@ export class GroupRepository {
                 group_count
             };
         } catch (error) {
-            // Add proper error handling
             console.error('Error fetching filtered groups:', error);
             throw new Error('Failed to fetch groups');
         }

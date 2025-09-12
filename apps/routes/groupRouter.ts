@@ -23,15 +23,13 @@ export class GroupRouter extends BaseRouter {
         );
 
         this.router.get(
-            "/:groupId",
-            this.groupController.getGroup.bind(this.groupController)
+            "/filter",
+            this.groupController.filterGroups.bind(this.groupController)
         );
 
-        // Example GET
-        //
         this.router.get(
-            "",
-            this.groupController.filterGroups.bind(this.groupController)
+            "/:groupId",
+            this.groupController.getGroup.bind(this.groupController)
         );
 
         this.router.put(
