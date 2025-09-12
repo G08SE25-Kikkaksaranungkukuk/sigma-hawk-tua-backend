@@ -75,12 +75,13 @@ export class GroupRepository {
 
     async GetFilteredGroups(filter: groupFilterReq): Promise<groupFilterRes> {
         // Input validation and normalization
-        const page = Math.max(1, Number(filter.page) || 1);
-        const page_size = Math.min(100, Math.max(1, Number(filter.page_size) || 10)); // Cap at 100
-
+        filter.page = Number(filter.page) || 1;
+        filter.page_size = Math.min(100, Math.max(1, Number(filter.page_size) || 10)); // Cap at 100
         const {
             interest_fields,
-            group_name
+            group_name,
+            page,
+            page_size
         } = filter;
 
         // Build where clause
@@ -121,12 +122,8 @@ export class GroupRepository {
                         created_at: true,
                         updated_at: true,
                         groupInterests: {
-                            include: {
-                                interest: {
-                                    select: {
-                                        key: true
-                                    }
-                                }
+                            select: {
+                                interest_id: true
                             }
                         }
                     },
@@ -137,8 +134,14 @@ export class GroupRepository {
 
             // Transform the data to match the expected format
             const transformedGroups = groups.map(group => ({
-                ...group,
-                interest_fields: group.groupInterests.map(gi => gi.interest.key)
+                group_id: group.group_id,
+                group_name: group.group_name,
+                group_leader_id: group.group_leader_id,
+                description: group.description ?? undefined,
+                max_members: group.max_members ?? undefined,
+                created_at: group.created_at,
+                updated_at: group.updated_at,
+                interest_id: group.groupInterests.map(gi => gi.interest_id)
             }));
 
             return {
