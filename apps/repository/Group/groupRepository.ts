@@ -78,33 +78,36 @@ export class GroupRepository {
         filter.page = Number(filter.page) || 1;
         filter.page_size = Math.min(100, Math.max(1, Number(filter.page_size) || 10)); // Cap at 100
         const {
-            interest_fields,
+            interest_id,
             group_name,
             page,
             page_size
         } = filter;
-
         // Build where clause
         const where: Record<string, any> = {};
 
-        if (interest_fields && interest_fields.length > 0) {
-            const interestKeys = Array.isArray(interest_fields) ? interest_fields : [interest_fields];
-            where.groupInterests = {
-                some: {
-                    interest: {
-                        key: {
-                            in: interestKeys
-                        }
+        let interestIds: number[] = [];
+        if (typeof interest_id === "number" || typeof interest_id === "string") {
+            interestIds = [Number(interest_id)].filter(n => !isNaN(n));
+        } else if (Array.isArray(interest_id)) {
+            interestIds = interest_id.map(Number).filter((n: number) => !isNaN(n));
+        }
+        if (interestIds.length > 0) {
+            // Require every interest_id to match
+            where.AND = interestIds.map(id => ({
+                groupInterests: {
+                    some: {
+                        interest_id: id
                     }
                 }
-            };
+            }));
         }
 
         if (group_name?.trim()) {
             where.group_name = {
                 contains: group_name.trim(),
                 mode: "insensitive"
-            };
+            }
         }
 
         try {

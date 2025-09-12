@@ -1,4 +1,4 @@
-import { InterestController } from "@/controllers/interest/InterestController";
+import { InterestController } from "@/controllers/interest/interestController";
 import { BaseRouter } from "./baseRouter";
 
 export class InterestRouter extends BaseRouter {
