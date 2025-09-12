@@ -1,14 +1,13 @@
 import { prisma } from "@/config/prismaClient";
 import { Interest, TravelStyle } from "@/prisma/index";
+import { int } from "zod";
 
 export class InterestRepository {
     // Get all interests
-    async getAllInterests(): Promise<{ id: number; interest: string }[]> {
+    async getAllInterests(): Promise<Interest[]> {
         const interests = await prisma.interest.findMany({
-            select: { id: true, key: true },
-            orderBy: { key: 'asc' },
         });
-        return interests.map(({ id, key }) => ({ id, interest: key }));
+        return interests;
     }
 
     // Get interest by ID
