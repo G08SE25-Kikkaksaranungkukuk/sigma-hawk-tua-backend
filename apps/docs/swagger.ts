@@ -527,9 +527,9 @@ const options = {
                 },
             },
             "/user": {
-                get: {
+                post: {
                     tags: ["User"],
-                    summary: "Get user profile",
+                    summary: "Get a user profile",
                     description: "Retrieve the profile information of a user",
                     parameters: [
                         {
