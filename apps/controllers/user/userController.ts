@@ -17,7 +17,7 @@ export class UserController extends BaseController {
         try {
             const email = req.body.email;
             const user = await this.service.getUser(email);
-            this.handleSuccess(res, { user }, 200);
+            this.handleSuccess(res, user, 200);
         } catch (error) {
             this.handleError(error, res);
         }
@@ -27,7 +27,7 @@ export class UserController extends BaseController {
         try {
             const email = req.body.email;
             const userData = req.body.data;
-
+            console.log(req.body);
             const updatedUser = await this.service.updateUser(email, userData);
             this.handleSuccess(res, { user: updatedUser }, 200);
         } catch (error) {
@@ -54,8 +54,8 @@ export class UserController extends BaseController {
     }
 
     async deleteUser(req: Request, res: Response): Promise<void> {
-         try {
-            if(!req.user){
+        try {
+            if (!req.user) {
                 throw new Error("User not authenticated");
             }
             const { password } = req.body;
@@ -63,7 +63,6 @@ export class UserController extends BaseController {
             await this.service.DeleteUser(email, password);
             this.clearAuthCookies(res);
             this.handleSuccess(res, null, 200, "Account deleted");
-            
         } catch (error) {
             this.handleError(error, res);
         }
@@ -88,10 +87,15 @@ export class UserController extends BaseController {
                 email,
                 interests
             );
-            this.handleSuccess(res, {
-                email: email,
-                updated
-            }, 200, "Interests updated");
+            this.handleSuccess(
+                res,
+                {
+                    email: email,
+                    updated,
+                },
+                200,
+                "Interests updated"
+            );
         } catch (error) {
             this.handleError(error, res);
         }
@@ -116,24 +120,31 @@ export class UserController extends BaseController {
                 email,
                 travelStyles
             );
-            this.handleSuccess(res, {
-                email: email,
-                updated
-            }, 200, "Travel styles updated");
+            this.handleSuccess(
+                res,
+                {
+                    email: email,
+                    updated,
+                },
+                200,
+                "Travel styles updated"
+            );
         } catch (error) {
             this.handleError(error, res);
         }
     }
 
-    async uploadUserProfile(req : Request , res : Response) : Promise<void> {
-       try {
-            const {accessToken} = req.cookies;
-            const userInfo : Partial<User> = verifyJwt(accessToken,config.ACCESSTOKEN_SECRET);
-            this.service.uploadProfilePicture(userInfo.email ?? "",req.file)
-            this.handleSuccess(res, null, 200 , "uploaded");
-       }
-       catch (error) {
-            this.handleError(error,res);
-       }
+    async uploadUserProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const { accessToken } = req.cookies;
+            const userInfo: Partial<User> = verifyJwt(
+                accessToken,
+                config.ACCESSTOKEN_SECRET
+            );
+            this.service.uploadProfilePicture(userInfo.email ?? "", req.file);
+            this.handleSuccess(res, null, 200, "uploaded");
+        } catch (error) {
+            this.handleError(error, res);
+        }
     }
 }
