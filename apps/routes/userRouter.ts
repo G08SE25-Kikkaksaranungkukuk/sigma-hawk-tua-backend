@@ -3,7 +3,7 @@ import { UserController } from "@/controllers/user/userController";
 import { BaseRouter } from "./baseRouter";
 import multer from "multer";
 
-const upload = multer({ dest: 'uploads/' , storage : multer.memoryStorage()})
+const upload = multer({ dest: "uploads/", storage: multer.memoryStorage() });
 
 export class UserRouter extends BaseRouter {
     private controller: UserController;
@@ -16,7 +16,7 @@ export class UserRouter extends BaseRouter {
 
     private initializeRoutes(): void {
         // Define routes for user profile
-        this.router.get("/", this.controller.getUser.bind(this.controller));
+        this.router.post("/", this.controller.getUser.bind(this.controller)); //get user profile
         this.router.patch(
             "/",
             this.controller.updateUser.bind(this.controller)
@@ -56,7 +56,7 @@ export class UserRouter extends BaseRouter {
             "/profile_pic",
             upload.single("profile"),
             this.controller.uploadUserProfile.bind(this.controller)
-        )
+        );
     }
 
     public getRouter(): Router {
