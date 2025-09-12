@@ -12,12 +12,12 @@ export class UserRepository {
     async createNewUser(payload: authRegisterReq): Promise<User> {
         // แยก interests และ travel_styles ออกจาก payload
         const { interests, travel_styles, ...userData } = payload;
-        
+
         // สร้าง user ก่อน
         const user = await prisma.user.create({
             data: {
                 ...userData,
-                role: userData.role || 'USER'
+                role: userData.role || "USER",
             },
         });
 
@@ -26,17 +26,17 @@ export class UserRepository {
             // หา interest IDs จาก keys
             const interestRecords = await prisma.interest.findMany({
                 where: {
-                    key: { in: interests }
-                }
+                    key: { in: interests },
+                },
             });
 
             // สร้าง UserInterest records
             if (interestRecords.length > 0) {
                 await prisma.userInterest.createMany({
-                    data: interestRecords.map(interest => ({
+                    data: interestRecords.map((interest) => ({
                         user_id: user.user_id,
-                        interest_id: interest.id
-                    }))
+                        interest_id: interest.id,
+                    })),
                 });
             }
         }
@@ -46,17 +46,17 @@ export class UserRepository {
             // หา travel style IDs จาก keys
             const travelStyleRecords = await prisma.travelStyle.findMany({
                 where: {
-                    key: { in: travel_styles }
-                }
+                    key: { in: travel_styles },
+                },
             });
 
             // สร้าง UserTravelStyle records
             if (travelStyleRecords.length > 0) {
                 await prisma.userTravelStyle.createMany({
-                    data: travelStyleRecords.map(travelStyle => ({
+                    data: travelStyleRecords.map((travelStyle) => ({
                         user_id: user.user_id,
-                        travel_style_id: travelStyle.id
-                    }))
+                        travel_style_id: travelStyle.id,
+                    })),
                 });
             }
         }
@@ -64,35 +64,41 @@ export class UserRepository {
         return user;
     }
 
-    async getAllTravelStyles() : Promise<Partial<TravelStyle>[]> {
+    async getAllTravelStyles(): Promise<Partial<TravelStyle>[]> {
         try {
             const travelStyles = await prisma.travelStyle.findMany({
                 omit: {
                     id: true,
                     description: true,
                     created_at: true,
-                    updated_at: true
+                    updated_at: true,
                 },
             });
             return travelStyles;
-        } catch (error : any) {
-            throw new AppError(`Failed to fetch all travel styles: ${error.message}`, 500);
+        } catch (error: any) {
+            throw new AppError(
+                `Failed to fetch all travel styles: ${error.message}`,
+                500
+            );
         }
     }
 
-    async getAllInterests() : Promise<Partial<Interest>[]> {
+    async getAllInterests(): Promise<Partial<Interest>[]> {
         try {
             const interests = await prisma.interest.findMany({
                 omit: {
                     id: true,
                     description: true,
                     created_at: true,
-                    updated_at: true
+                    updated_at: true,
                 },
-        });
-        return interests;
-        } catch (error : any) {
-            throw new AppError(`Failed to fetch all interests: ${error.message}`, 500);
+            });
+            return interests;
+        } catch (error: any) {
+            throw new AppError(
+                `Failed to fetch all interests: ${error.message}`,
+                500
+            );
         }
     }
 
@@ -122,8 +128,8 @@ export class UserRepository {
     }
 
     async retrieveUserById(
-    user_id: number,
-    without_sentitive_fields: boolean = false
+        user_id: number,
+        without_sentitive_fields: boolean = false
     ): Promise<User | null> {
         const user = await prisma.user.findFirst({
             where: { user_id },
@@ -139,27 +145,33 @@ export class UserRepository {
         return user;
     }
 
-    async updateUserProfile(user : User , image : Express.Multer.File | undefined): Promise<void>{
-        if(!image) throw new AppError("Image is not uploaded",400)
+    async updateUserProfile(
+        user: User,
+        image: Express.Multer.File | undefined
+    ): Promise<void> {
+        if (!image) throw new AppError("Image is not uploaded", 400);
         const file_ext = image.originalname.split(".").at(-1);
-        const uploadPath = `/public/profile/${user.user_id}.${file_ext}`
-        const ret = await axios.put(config.FILE_SERVER_URL + uploadPath,image.buffer);
+        const uploadPath = `/public/profile/${user.user_id}.${file_ext}`;
+        const ret = await axios.put(
+            config.FILE_SERVER_URL + uploadPath,
+            image.buffer
+        );
         const userUpdated = await prisma.user.update({
-            where : {"email" : user.email},
-            data : {
-                profile_url : {
-                    set : uploadPath
-                }
-            }
-        })
+            where: { email: user.email },
+            data: {
+                profile_url: {
+                    set: uploadPath,
+                },
+            },
+        });
     }
-    
 
     async getUserProfile(email: string): Promise<Partial<User> | null> {
         const user = await prisma.user.findFirst({
             where: { email },
             select: {
                 first_name: true,
+                email: true,
                 middle_name: true,
                 last_name: true,
                 birth_date: true,
@@ -201,7 +213,7 @@ export class UserRepository {
                 },
             },
         });
-        return user?.userInterests.map(ui => ui.interest) || [];
+        return user?.userInterests.map((ui) => ui.interest) || [];
     }
 
     async updateUserInterestsByEmail(
@@ -226,7 +238,7 @@ export class UserRepository {
         // Add new interests
         if (interestIds.length > 0) {
             await prisma.userInterest.createMany({
-                data: interestIds.map(interestId => ({
+                data: interestIds.map((interestId) => ({
                     user_id: user.user_id,
                     interest_id: interestId,
                 })),
@@ -260,7 +272,7 @@ export class UserRepository {
                 },
             },
         });
-        return user?.userTravelStyles.map(uts => uts.travel_style) || [];
+        return user?.userTravelStyles.map((uts) => uts.travel_style) || [];
     }
 
     // New method to update user travel styles
@@ -286,7 +298,7 @@ export class UserRepository {
         // Add new travel styles
         if (travelStyleIds.length > 0) {
             await prisma.userTravelStyle.createMany({
-                data: travelStyleIds.map(travelStyleId => ({
+                data: travelStyleIds.map((travelStyleId) => ({
                     user_id: user.user_id,
                     travel_style_id: travelStyleId,
                 })),
@@ -355,7 +367,10 @@ export class UserRepository {
     }
 
     // Utility method to add a single travel style to a user
-    async addUserTravelStyle(email: string, travelStyleId: number): Promise<void> {
+    async addUserTravelStyle(
+        email: string,
+        travelStyleId: number
+    ): Promise<void> {
         const user = await prisma.user.findUnique({
             where: { email },
             select: { user_id: true },
@@ -382,7 +397,10 @@ export class UserRepository {
     }
 
     // Utility method to remove a single travel style from a user
-    async removeUserTravelStyle(email: string, travelStyleId: number): Promise<void> {
+    async removeUserTravelStyle(
+        email: string,
+        travelStyleId: number
+    ): Promise<void> {
         const user = await prisma.user.findUnique({
             where: { email },
             select: { user_id: true },
@@ -423,8 +441,8 @@ export class UserRepository {
         // Transform the data to a cleaner format
         return {
             ...user,
-            interests: user.userInterests.map(ui => ui.interest),
-            travel_styles: user.userTravelStyles.map(uts => uts.travel_style),
+            interests: user.userInterests.map((ui) => ui.interest),
+            travel_styles: user.userTravelStyles.map((uts) => uts.travel_style),
         };
     }
 
@@ -442,12 +460,12 @@ export class UserRepository {
         // Convert interest keys to IDs
         const interests = await prisma.interest.findMany({
             where: {
-                key: { in: interestKeys }
+                key: { in: interestKeys },
             },
-            select: { id: true }
+            select: { id: true },
         });
 
-        const interestIds = interests.map(interest => interest.id);
+        const interestIds = interests.map((interest) => interest.id);
 
         // Remove all existing interests for the user
         await prisma.userInterest.deleteMany({
@@ -457,7 +475,7 @@ export class UserRepository {
         // Add new interests
         if (interestIds.length > 0) {
             await prisma.userInterest.createMany({
-                data: interestIds.map(interestId => ({
+                data: interestIds.map((interestId) => ({
                     user_id: user.user_id,
                     interest_id: interestId,
                 })),
@@ -480,7 +498,10 @@ export class UserRepository {
     }
 
     // Update user travel styles by keys (string array)
-    async updateUserTravelStylesByKeys(email: string, travelStyleKeys: string[]) {
+    async updateUserTravelStylesByKeys(
+        email: string,
+        travelStyleKeys: string[]
+    ) {
         const user = await prisma.user.findUnique({
             where: { email },
             select: { user_id: true },
@@ -493,12 +514,14 @@ export class UserRepository {
         // Convert travel style keys to IDs
         const travelStyles = await prisma.travelStyle.findMany({
             where: {
-                key: { in: travelStyleKeys }
+                key: { in: travelStyleKeys },
             },
-            select: { id: true }
+            select: { id: true },
         });
 
-        const travelStyleIds = travelStyles.map(travelStyle => travelStyle.id);
+        const travelStyleIds = travelStyles.map(
+            (travelStyle) => travelStyle.id
+        );
 
         // Remove all existing travel styles for the user
         await prisma.userTravelStyle.deleteMany({
@@ -508,7 +531,7 @@ export class UserRepository {
         // Add new travel styles
         if (travelStyleIds.length > 0) {
             await prisma.userTravelStyle.createMany({
-                data: travelStyleIds.map(travelStyleId => ({
+                data: travelStyleIds.map((travelStyleId) => ({
                     user_id: user.user_id,
                     travel_style_id: travelStyleId,
                 })),
