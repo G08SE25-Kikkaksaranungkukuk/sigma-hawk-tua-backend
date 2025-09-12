@@ -96,7 +96,7 @@ model Group {
   Belongs         Belongs[]
   groupInterests  GroupInterest[]  @relation("GroupHasInterests")
   itineraries     GroupItinerary[] @relation("GroupHasItineraries")
-  leader          User             @relation("IsHeadOf", fields: [group_leader_id], references: [user_id])
+  leader          User             @relation("IsHeadOf", fields: [group_leader_id], references: [user_id], onDelete: Cascade)
   requests        RequestJoin[]    @relation("GroupReceivesRequests")
 
   @@map("groups")
