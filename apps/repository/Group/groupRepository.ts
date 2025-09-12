@@ -78,27 +78,23 @@ export class GroupRepository {
         filter.page = Number(filter.page) || 1;
         filter.page_size = Math.min(100, Math.max(1, Number(filter.page_size) || 10)); // Cap at 100
         const {
-            interest_fields,
+            interest_id,
             group_name,
             page,
             page_size
         } = filter;
 
+        // Normalize interest_id to array of numbers
+        let interestIdArr: number[] = [];
+        if (Array.isArray(interest_id)) {
+            interestIdArr = interest_id.map(id => Number(id)).filter(id => !isNaN(id));
+        } else if (typeof interest_id === 'string' || typeof interest_id === 'number') {
+            const numId = Number(interest_id);
+            if (!isNaN(numId)) interestIdArr = [numId];
+        }
+
         // Build where clause
         const where: Record<string, any> = {};
-
-        if (interest_fields && interest_fields.length > 0) {
-            const interestKeys = Array.isArray(interest_fields) ? interest_fields : [interest_fields];
-            where.groupInterests = {
-                some: {
-                    interest: {
-                        key: {
-                            in: interestKeys
-                        }
-                    }
-                }
-            };
-        }
 
         if (group_name?.trim()) {
             where.group_name = {
@@ -132,8 +128,17 @@ export class GroupRepository {
                 prisma.group.count({ where })
             ]);
 
+            // Filter groups so every interestIdArr is in the group.groupInterests
+            let filteredGroups = groups;
+            if (interestIdArr.length > 0) {
+                filteredGroups = groups.filter(group => {
+                    const groupInterestIds = group.groupInterests.map(gi => gi.interest_id);
+                    return interestIdArr.every(id => groupInterestIds.includes(id));
+                });
+            }
+
             // Transform the data to match the expected format
-            const transformedGroups = groups.map(group => ({
+            const transformedGroups = filteredGroups.map(group => ({
                 group_id: group.group_id,
                 group_name: group.group_name,
                 group_leader_id: group.group_leader_id,
@@ -146,7 +151,7 @@ export class GroupRepository {
 
             return {
                 group_array: transformedGroups,
-                group_count
+                group_count: transformedGroups.length
             };
         } catch (error) {
             console.error('Error fetching filtered groups:', error);

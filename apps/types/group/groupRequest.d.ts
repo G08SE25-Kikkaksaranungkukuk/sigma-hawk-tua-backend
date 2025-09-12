@@ -19,7 +19,7 @@ export interface groupGetReq{
 }
 
 export interface groupFilterReq {
-  interest_fields? : string[];
+  interest_id? : number[];
   group_name? : string;
   page? : number;
   page_size? : number;
