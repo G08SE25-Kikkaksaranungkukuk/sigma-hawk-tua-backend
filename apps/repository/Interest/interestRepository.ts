@@ -3,10 +3,12 @@ import { Interest, TravelStyle } from "@/prisma/index";
 
 export class InterestRepository {
     // Get all interests
-    async getAllInterests(): Promise<Interest[]> {
-        return await prisma.interest.findMany({
+    async getAllInterests(): Promise<{ id: number; interest: string }[]> {
+        const interests = await prisma.interest.findMany({
+            select: { id: true, key: true },
             orderBy: { key: 'asc' },
         });
+        return interests.map(({ id, key }) => ({ id, interest: key }));
     }
 
     // Get interest by ID
