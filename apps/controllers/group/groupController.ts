@@ -15,6 +15,7 @@ export class GroupController extends BaseController {
     async createGroup(req: Request, res: Response): Promise<void> {
         try {
             const reqPayload = { ...req.body, group_leader_id: req.user?.user_id ?? -1 };
+            console.log(reqPayload);
             const reqParsed = await groupCreateSchema.parseAsync(reqPayload);
             const newGroup = await this.groupService.createNewGroup(reqParsed as groupCreateReq);
             this.handleSuccess(res, newGroup, 201, "Group created successfully");
