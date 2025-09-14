@@ -437,7 +437,7 @@ export class GroupRepository {
         }
     }
 
-    async getGroupProfileImage(group_id: number): Promise<{ imageBuffer: Buffer, contentType: string }> {
+    async getGroupProfileImage(group_id: number): Promise<{ imageBuffer?: Buffer, contentType?: string, hasProfile: boolean }> {
         try {
             // First get the group to check if it exists and get profile_url
             const group = await prisma.group.findFirstOrThrow({
@@ -446,7 +446,9 @@ export class GroupRepository {
             });
 
             if (!group.profile_url) {
-                throw new AppError("Group does not have a profile image", 404);
+                return {
+                    hasProfile: false
+                };
             }
 
             // Normalize URL to avoid double slashes
@@ -483,12 +485,15 @@ export class GroupRepository {
 
                 return {
                     imageBuffer: Buffer.from(response.data),
-                    contentType
+                    contentType,
+                    hasProfile: true
                 };
 
             } catch (fetchError: any) {
                 if (fetchError.response?.status === 404) {
-                    throw new AppError("Profile image not found on file server", 404);
+                    return {
+                        hasProfile: false
+                    };
                 }
                 throw new AppError("Failed to fetch image from file server", 500);
             }

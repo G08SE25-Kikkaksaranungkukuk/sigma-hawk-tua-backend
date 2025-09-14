@@ -53,16 +53,25 @@ export class GroupController extends BaseController {
             const { id } = req.params;
             const groupId = Number(id);
             
-            const { imageBuffer, contentType } = await this.groupService.getGroupProfile(groupId);
+            const result = await this.groupService.getGroupProfile(groupId);
+            
+            // Always set the hasProfile flag in response headers
+            res.setHeader('X-Has-Profile', result.hasProfile.toString());
+            
+            if (!result.hasProfile) {
+                // Return JSON response indicating no profile image
+                this.handleSuccess(res, { hasProfile: false }, 200, "Group has no profile image");
+                return;
+            }
             
             // Set proper headers for image response
-            res.setHeader('Content-Type', contentType);
-            res.setHeader('Content-Length', imageBuffer.length);
+            res.setHeader('Content-Type', result.contentType!);
+            res.setHeader('Content-Length', result.imageBuffer!.length);
             res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
             res.setHeader('Accept-Ranges', 'bytes');
             
             // Send the image data
-            res.send(imageBuffer);
+            res.send(result.imageBuffer);
         } catch (error) {
             this.handleError(error, res);
         }
