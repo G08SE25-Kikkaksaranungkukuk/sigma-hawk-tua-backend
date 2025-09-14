@@ -2,6 +2,7 @@ import { GroupRepository } from "@/repository/Group/groupRepository";
 import { AppError } from "@/types/error/AppError";
 import { groupCreateReq, groupGetReq, groupFilterReq } from "@/types/group/groupRequest";
 
+
 export class GroupService {
     private grouprepository: GroupRepository;
 
@@ -20,13 +21,27 @@ export class GroupService {
     }
 
     async createNewGroup(group_data: groupCreateReq) {
-        try {
-            console.log(group_data);
+        try {            
+            // Create the group record
             const newGroup = await this.grouprepository.createNewGroup(group_data);
-            const memberAdd = await this.grouprepository.GroupMemberAdd({
+            
+            // Add the group leader as a member
+            await this.grouprepository.GroupMemberAdd({
                 user_id: group_data.group_leader_id,
                 group_id: newGroup.group_id
             });
+
+            // Handle profile image upload if provided during creation
+            if (group_data.profile) {
+                try {
+                    await this.grouprepository.uploadGroupProfile(newGroup.group_id, group_data.profile);
+                } catch (profileError) {
+                    // Log the error but don't fail the entire group creation
+                    console.error('Failed to upload group profile image during creation:', profileError);
+                    // Note: Group creation continues even if profile upload fails
+                }
+            }
+
             return newGroup;
         } catch (error: unknown) {
             console.error(error)
@@ -108,6 +123,32 @@ export class GroupService {
                 throw error;
             }
             throw new AppError("Failed to get user's groups", 500);
+        }
+    }
+
+    async uploadGroupProfile(group_id: number, user_id: number, profileImage: Express.Multer.File) {
+        try {
+            await this.grouprepository.isGroupLeader({ group_id, user_id });            
+            await this.grouprepository.uploadGroupProfile(group_id, profileImage);
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            console.error("Error updating group profile:", error);
+            throw new AppError("Failed to update group profile", 500);
+        }
+    }
+
+    async getGroupProfile(group_id: number) {
+        try {
+            // Get the actual image data from the repository
+            const imageData = await this.grouprepository.getGroupProfileImage(group_id);
+            return imageData;
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError("Failed to get group profile", 500);
         }
     }
 }

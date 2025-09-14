@@ -14,11 +14,55 @@ export class GroupController extends BaseController {
 
     async createGroup(req: Request, res: Response): Promise<void> {
         try {
-            const reqPayload = { ...req.body, group_leader_id: req.user?.user_id ?? -1 };
-            console.log(reqPayload);
+            const reqPayload = { 
+                ...req.body, 
+                group_leader_id: req.user?.user_id ?? -1,
+                profile: req.file // Add the uploaded file if present
+            };
             const reqParsed = await groupCreateSchema.parseAsync(reqPayload);
             const newGroup = await this.groupService.createNewGroup(reqParsed as groupCreateReq);
             this.handleSuccess(res, newGroup, 201, "Group created successfully");
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async uploadGroupProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const groupId = Number(id);
+            const userId = req.user?.user_id ?? -1;
+            
+            // Check if file was uploaded
+            if (!req.file) {
+                this.handleError(new Error("Profile image is required"), res);
+                return;
+            }
+            
+            // Call service method to update profile
+            const result = await this.groupService.uploadGroupProfile(groupId, userId, req.file);
+
+            this.handleSuccess(res, result, 200, "Group profile updated successfully");
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async getGroupProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const groupId = Number(id);
+            
+            const { imageBuffer, contentType } = await this.groupService.getGroupProfile(groupId);
+            
+            // Set proper headers for image response
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Content-Length', imageBuffer.length);
+            res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+            res.setHeader('Accept-Ranges', 'bytes');
+            
+            // Send the image data
+            res.send(imageBuffer);
         } catch (error) {
             this.handleError(error, res);
         }

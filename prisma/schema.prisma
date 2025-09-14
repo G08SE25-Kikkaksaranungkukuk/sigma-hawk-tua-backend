@@ -90,6 +90,7 @@ model Group {
   group_name      String
   group_leader_id Int
   description     String?
+  profile_url     String?
   max_members     Int?             @default(10)
   created_at      DateTime         @default(now())
   updated_at      DateTime         @updatedAt
