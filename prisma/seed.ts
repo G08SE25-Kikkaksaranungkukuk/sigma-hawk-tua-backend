@@ -53,50 +53,6 @@ async function main() {
     });
   }
 
-  // Seed a test user
-  console.log('👤 Seeding test user...');
-  const testUser = await prisma.user.upsert({
-    where: { email: 'testuser@example.com' },
-    update: {},
-    create: {
-      first_name: 'Test',
-      last_name: 'User',
-      birth_date: new Date('2000-01-01'),
-      sex: 'M',
-      phone: '0123456789',
-      password: 'testpassword', // In production, hash passwords!
-      email: 'testuser@example.com',
-    },
-  });
-
-  // Seed a test group
-  console.log('👥 Seeding test group...');
-  const testGroup = await prisma.group.upsert({
-    where: { group_id: 1 }, // Change if you want a different id
-    update: {},
-    create: {
-      group_name: 'Test Group',
-      group_leader_id: testUser.user_id,
-      description: 'A group for testing purposes',
-      max_members: 10,
-    },
-  });
-
-  // Link user to group (Belongs)
-  await prisma.belongs.upsert({
-    where: {
-      A_B: {
-        A: testGroup.group_id,
-        B: testUser.user_id,
-      },
-    },
-    update: {},
-    create: {
-      A: testGroup.group_id,
-      B: testUser.user_id,
-    },
-  });
-
   console.log('✅ Database seeding completed successfully!');
 }
 
