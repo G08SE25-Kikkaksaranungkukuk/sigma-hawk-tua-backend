@@ -69,7 +69,6 @@ export class UserRepository {
             const travelStyles = await prisma.travelStyle.findMany({
                 omit: {
                     id: true,
-                    key: true,
                     description: true,
                     created_at: true,
                     updated_at: true
