@@ -1,7 +1,9 @@
 import { GroupController } from "@/controllers/group/groupController";
 import { groupMiddleware } from "@/middlewares/groupMiddleware";
-
+import multer from "multer";
 import { BaseRouter } from "./baseRouter";
+
+const upload = multer({ dest: 'uploads/', storage: multer.memoryStorage() });
 
 export class GroupRouter extends BaseRouter {
     private groupController : GroupController;
@@ -18,6 +20,7 @@ export class GroupRouter extends BaseRouter {
         // this.router.use(groupMiddleware);
         this.router.post(
             "",
+            upload.single('profile'), // Optional profile image upload
             groupMiddleware,
             this.groupController.createGroup.bind(this.groupController)
         );
@@ -33,7 +36,19 @@ export class GroupRouter extends BaseRouter {
             "",
             this.groupController.filterGroups.bind(this.groupController)
         );
+        
+        this.router.put(
+            "/:id/profile",
+            upload.single('profile'), // Multer middleware for file upload
+            groupMiddleware,
+            this.groupController.uploadGroupProfile.bind(this.groupController)
+        );
 
+        this.router.get(
+            "/:id/profile",
+            this.groupController.getGroupProfile.bind(this.groupController)
+        );        
+        
         this.router.put(
             "/:id/member",
             groupMiddleware,

@@ -2,10 +2,12 @@ import { groupCreateReq, groupMemberReq, groupFilterReq, groupFilterRes } from "
 import { prisma } from "@/config/prismaClient";
 import { Group } from "@/prisma/index";
 import { AppError } from "@/types/error/AppError";
+import { config } from "@/config/config";
+import axios from "axios";
 
 export class GroupRepository {
     async createNewGroup(group_data: groupCreateReq): Promise<Group> {
-        const { interest_fields, ...groupData } = group_data;
+        const { interest_fields, profile, ...groupData } = group_data;
         
         // Create group first
         const group = await prisma.group.create({
@@ -399,6 +401,108 @@ export class GroupRepository {
             }
         } catch (error) {
             throw new AppError("Failed to remove interests from group", 500);
+        }
+    }
+
+    async uploadGroupProfile(group_id: number, img: Express.Multer.File | undefined): Promise<void> {
+        try {
+            if (!img) throw new AppError("Image is not uploaded", 400);
+            
+            const file_ext = img.originalname.split(".").at(-1);
+            if (!file_ext) throw new AppError("Invalid file format", 400);
+            
+            const supportedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (!supportedExtensions.includes(file_ext.toLowerCase())) {
+                throw new AppError("Unsupported file format. Supported formats: jpg, jpeg, png, gif, webp", 400);
+            }
+            
+            const uploadPath = `/public/group/${group_id}.${file_ext}`;
+            try {
+                await axios.put(config.FILE_SERVER_URL + uploadPath, img.buffer);
+            } catch (uploadError) {
+                throw new AppError("Failed to upload image to file server", 500);
+            }
+        
+            await prisma.group.update({
+                where: { group_id },
+                data: {
+                    profile_url: uploadPath
+                }
+            });            
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError("Failed to update group profile", 500);
+        }
+    }
+
+    async getGroupProfileImage(group_id: number): Promise<{ imageBuffer?: Buffer, contentType?: string, hasProfile: boolean }> {
+        try {
+            // First get the group to check if it exists and get profile_url
+            const group = await prisma.group.findFirstOrThrow({
+                where: { group_id },
+                select: { profile_url: true }
+            });
+
+            if (!group.profile_url) {
+                return {
+                    hasProfile: false
+                };
+            }
+
+            // Normalize URL to avoid double slashes
+            const baseUrl = config.FILE_SERVER_URL.replace(/\/+$/, ''); // Remove trailing slashes
+            const fullUrl = baseUrl + group.profile_url;
+
+            try {
+                // Fetch the image from the file server
+                const response = await axios.get(fullUrl, {
+                    responseType: 'arraybuffer',
+                    timeout: 10000 // 10 second timeout
+                });
+
+                // Determine content type from file extension
+                const fileExt = group.profile_url.split('.').pop()?.toLowerCase();
+                let contentType = 'image/jpeg'; // default
+                
+                switch (fileExt) {
+                    case 'png':
+                        contentType = 'image/png';
+                        break;
+                    case 'gif':
+                        contentType = 'image/gif';
+                        break;
+                    case 'webp':
+                        contentType = 'image/webp';
+                        break;
+                    case 'jpg':
+                    case 'jpeg':
+                    default:
+                        contentType = 'image/jpeg';
+                        break;
+                }
+
+                return {
+                    imageBuffer: Buffer.from(response.data),
+                    contentType,
+                    hasProfile: true
+                };
+
+            } catch (fetchError: any) {
+                if (fetchError.response?.status === 404) {
+                    return {
+                        hasProfile: false
+                    };
+                }
+                throw new AppError("Failed to fetch image from file server", 500);
+            }
+
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            throw new AppError("Cannot find specified group", 404);
         }
     }
 }

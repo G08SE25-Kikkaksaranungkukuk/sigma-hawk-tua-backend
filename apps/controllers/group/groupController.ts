@@ -14,11 +14,64 @@ export class GroupController extends BaseController {
 
     async createGroup(req: Request, res: Response): Promise<void> {
         try {
-            const reqPayload = { ...req.body, group_leader_id: req.user?.user_id ?? -1 };
-            console.log(reqPayload);
+            const reqPayload = { 
+                ...req.body, 
+                group_leader_id: req.user?.user_id ?? -1,
+                profile: req.file // Add the uploaded file if present
+            };
             const reqParsed = await groupCreateSchema.parseAsync(reqPayload);
             const newGroup = await this.groupService.createNewGroup(reqParsed as groupCreateReq);
             this.handleSuccess(res, newGroup, 201, "Group created successfully");
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async uploadGroupProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const groupId = Number(id);
+            const userId = req.user?.user_id ?? -1;
+            
+            // Check if file was uploaded
+            if (!req.file) {
+                this.handleError(new Error("Profile image is required"), res);
+                return;
+            }
+            
+            // Call service method to update profile
+            const result = await this.groupService.uploadGroupProfile(groupId, userId, req.file);
+
+            this.handleSuccess(res, result, 200, "Group profile updated successfully");
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
+    async getGroupProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const groupId = Number(id);
+            
+            const result = await this.groupService.getGroupProfile(groupId);
+            
+            // Always set the hasProfile flag in response headers
+            res.setHeader('X-Has-Profile', result.hasProfile.toString());
+            
+            if (!result.hasProfile) {
+                // Return JSON response indicating no profile image
+                this.handleSuccess(res, { hasProfile: false }, 200, "Group has no profile image");
+                return;
+            }
+            
+            // Set proper headers for image response
+            res.setHeader('Content-Type', result.contentType!);
+            res.setHeader('Content-Length', result.imageBuffer!.length);
+            res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+            res.setHeader('Accept-Ranges', 'bytes');
+            
+            // Send the image data
+            res.send(result.imageBuffer);
         } catch (error) {
             this.handleError(error, res);
         }

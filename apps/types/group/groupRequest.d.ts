@@ -5,6 +5,7 @@ export interface groupCreateReq {
   group_name: string;
   group_leader_id: number;
   description?: string;
+  profile?: Express.Multer.File;
   max_members?: number;
   interest_fields?: string[];  // Changed from interest_ids to interest_fields
 }

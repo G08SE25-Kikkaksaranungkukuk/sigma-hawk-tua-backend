@@ -8,10 +8,22 @@ const validInterestKeys = [
   "BEACH_BAR", "THEATRE"
 ] as const;
 
+const ImageFileSchema = z
+  .any()
+  .refine(
+    f => !f || (typeof f === "object" && "mimetype" in f && String(f.mimetype).startsWith("image/")),
+    "profile must be an image file"
+  )
+  .refine(
+    f => !f || (typeof f === "object" && "size" in f && Number(f.size) <= 5 * 1024 * 1024),
+    "profile must be ≤ 5 MB"
+  );
+
 export const groupCreateSchema = z.object({
     group_name: z.string().min(1, "Group name is required"),
-    group_leader_id: z.number().int().min(1, "Valid group leader ID is required"),
+    group_leader_id: z.coerce.number().int().min(1, "Valid group leader ID is required"),
     description: z.string().optional(),
-    max_members: z.number().int().min(1).max(100).optional().default(10),
+    profile: ImageFileSchema.optional(),
+    max_members: z.coerce.number().int().min(1).max(100).optional().default(10),
     interest_fields: z.array(z.enum(validInterestKeys)).optional()
 })
