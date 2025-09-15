@@ -1,4 +1,5 @@
 // Run this:
+// pnpx prisma migrate reset
 // npx ts-node tests/dummy_group.ts
 import { PrismaClient } from '../generated/prisma/index';
 
@@ -8,6 +9,7 @@ async function seedDummyGroups() {
   // Seed 20 test users and groups
   console.log('👤 Seeding 20 test users and groups...');
   const allInterests = await prisma.interest.findMany();
+  const allTravelStyles = await prisma.travelStyle.findMany();
 
   // For random group names
   const adjectives = ['Brave', 'Swift', 'Silent', 'Mighty', 'Clever', 'Wild', 'Happy', 'Lucky', 'Bright', 'Calm'];
@@ -29,6 +31,43 @@ async function seedDummyGroups() {
       },
     });
 
+        // Assign 3 random interest IDs to user
+        const shuffledInterests = allInterests.sort(() => 0.5 - Math.random());
+        const selectedUserInterestIds = shuffledInterests.slice(0, 3).map(i => i.id);
+        for (const interest_id of selectedUserInterestIds) {
+          await prisma.userInterest.upsert({
+            where: {
+              user_id_interest_id: {
+                user_id: user.user_id,
+                interest_id,
+              },
+            },
+            update: {},
+            create: {
+              user_id: user.user_id,
+              interest_id,
+            },
+          });
+        }
+
+        // Assign 2 random travel style IDs to user
+        const shuffledTravelStyles = allTravelStyles.sort(() => 0.5 - Math.random());
+        const selectedUserTravelStyleIds = shuffledTravelStyles.slice(0, 2).map(ts => ts.id);
+        for (const travel_style_id of selectedUserTravelStyleIds) {
+          await prisma.userTravelStyle.upsert({
+            where: {
+              user_id_travel_style_id: {
+                user_id: user.user_id,
+                travel_style_id,
+              },
+            },
+            update: {},
+            create: {
+              user_id: user.user_id,
+              travel_style_id,
+            },
+          });
+        }
     // Generate random group name
     const groupName = `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${nouns[Math.floor(Math.random() * nouns.length)]} ${Math.floor(Math.random() * 1000)}`;
 

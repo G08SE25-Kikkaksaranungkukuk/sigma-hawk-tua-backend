@@ -15,9 +15,9 @@ export class UserController extends BaseController {
 
     async getUser(req: Request, res: Response): Promise<void> {
         try {
-            console.log(req.body)
+            // Support both body and query params
             const email = req.body?.email;
-            const user_id = req.body?.user_id;
+            const user_id = Number(req.query?.user_id);
 
             if (!email && !user_id) {
                 this.handleError(new Error("Email or User ID required"), res);

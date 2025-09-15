@@ -202,7 +202,7 @@ export class UserRepository {
 
     // TODO: getUserProfile support many keys
     async getUserProfileById(user_id: number): Promise<Partial<User> | null> {
-        const user = await prisma.user.findFirst({
+        return await prisma.user.findFirst({
             where: { user_id },
             select: {
                 first_name: true,
@@ -214,18 +214,17 @@ export class UserRepository {
                 profile_url: true,
                 social_credit: true,
                 userInterests: {
-                    include: {
-                        interest: true,
+                    select: {
+                        interest_id: true,
                     },
                 },
                 userTravelStyles: {
-                    include: {
-                        travel_style: true,
+                    select: {
+                        travel_style_id: true,
                     },
                 },
             },
         });
-        return user;
     }
 
     async updateUser(email: string, data: Partial<User>): Promise<User> {
