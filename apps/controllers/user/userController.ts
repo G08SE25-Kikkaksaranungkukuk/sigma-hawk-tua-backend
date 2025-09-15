@@ -27,7 +27,6 @@ export class UserController extends BaseController {
         try {
             const email = req.body.email;
             const userData = req.body.data;
-            console.log(req.body);
             const updatedUser = await this.service.updateUser(email, userData);
             this.handleSuccess(res, { user: updatedUser }, 200);
         } catch (error) {
