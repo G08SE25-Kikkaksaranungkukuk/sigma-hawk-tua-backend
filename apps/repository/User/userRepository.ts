@@ -88,7 +88,7 @@ export class UserRepository {
             const interests = await prisma.interest.findMany({
                 omit: {
                     // id: true,
-                    key: true,
+                    // key: true,
                     description: true,
                     created_at: true,
                     updated_at: true,
