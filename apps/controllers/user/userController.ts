@@ -15,8 +15,22 @@ export class UserController extends BaseController {
 
     async getUser(req: Request, res: Response): Promise<void> {
         try {
-            const email = req.body.email;
-            const user = await this.service.getUser(email);
+            console.log(req.body)
+            const email = req.body?.email;
+            const user_id = req.body?.user_id;
+
+            if (!email && !user_id) {
+                this.handleError(new Error("Email or User ID required"), res);
+                return;
+            }
+
+            let user;
+            if (email) {
+                user = await this.service.getUser(email);
+            } else if (user_id) {
+                user = await this.service.getUserById(user_id);
+            }
+
             this.handleSuccess(res, { user }, 200);
         } catch (error) {
             this.handleError(error, res);
@@ -54,8 +68,8 @@ export class UserController extends BaseController {
     }
 
     async deleteUser(req: Request, res: Response): Promise<void> {
-         try {
-            if(!req.user){
+        try {
+            if (!req.user) {
                 throw new Error("User not authenticated");
             }
             const { password } = req.body;
@@ -63,7 +77,7 @@ export class UserController extends BaseController {
             await this.service.DeleteUser(email, password);
             this.clearAuthCookies(res);
             this.handleSuccess(res, null, 200, "Account deleted");
-            
+
         } catch (error) {
             this.handleError(error, res);
         }
@@ -125,15 +139,15 @@ export class UserController extends BaseController {
         }
     }
 
-    async uploadUserProfile(req : Request , res : Response) : Promise<void> {
-       try {
-            const {accessToken} = req.cookies;
-            const userInfo : Partial<User> = verifyJwt(accessToken,config.ACCESSTOKEN_SECRET);
-            this.service.uploadProfilePicture(userInfo.email ?? "",req.file)
-            this.handleSuccess(res, null, 200 , "uploaded");
-       }
-       catch (error) {
-            this.handleError(error,res);
-       }
+    async uploadUserProfile(req: Request, res: Response): Promise<void> {
+        try {
+            const { accessToken } = req.cookies;
+            const userInfo: Partial<User> = verifyJwt(accessToken, config.ACCESSTOKEN_SECRET);
+            this.service.uploadProfilePicture(userInfo.email ?? "", req.file)
+            this.handleSuccess(res, null, 200, "uploaded");
+        }
+        catch (error) {
+            this.handleError(error, res);
+        }
     }
 }

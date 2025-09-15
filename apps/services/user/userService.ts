@@ -22,6 +22,22 @@ export class UserService {
         }
     }
 
+    async getUserById(user_id: number | string) {
+        try {
+            const id = typeof user_id === "string" ? parseInt(user_id, 10) : user_id;
+            if (isNaN(Number(id))) {
+                throw new AppError("Invalid user ID", 400);
+            }
+            const user = await this.repo.getUserProfileById(id);
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+            return user;
+        } catch (error: any) {
+            throw new AppError(`Failed to fetch user by ID: ${error.message}`, 500);
+        }
+    }
+
     async updateUser(email: string, data: Partial<User>) {
         try {
             if (!data) {
@@ -38,7 +54,7 @@ export class UserService {
 
             // Define allowed user profile fields (exclude system fields)
             const allowedFields = [
-                "first_name", "middle_name", "last_name", 
+                "first_name", "middle_name", "last_name",
                 "birth_date", "sex", "phone", "profile_url"
             ];
 
@@ -90,31 +106,31 @@ export class UserService {
         }
     }
 
-    async DeleteUser(email: string, password: string){
+    async DeleteUser(email: string, password: string) {
         const userPassword = await this.repo.getUserPassword(email);
 
         const valid = await bcrypt.compare(password, userPassword);
-        if (!valid) throw new AppError("Invalid password",401);
+        if (!valid) throw new AppError("Invalid password", 401);
 
         await this.repo.Delete(email);
-        }
+    }
 
     // Methods related to user interests
 
-    async getAllTravelStyles() : Promise<Partial<TravelStyle>[]> {
+    async getAllTravelStyles(): Promise<Partial<TravelStyle>[]> {
         try {
             const travelStyles = await this.repo.getAllTravelStyles();
             return travelStyles;
-        } catch (error : any) {
+        } catch (error: any) {
             throw new AppError(`Failed to fetch all travel styles: ${error.message}`, 500);
         }
     }
 
-    async getAllInterests() : Promise<Partial<Interest>[]> {
+    async getAllInterests(): Promise<Partial<Interest>[]> {
         try {
             const interests = await this.repo.getAllInterests();
             return interests;
-        } catch (error : any) {
+        } catch (error: any) {
             throw new AppError(`Failed to fetch all interests: ${error.message}`, 500);
         }
     }
@@ -156,13 +172,13 @@ export class UserService {
         }
     }
 
-    async uploadProfilePicture(email : string , pic : Express.Multer.File | undefined) : Promise<void> {
+    async uploadProfilePicture(email: string, pic: Express.Multer.File | undefined): Promise<void> {
         try {
             const user = await this.repo.retrieveUser(email);
             if (!user) {
                 throw new AppError("User not found", 404);
-            }            await this.repo.updateUserProfile(user,pic);
-        } catch (error : any) {
+            } await this.repo.updateUserProfile(user, pic);
+        } catch (error: any) {
             throw new AppError(
                 `Failed to upload new user profile: ${error.message}`,
                 500
@@ -203,5 +219,5 @@ export class UserService {
             );
         }
     }
-    
+
 }

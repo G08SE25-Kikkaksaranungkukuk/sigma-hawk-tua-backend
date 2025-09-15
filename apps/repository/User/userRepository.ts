@@ -12,7 +12,7 @@ export class UserRepository {
     async createNewUser(payload: authRegisterReq): Promise<User> {
         // แยก interests และ travel_styles ออกจาก payload
         const { interests, travel_styles, ...userData } = payload;
-        
+
         // สร้าง user ก่อน
         const user = await prisma.user.create({
             data: {
@@ -64,7 +64,7 @@ export class UserRepository {
         return user;
     }
 
-    async getAllTravelStyles() : Promise<Partial<TravelStyle>[]> {
+    async getAllTravelStyles(): Promise<Partial<TravelStyle>[]> {
         try {
             const travelStyles = await prisma.travelStyle.findMany({
                 omit: {
@@ -75,12 +75,12 @@ export class UserRepository {
                 },
             });
             return travelStyles;
-        } catch (error : any) {
+        } catch (error: any) {
             throw new AppError(`Failed to fetch all travel styles: ${error.message}`, 500);
         }
     }
 
-    async getAllInterests() : Promise<Partial<Interest>[]> {
+    async getAllInterests(): Promise<Partial<Interest>[]> {
         try {
             const interests = await prisma.interest.findMany({
                 omit: {
@@ -90,9 +90,9 @@ export class UserRepository {
                     created_at: true,
                     updated_at: true
                 },
-        });
-        return interests;
-        } catch (error : any) {
+            });
+            return interests;
+        } catch (error: any) {
             throw new AppError(`Failed to fetch all interests: ${error.message}`, 500);
         }
     }
@@ -104,7 +104,7 @@ export class UserRepository {
         return user != null;
     }
 
-    async Delete(email: string){
+    async Delete(email: string) {
         await prisma.user.delete({
             where: { email },
         });
@@ -140,8 +140,8 @@ export class UserRepository {
     }
 
     async retrieveUserById(
-    user_id: number,
-    without_sentitive_fields: boolean = false
+        user_id: number,
+        without_sentitive_fields: boolean = false
     ): Promise<User | null> {
         const user = await prisma.user.findFirst({
             where: { user_id },
@@ -157,25 +157,53 @@ export class UserRepository {
         return user;
     }
 
-    async updateUserProfile(user : User , image : Express.Multer.File | undefined): Promise<void>{
-        if(!image) throw new AppError("Image is not uploaded",400)
+    async updateUserProfile(user: User, image: Express.Multer.File | undefined): Promise<void> {
+        if (!image) throw new AppError("Image is not uploaded", 400)
         const file_ext = image.originalname.split(".").at(-1);
         const uploadPath = `/public/profile/${user.user_id}.${file_ext}`
-        const ret = await axios.put(config.FILE_SERVER_URL + uploadPath,image.buffer);
+        const ret = await axios.put(config.FILE_SERVER_URL + uploadPath, image.buffer);
         const userUpdated = await prisma.user.update({
-            where : {"email" : user.email},
-            data : {
-                profile_url : {
-                    set : uploadPath
+            where: { "email": user.email },
+            data: {
+                profile_url: {
+                    set: uploadPath
                 }
             }
         })
     }
-    
+
 
     async getUserProfile(email: string): Promise<Partial<User> | null> {
         const user = await prisma.user.findFirst({
             where: { email },
+            select: {
+                first_name: true,
+                middle_name: true,
+                last_name: true,
+                birth_date: true,
+                sex: true,
+                phone: true,
+                profile_url: true,
+                social_credit: true,
+                userInterests: {
+                    include: {
+                        interest: true,
+                    },
+                },
+                userTravelStyles: {
+                    include: {
+                        travel_style: true,
+                    },
+                },
+            },
+        });
+        return user;
+    }
+
+    // TODO: getUserProfile support many keys
+    async getUserProfileById(user_id: number): Promise<Partial<User> | null> {
+        const user = await prisma.user.findFirst({
+            where: { user_id },
             select: {
                 first_name: true,
                 middle_name: true,
