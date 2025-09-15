@@ -76,29 +76,26 @@ export class GroupRepository {
 
     async GetFilteredGroups(filter: groupFilterReq): Promise<groupFilterRes> {
         // Input validation and normalization
-        const page = Math.max(1, Number(filter.page) || 1);
-        const page_size = Math.min(100, Math.max(1, Number(filter.page_size) || 10)); // Cap at 100
-
+        filter.page = Number(filter.page) || 1;
+        filter.page_size = Math.min(100, Math.max(1, Number(filter.page_size) || 10)); // Cap at 100
         const {
-            interest_fields,
-            group_name
+            interest_id,
+            group_name,
+            page,
+            page_size
         } = filter;
 
-        // Build where clause more efficiently
-        const where: Record<string, any> = {};
-
-        if (interest_fields && interest_fields?.length > 0) {
-            const interestKeys = Array.isArray(interest_fields) ? interest_fields : [interest_fields];
-            where.groupInterests = {
-                some: {
-                    interest: {
-                        key: {
-                            in: interestKeys
-                        }
-                    }
-                }
-            };
+        // Normalize interest_id to array of numbers
+        let interestIdArr: number[] = [];
+        if (Array.isArray(interest_id)) {
+            interestIdArr = interest_id.map(id => Number(id)).filter(id => !isNaN(id));
+        } else if (typeof interest_id === 'string' || typeof interest_id === 'number') {
+            const numId = Number(interest_id);
+            if (!isNaN(numId)) interestIdArr = [numId];
         }
+
+        // Build where clause
+        const where: Record<string, any> = {};
 
         if (group_name?.trim()) {
             where.group_name = {
@@ -107,7 +104,6 @@ export class GroupRepository {
             };
         }
 
-        // Single database query with aggregation (if your Prisma version supports it)
         try {
             const [groups, group_count] = await Promise.all([
                 prisma.group.findMany({
@@ -123,33 +119,42 @@ export class GroupRepository {
                         created_at: true,
                         updated_at: true,
                         groupInterests: {
-                            include: {
-                                interest: {
-                                    select: {
-                                        key: true
-                                    }
-                                }
+                            select: {
+                                interest_id: true
                             }
                         }
                     },
-                    // Add ordering for consistent pagination
                     orderBy: { group_name: 'asc' }
                 }),
                 prisma.group.count({ where })
             ]);
 
+            // Filter groups so every interestIdArr is in the group.groupInterests
+            let filteredGroups = groups;
+            if (interestIdArr.length > 0) {
+                filteredGroups = groups.filter(group => {
+                    const groupInterestIds = group.groupInterests.map(gi => gi.interest_id);
+                    return interestIdArr.every(id => groupInterestIds.includes(id));
+                });
+            }
+
             // Transform the data to match the expected format
-            const transformedGroups = groups.map(group => ({
-                ...group,
-                interest_fields: group.groupInterests.map(gi => gi.interest.key)
+            const transformedGroups = filteredGroups.map(group => ({
+                group_id: group.group_id,
+                group_name: group.group_name,
+                group_leader_id: group.group_leader_id,
+                description: group.description ?? undefined,
+                max_members: group.max_members ?? undefined,
+                created_at: group.created_at,
+                updated_at: group.updated_at,
+                interest_id: group.groupInterests.map(gi => gi.interest_id)
             }));
 
             return {
                 group_array: transformedGroups,
-                group_count
+                group_count: transformedGroups.length
             };
         } catch (error) {
-            // Add proper error handling
             console.error('Error fetching filtered groups:', error);
             throw new Error('Failed to fetch groups');
         }

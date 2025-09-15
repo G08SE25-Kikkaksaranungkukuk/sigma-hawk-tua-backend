@@ -20,15 +20,22 @@ export interface groupGetReq{
 }
 
 export interface groupFilterReq {
-  interest_fields? : string[];
+  interest_id? : number[];
   group_name? : string;
   page? : number;
   page_size? : number;
 }
 
+
 export interface groupInfo {
-  interest_fields : string[];
-  group_name : string;
+  interest_id: number[];
+  group_id: number;
+  group_name: string;
+  group_leader_id: number;
+  description?: string;
+  max_members?: number;
+  created_at?: Date | string;
+  updated_at?: Date | string;
 }
 
 export interface groupFilterRes {

@@ -15,7 +15,7 @@ export class GroupService {
             const group = await this.grouprepository.getGroupWithDetails(group_data.group_id);
             return group;
         } catch (error: unknown) {
-            //console.error(error)
+            console.error(error);
             throw new AppError("Failed to get group", 500);
         }
     }
@@ -44,7 +44,7 @@ export class GroupService {
 
             return newGroup;
         } catch (error: unknown) {
-            console.error(error)
+            console.error(error);
             throw new AppError("Failed to create group", 500);
         }
     }
