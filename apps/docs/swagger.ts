@@ -44,9 +44,4 @@ export const setupSwagger = (app: Express) => {
             },
         })
     );
-    console.log(
-        `📚 Swagger docs available at http://localhost:${
-            process.env.PORT || 8080
-        }/api-docs`
-    );
 };
