@@ -26,10 +26,11 @@ services:
 
     dufs:
         image: sigoden/dufs
+        restart: always
         ports:
             - 6969:5000
         volumes:
-         - dufsdata:/data
+            - dufsdata:/data
         command: /data -A
 
 volumes:
