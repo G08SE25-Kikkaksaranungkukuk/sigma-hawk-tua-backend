@@ -4,12 +4,12 @@ import bodyParser from "body-parser";
 import cors from "cors";
 
 import cookieParser from "cookie-parser";
-import { RouterManager } from "@/routes/RouterManager";
+import { VersionControl } from "@/versioningRoutes/versionControl";
 import { setupSwagger } from "@/docs/swagger";
 
 const app = express();
 
-app.use(cors({credentials: true, origin: 'http://localhost:3000'}));
+app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -19,9 +19,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// router integration
-const routerManager = new RouterManager();
-app.use(routerManager.getRouter());
+// router integration - api/<version>/<path>
+const versionControl = new VersionControl();
+app.use(versionControl.getRouter());
 
 // Setup Swagger documentation
 setupSwagger(app);

@@ -21,23 +21,14 @@
       "@/*": [
         "apps/*"
       ],
-      "@/controllers/*": [
-        "apps/controllers/*"
-      ],
-      "@/services/*": [
-        "apps/services/*"
-      ],
       "@/utils/*": [
         "apps/utils/*"
       ],
       "@/types/*": [
         "apps/types/*"
       ],
-      "@/middlewares/*": [
-        "apps/middlewares/*"
-      ],
-      "@/routes/*": [
-        "apps/routes/*"
+      "@/versioningRoutes/*": [
+        "apps/versioningRoutes/*"
       ],
       "@/config/*": [
         "apps/config/*"
