@@ -1,7 +1,6 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { VersionRegistry } from "./VersionRegistry";
 import { versionMiddleware } from "@/middlewares/versionMiddleware";
-import { DocumentationVersionManager } from "@/docs/versions/documentationManager";
 
 /**
  * Main RouterManager
@@ -19,29 +18,6 @@ export class RouterManager {
     }
 
     private initializeRouters(): void {
-        // Documentation discovery endpoint
-        this.router.get("/api/docs", (req: Request, res: Response) => {
-            const versions = DocumentationVersionManager.getAvailableVersions();
-            res.json({
-                success: true,
-                message: "Available API documentation versions",
-                data: {
-                    available_versions: versions,
-                    endpoints: {
-                        version_discovery: "/api/versions",
-                        health_check: "/healthz",
-                        swagger_ui: {
-                            latest: "/api-docs/latest",
-                            versioned: "/api-docs/{version}",
-                            list: "/api-docs/versions"
-                        },
-                        raw_specs: "/api-docs/{version}/swagger.json"
-                    }
-                },
-                timestamp: new Date().toISOString()
-            });
-        });
-
         // Apply version middleware to all /api routes
         this.router.use("/api", versionMiddleware);
         
