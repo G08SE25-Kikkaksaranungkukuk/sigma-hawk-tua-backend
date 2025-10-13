@@ -30,6 +30,7 @@ model User {
   userInterests    UserInterest[]    @relation("UserHasInterests")
   userTravelStyles UserTravelStyle[] @relation("UserHasTravelStyles")
   likes_blog       Blog[]            @relation("Like")
+  travelHistories  TravelHistory[]   @relation("UserHasTravelHistory")
 }
 
 model Interest {
@@ -100,6 +101,7 @@ model Group {
   itineraries     GroupItinerary[] @relation("GroupHasItineraries")
   leader          User             @relation("IsHeadOf", fields: [group_leader_id], references: [user_id], onDelete: Cascade)
   requests        RequestJoin[]    @relation("GroupReceivesRequests")
+  travelHistories TravelHistory[]  @relation("GroupHasTravelHistory")
 
   @@map("groups")
 }
@@ -151,15 +153,16 @@ model Place {
 }
 
 model Itinerary {
-  itinerary_id Int              @id @default(autoincrement())
-  title        String?
-  description  String?
-  start_date   DateTime
-  end_date     DateTime
-  created_at   DateTime         @default(now())
-  updated_at   DateTime         @updatedAt
-  groups       GroupItinerary[] @relation("ItineraryBelongsToGroups")
-  places       Place[]          @relation("CreateEditItinerary")
+  itinerary_id    Int              @id @default(autoincrement())
+  title           String?
+  description     String?
+  start_date      DateTime
+  end_date        DateTime
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+  groups          GroupItinerary[] @relation("ItineraryBelongsToGroups")
+  places          Place[]          @relation("CreateEditItinerary")
+  travelHistories TravelHistory[]  @relation("ItineraryHasTravelHistory")
 
   @@map("itineraries")
 }
@@ -188,6 +191,21 @@ model GroupItinerary {
 
   @@unique([group_id, itinerary_id])
   @@map("group_itineraries")
+}
+
+model TravelHistory {
+  id           Int       @id @default(autoincrement())
+  group_id     Int?
+  user_id      Int
+  itinerary_id Int?
+  created_at   DateTime  @default(now())
+  expires_at   DateTime  @default(dbgenerated("NOW() + INTERVAL '1 year'"))
+  group        Group?    @relation("GroupHasTravelHistory", fields: [group_id], references: [group_id], onDelete: SetNull)
+  user         User      @relation("UserHasTravelHistory", fields: [user_id], references: [user_id], onDelete: Cascade)
+  itinerary    Itinerary? @relation("ItineraryHasTravelHistory", fields: [itinerary_id], references: [itinerary_id], onDelete: SetNull)
+
+  @@unique([group_id, user_id, itinerary_id])
+  @@map("travel_history")
 }
 
 model GroupInterest {
