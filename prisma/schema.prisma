@@ -164,11 +164,11 @@ model Itinerary {
 }
 
 model Blog {
-  blog_id       Int               @id @default(autoincrement())
+  blog_id       Int             @id @default(autoincrement())
   user_id       Int
   json_config   Text
   html_output   Text
-  liked_users   User[]
+  liked_users   User[]          @relation("Like")
 
   @@unique(user_id)
   @@map("blogs")
