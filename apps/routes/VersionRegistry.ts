@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { RouterManagerV1 } from "./v1/RouterManager";
 import { ApiVersionManager, API_VERSIONS } from "@/config/apiVersion";
+import { RouterManagerV2 } from "./v2/RouterManager";
 
 /**
  * Version Registry
@@ -27,11 +28,11 @@ export class VersionRegistry {
         }
 
         // Future versions will be registered here
-        // if (API_VERSIONS.v2?.isActive) {
-        //     const v2RouterManager = new RouterManagerV2();
-        //     this.versionRouters.set("v2", v2RouterManager.getRouter());
-        //     this.router.use(API_VERSIONS.v2.prefix, v2RouterManager.getRouter());
-        // }
+        if (API_VERSIONS.v2?.isActive) {
+            const v2RouterManager = new RouterManagerV2();
+            this.versionRouters.set("v2", v2RouterManager.getRouter());
+            this.router.use(API_VERSIONS.v2.prefix, v2RouterManager.getRouter());
+        }
     }
 
     private setupVersionEndpoints(): void {
