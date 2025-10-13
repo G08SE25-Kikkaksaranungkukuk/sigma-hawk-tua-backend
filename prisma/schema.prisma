@@ -166,6 +166,8 @@ model Itinerary {
 model Blog {
   blog_id       Int             @id @default(autoincrement())
   user_id       Int
+  title         Text
+  description   Text
   created_at    DateTime        @default(now())
   json_config   Text
   html_output   Text
