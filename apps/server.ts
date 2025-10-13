@@ -6,6 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { RouterManager } from "@/routes/RouterManager";
 import { setupSwagger } from "@/docs/swagger";
+import { ApiVersionManager } from "@/config/apiVersion";
 
 const app = express();
 
@@ -19,7 +20,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// router integration
+// Initialize routing with versioning support
 const routerManager = new RouterManager();
 app.use(routerManager.getRouter());
 
