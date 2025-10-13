@@ -163,6 +163,17 @@ model Itinerary {
   @@map("itineraries")
 }
 
+model Blog {
+  blog_id       Int               @id @default(autoincrement())
+  user_id       Int
+  json_config   Text
+  html_output   Text
+  liked_users   User[]
+
+  @@unique(user_id)
+  @@map("blogs")
+}
+
 model GroupItinerary {
   id           Int       @id @default(autoincrement())
   group_id     Int
