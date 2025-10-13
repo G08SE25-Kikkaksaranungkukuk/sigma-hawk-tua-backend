@@ -174,7 +174,6 @@ model Blog {
   html_output   String
   liked_users   User[]          @relation("Like")
 
-  @@unique(user_id)
   @@map("blogs")
 }
 
