@@ -212,12 +212,12 @@ model PlaceInterest {
 }
 
 model Belongs {
-  group_id      Int
-  user_id      Int
-  groups Group @relation(fields: [group_id], references: [group_id], onDelete: Cascade)
-  User   User  @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  A         Int       
+  B         Int
+  groups    Group     @relation(fields: [A], references: [group_id], onDelete: Cascade)
+  User      User      @relation(fields: [B], references: [user_id], onDelete: Cascade)
 
-  @@id([group_id, user_id], map: "_Belongs_AB_pkey")
-  @@index([user_id], map: "_Belongs_B_index")
+  @@id([A, B], map: "_Belongs_AB_pkey")
+  @@index([B], map: "_Belongs_B_index")
   @@map("_Belongs")
 }
