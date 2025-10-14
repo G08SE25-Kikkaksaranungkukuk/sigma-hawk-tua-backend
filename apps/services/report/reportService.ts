@@ -22,18 +22,8 @@ export class ReportService {
     /**
      * Create a new report
      */
-    async createReport(userId: number, reportData: CreateReportRequest): Promise<CreateReportResponse> {
+    async createReport(reportData: CreateReportRequest): Promise<CreateReportResponse> {
         try {
-            // Check if user has already reported this blog
-            const hasReported = await this.reportRepository.hasUserReportedBlog(userId, reportData.report_id);
-            
-            if (hasReported) {
-                return {
-                    success: false,
-                    message: "You have already reported this blog"
-                };
-            }
-
             // Validate report data
             if (!reportData.title.trim() || !reportData.reason.trim()) {
                 return {
@@ -64,8 +54,6 @@ export class ReportService {
             }
 
             const report = await this.reportRepository.createReport({
-                report_id: reportData.report_id,
-                user_id: userId,
                 title: reportData.title.trim(),
                 reason: reportData.reason.trim(),
                 description: reportData.description?.trim() || ""
@@ -214,34 +202,16 @@ export class ReportService {
         }
     }
 
-    /**
-     * Get reports by user (user's own reports)
-     */
-    async getMyReports(userId: number, page: number = 1, limit: number = 10) {
-        try {
-            const result = await this.reportRepository.getReportsByUser(userId, page, limit);
-            
-            return {
-                success: true,
-                reports: result.reports,
-                pagination: result.pagination
-            };
-        } catch (error) {
-            console.error("Error in getMyReports service:", error);
-            return {
-                success: false,
-                reports: [],
-                message: "Failed to fetch your reports"
-            };
-        }
-    }
+    // Removed getMyReports since we don't have user_id in simple schema
+
+    // Removed getReportsByBlog since we don't have blog_id in simple schema
 
     /**
-     * Get reports for a specific blog (Admin only)
+     * Get all reports (Admin only)
      */
-    async getReportsByBlog(blogId: number, page: number = 1, limit: number = 10) {
+    async getAllReportsAdmin(page: number = 1, limit: number = 10) {
         try {
-            const result = await this.reportRepository.getReportsByBlog(blogId, page, limit);
+            const result = await this.reportRepository.getAllReports(page, limit);
             
             return {
                 success: true,
@@ -249,11 +219,11 @@ export class ReportService {
                 pagination: result.pagination
             };
         } catch (error) {
-            console.error("Error in getReportsByBlog service:", error);
+            console.error("Error in getAllReportsAdmin service:", error);
             return {
                 success: false,
                 reports: [],
-                message: "Failed to fetch blog reports"
+                message: "Failed to fetch all reports"
             };
         }
     }
@@ -261,28 +231,15 @@ export class ReportService {
     /**
      * Get report statistics
      */
-    async getReportStats(userId?: number, blogId?: number): Promise<ReportStatsResponse> {
+    async getReportStats(): Promise<ReportStatsResponse> {
         try {
             const totalReports = await this.reportRepository.getReportsCount();
-            
-            let reportsByUser = 0;
-            if (userId) {
-                const userReportsResult = await this.reportRepository.getReportsByUser(userId, 1, 1);
-                reportsByUser = userReportsResult.pagination.total_records;
-            }
-
-            let reportsForBlog = 0;
-            if (blogId) {
-                const blogReportsResult = await this.reportRepository.getReportsByBlog(blogId, 1, 1);
-                reportsForBlog = blogReportsResult.pagination.total_records;
-            }
 
             return {
                 success: true,
                 stats: {
-                    total_reports: totalReports,
-                    reports_by_user: reportsByUser,
-                    reports_for_blog: reportsForBlog
+                    total_reports: totalReports
+                    // Removed user/blog specific stats since we have simple schema
                 }
             };
         } catch (error) {
@@ -290,9 +247,7 @@ export class ReportService {
             return {
                 success: false,
                 stats: {
-                    total_reports: 0,
-                    reports_by_user: 0,
-                    reports_for_blog: 0
+                    total_reports: 0
                 }
             };
         }

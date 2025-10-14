@@ -34,30 +34,7 @@ export class ReportRouterV2 extends BaseRouter {
             this.reportController.createReport.bind(this.reportController)
         );
 
-        // READ - Get current user's reports
-        this.router.get(
-            "/me",
-            authMiddleware,
-            validatePagination,
-            this.reportController.getMyReports.bind(this.reportController)
-        );
-
-        // READ - Get report statistics
-        this.router.get(
-            "/stats",
-            authMiddleware,
-            this.reportController.getReportStats.bind(this.reportController)
-        );
-
-        // READ - Get reports for a specific blog (Admin functionality)
-        this.router.get(
-            "/blog/:blogId",
-            authMiddleware,
-            adminMiddleware,
-            validateBlogId,
-            validatePagination,
-            this.reportController.getReportsByBlog.bind(this.reportController)
-        );
+        // Removed /me route since we don't have user_id in simple schema
 
         // READ - Get all reports with filters (Admin functionality)
         this.router.get(

@@ -26,22 +26,21 @@ export class ReportController extends BaseController {
                 return res.status(401).json({ success: false, message: "Unauthorized" });
             }
 
-            const reportData: CreateReportRequest = {
-                report_id: parseInt(req.body.report_id), // blog_id
-                title: req.body.title,
-                reason: req.body.reason,
-                description: req.body.description || ""
-            };
+        const reportData: CreateReportRequest = {
+            title: req.body.title,
+            reason: req.body.reason,
+            description: req.body.description || ""
+        };
 
-            // Validate required fields
-            if (!reportData.report_id || !reportData.title || !reportData.reason) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: "Missing required fields: report_id, title, reason" 
-                });
-            }
+        // Validate required fields
+        if (!reportData.title || !reportData.reason) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Missing required fields: title, reason" 
+            });
+        }
 
-            const result = await this.reportService.createReport(userId, reportData);
+                        const result = await this.reportService.createReport(reportData);
 
             if (result.success) {
                 return this.handleSuccess(res, result.report, 201, result.message);
@@ -61,8 +60,9 @@ export class ReportController extends BaseController {
     async getAllReports(req: Request, res: Response) {
         try {
             const filters: ReportFilters = {
-                blog_id: req.query.blog_id ? parseInt(req.query.blog_id as string) : undefined,
-                user_id: req.query.user_id ? parseInt(req.query.user_id as string) : undefined,
+                id: req.query.id ? parseInt(req.query.id as string) : undefined,
+                title: req.query.title ? req.query.title as string : undefined,
+                reason: req.query.reason ? req.query.reason as string : undefined,
                 page: req.query.page ? parseInt(req.query.page as string) : 1,
                 limit: req.query.limit ? parseInt(req.query.limit as string) : 10
             };
@@ -175,66 +175,9 @@ export class ReportController extends BaseController {
         }
     }
 
-    /**
-     * Get current user's reports
-     * GET /api/v2/reports/me
-     */
-    async getMyReports(req: Request, res: Response) {
-        try {
-            const userId = req.user?.user_id;
-            if (!userId) {
-                return res.status(401).json({ success: false, message: "Unauthorized" });
-            }
+    // Removed getMyReports since we don't have user_id in simple schema
 
-            const page = req.query.page ? parseInt(req.query.page as string) : 1;
-            const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-
-            const result = await this.reportService.getMyReports(userId, page, limit);
-
-            if (result.success) {
-                return this.handleSuccess(res, {
-                    reports: result.reports,
-                    pagination: result.pagination
-                }, 200, "Your reports fetched successfully");
-            } else {
-                return res.status(500).json({ success: false, message: result.message || "Failed to fetch your reports" });
-            }
-        } catch (error) {
-            console.error("Error in getMyReports controller:", error);
-            return this.handleError(error, res);
-        }
-    }
-
-    /**
-     * Get reports for a specific blog (Admin only)
-     * GET /api/v2/reports/blog/:blogId
-     */
-    async getReportsByBlog(req: Request, res: Response) {
-        try {
-            const blogId = parseInt(req.params.blogId);
-            
-            if (!blogId || isNaN(blogId)) {
-                return res.status(400).json({ success: false, message: "Invalid blog ID" });
-            }
-
-            const page = req.query.page ? parseInt(req.query.page as string) : 1;
-            const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-
-            const result = await this.reportService.getReportsByBlog(blogId, page, limit);
-
-            if (result.success) {
-                return this.handleSuccess(res, {
-                    reports: result.reports,
-                    pagination: result.pagination
-                }, 200, "Blog reports fetched successfully");
-            } else {
-                return res.status(500).json({ success: false, message: result.message || "Failed to fetch blog reports" });
-            }
-        } catch (error) {
-            console.error("Error in getReportsByBlog controller:", error);
-            return this.handleError(error, res);
-        }
-    }
+    // Removed getReportsByBlog since we don't have blog relations in simple schema
 
     /**
      * Get report statistics
@@ -242,10 +185,7 @@ export class ReportController extends BaseController {
      */
     async getReportStats(req: Request, res: Response) {
         try {
-            const userId = req.query.user_id ? parseInt(req.query.user_id as string) : undefined;
-            const blogId = req.query.blog_id ? parseInt(req.query.blog_id as string) : undefined;
-
-            const result = await this.reportService.getReportStats(userId, blogId);
+            const result = await this.reportService.getReportStats();
 
             return this.handleSuccess(res, result.stats, 200, "Report statistics fetched successfully");
         } catch (error) {

@@ -9,16 +9,9 @@ import { Request, Response, NextFunction } from "express";
  * Validates report creation data
  */
 export const validateCreateReport = (req: Request, res: Response, next: NextFunction) => {
-    const { report_id, title, reason } = req.body;
+    const { title, reason } = req.body;
 
-    // Check required fields
-    if (!report_id) {
-        return res.status(400).json({
-            success: false,
-            message: "report_id is required (blog ID being reported)"
-        });
-    }
-
+    // Check required fields (id will be auto-generated)
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
         return res.status(400).json({
             success: false,
@@ -55,18 +48,7 @@ export const validateCreateReport = (req: Request, res: Response, next: NextFunc
         });
     }
 
-    // Validate report_id is a valid number
-    const reportIdNum = parseInt(report_id);
-    if (isNaN(reportIdNum) || reportIdNum <= 0) {
-        return res.status(400).json({
-            success: false,
-            message: "report_id must be a valid positive integer"
-        });
-    }
-
-    // Set parsed report_id back to req.body
-    req.body.report_id = reportIdNum;
-
+    // No need to validate report_id since it's auto-generated
     next();
 };
 
