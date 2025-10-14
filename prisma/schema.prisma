@@ -169,7 +169,7 @@ model LikeBlog {
   blog_id       Int
   like_time     DateTime        @default(now())
   User          User            @relation("UserLikes", fields: [user_id], references: [user_id], onDelete: Cascade)
-  blog          Blog            @relation("BlogLiked", fields: [blog_id], references: [blog_id], onDelete: Cascade)
+  blogs         Blog            @relation("BlogLiked", fields: [blog_id], references: [blog_id], onDelete: Cascade)
 
   @@unique([user_id, blog_id])
   @@map("like_blog")
