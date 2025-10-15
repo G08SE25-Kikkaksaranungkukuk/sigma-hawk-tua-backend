@@ -1,14 +1,7 @@
+
 import { BlogRepository } from "@/repository/Blog/blogRepository";
 import { AppError } from "@/types/error/AppError";
-
-export interface BlogSearchFilter {
-    keyword?: string;
-    tag?: string;
-    author?: string;
-    date?: string;
-    page?: number;
-    page_size?: number;
-}
+import { BlogSearchFilter } from "@/types/blog/blogRequest";
 
 export class BlogService {
     private blogRepository: BlogRepository;
@@ -27,7 +20,18 @@ export class BlogService {
             const page_size = filter.page_size && filter.page_size > 0 ? Math.min(filter.page_size, 100) : 10;
             filter.page = page;
             filter.page_size = page_size;
-            const result = await this.blogRepository.searchBlogs(filter);
+
+            // Ensure interest_id is always an array or undefined
+            let interestFilter: number[] | undefined = undefined;
+            if (filter.interest_id) {
+                if (Array.isArray(filter.interest_id)) {
+                    interestFilter = filter.interest_id.length > 0 ? filter.interest_id : undefined;
+                } else {
+                    interestFilter = [filter.interest_id];
+                }
+            }
+            const repoFilter = { ...filter, interest_id: interestFilter };
+            const result = await this.blogRepository.searchBlogs(repoFilter);
             return result;
         } catch (error: unknown) {
             console.error(error);

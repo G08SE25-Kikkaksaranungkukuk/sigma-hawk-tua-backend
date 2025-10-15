@@ -1,13 +1,13 @@
 import { prisma } from "@/config/prismaClient";
 import { AppError } from "@/types/error/AppError";
-import { BlogSearchFilter } from "@/services/blog/blogService";
+import { BlogSearchFilter } from "@/types/blog/blogRequest";
 
 export class BlogRepository {
     /**
      * Search and filter blogs by keyword, tag, author, date
      */
     async searchBlogs(filter: BlogSearchFilter) {
-        const { keyword, tag, author, date, page = 1, page_size = 10 } = filter;
+        const { keyword, interest_id, author, date, page = 1, page_size = 10 } = filter;
         const where: any = {};
 
         if (keyword) {
@@ -17,7 +17,7 @@ export class BlogRepository {
                 { html_output: { contains: keyword, mode: "insensitive" } }
             ];
         }
-        // No tag or author fields in Blog schema, so skip those
+        // No author field in Blog schema, so skip author
         if (date) {
             // Assuming date is in YYYY-MM-DD format
             const dateObj = new Date(date);
@@ -29,15 +29,37 @@ export class BlogRepository {
             }
         }
 
+        // Filter by interest_id using BlogInterest join table
+        let blogWhere = where;
+        let include: any = {
+            blogInterests: {
+                select: { interest_id: true }
+            }
+        };
+        if (interest_id && Array.isArray(interest_id) && interest_id.length > 0) {
+            // Only return blogs that have ALL matching interests
+            blogWhere = {
+                ...where,
+                AND: interest_id.map((id) => ({
+                    blogInterests: {
+                        some: { interest_id: id }
+                    }
+                }))
+            };
+        }
+
         try {
             const [blogs, total] = await Promise.all([
                 prisma.blog.findMany({
-                    where,
+                    where: blogWhere,
+                    include,
                     orderBy: { created_at: "desc" },
                     skip: (page - 1) * page_size,
                     take: page_size,
                 }),
-                prisma.blog.count({ where }),
+                prisma.blog.count({
+                    where: blogWhere
+                }),
             ]);
             return {
                 data: blogs,
