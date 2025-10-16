@@ -166,12 +166,20 @@ export class ItineraryRepository {
     /**
      * Assign itinerary to a group
      */
-    async assignItineraryToGroup(itineraryId: number, groupId: number): Promise<void> {
+    async assignItineraryToGroup(itineraryId: number, groupId: number): Promise<any> {
         try {
-            await this.prisma.groupItinerary.create({
+            return await this.prisma.groupItinerary.create({
                 data: {
                     group_id: groupId,
                     itinerary_id: itineraryId
+                },
+                include: {
+                    group: {
+                        include: {
+                            leader: true
+                        }
+                    },
+                    itinerary: true
                 }
             });
         } catch (error: any) {
