@@ -9,6 +9,7 @@ export interface ItineraryResponse {
     description?: string;
     start_date: string;
     end_date: string;
+    place_links: string[];
     created_at: string;
     updated_at: string;
     groups?: GroupBasicInfo[];
@@ -20,6 +21,7 @@ export interface ItineraryListResponse {
     description?: string;
     start_date: string;
     end_date: string;
+    place_links: string[];
     created_at: string;
     groups_count: number;
 }

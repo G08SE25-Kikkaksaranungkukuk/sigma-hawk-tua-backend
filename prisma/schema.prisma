@@ -42,7 +42,6 @@ model Interest {
   created_at     DateTime        @default(now())
   updated_at     DateTime        @updatedAt
   groupInterests GroupInterest[] @relation("InterestBelongsToGroups")
-  placeInterests PlaceInterest[] @relation("InterestBelongsToPlaces")
   userInterests  UserInterest[]  @relation("InterestBelongsToUsers")
 
   @@map("interests")
@@ -130,36 +129,16 @@ model Interaction {
   @@map("interactions")
 }
 
-model Place {
-  place_id       Int             @id @default(autoincrement())
-  name           String
-  description    String?
-  place_type     String?
-  latitude       Float?
-  longitude      Float?
-  picture_url    String?
-  phone_num      String?
-  social_media   String?
-  address        String?
-  rating         Float?          @default(0)
-  created_at     DateTime        @default(now())
-  updated_at     DateTime        @updatedAt
-  placeInterests PlaceInterest[] @relation("PlaceHasInterests")
-  Itinerary      Itinerary[]     @relation("CreateEditItinerary")
-
-  @@map("places")
-}
-
 model Itinerary {
   itinerary_id Int              @id @default(autoincrement())
   title        String?
   description  String?
   start_date   DateTime
   end_date     DateTime
+  place_links  String[]         @default([])
   created_at   DateTime         @default(now())
   updated_at   DateTime         @updatedAt
   groups       GroupItinerary[] @relation("ItineraryBelongsToGroups")
-  places       Place[]          @relation("CreateEditItinerary")
 
   @@map("itineraries")
 }
@@ -199,18 +178,6 @@ model GroupInterest {
 
   @@unique([group_id, interest_id])
   @@map("group_interests")
-}
-
-model PlaceInterest {
-  id          Int      @id @default(autoincrement())
-  place_id    Int
-  interest_id Int
-  created_at  DateTime @default(now())
-  interest    Interest @relation("InterestBelongsToPlaces", fields: [interest_id], references: [id], onDelete: Cascade)
-  place       Place    @relation("PlaceHasInterests", fields: [place_id], references: [place_id], onDelete: Cascade)
-
-  @@unique([place_id, interest_id])
-  @@map("place_interests")
 }
 
 model Belongs {

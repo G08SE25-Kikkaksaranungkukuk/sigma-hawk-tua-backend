@@ -176,20 +176,13 @@ export class ItineraryService implements IItineraryService {
 
     /**
      * Check if user has permission to modify itinerary
-     * User must be leader of at least one group that has this itinerary
+     * User must be a group leader (of any group)
      */
     private async checkItineraryPermission(itineraryId: number, userId: number): Promise<boolean> {
         try {
-            const itinerary: any = await this.repository.getItineraryById(itineraryId);
-            if (!itinerary) return false;
-
-            // Check if user is leader of any group that has this itinerary
-            for (const groupItinerary of itinerary.groups || []) {
-                const isLeader = await this.repository.isUserGroupLeader(userId, groupItinerary.group_id);
-                if (isLeader) return true;
-            }
-
-            return false;
+            // Check if user is a leader of any group
+            const userGroups = await this.repository.getUserGroups(userId);
+            return userGroups.length > 0; // If user is leader of any group, they can modify itineraries
         } catch (error) {
             return false;
         }
@@ -205,6 +198,7 @@ export class ItineraryService implements IItineraryService {
             description: itinerary.description,
             start_date: itinerary.start_date.toISOString(),
             end_date: itinerary.end_date.toISOString(),
+            place_links: itinerary.place_links || [],
             created_at: itinerary.created_at.toISOString(),
             updated_at: itinerary.updated_at.toISOString(),
             groups: itinerary.groups?.map((gi: any): GroupBasicInfo => ({
@@ -228,6 +222,7 @@ export class ItineraryService implements IItineraryService {
             description: itinerary.description,
             start_date: itinerary.start_date.toISOString(),
             end_date: itinerary.end_date.toISOString(),
+            place_links: itinerary.place_links || [],
             created_at: itinerary.created_at.toISOString(),
             groups_count: itinerary._count?.groups || 0
         };

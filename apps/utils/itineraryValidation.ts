@@ -14,7 +14,10 @@ export const itineraryCreateSchema = z.object({
     start_date: z.string()
         .datetime("Invalid start date format. Use ISO 8601 format"),
     end_date: z.string()
-        .datetime("Invalid end date format. Use ISO 8601 format")
+        .datetime("Invalid end date format. Use ISO 8601 format"),
+    place_links: z.array(z.string().url("Invalid URL format"))
+        .optional()
+        .default([])
 }).refine(data => {
     const startDate = new Date(data.start_date);
     const endDate = new Date(data.end_date);
@@ -37,6 +40,8 @@ export const itineraryUpdateSchema = z.object({
         .optional(),
     end_date: z.string()
         .datetime("Invalid end date format. Use ISO 8601 format")
+        .optional(),
+    place_links: z.array(z.string().url("Invalid URL format"))
         .optional()
 }).refine(data => {
     if (data.start_date && data.end_date) {

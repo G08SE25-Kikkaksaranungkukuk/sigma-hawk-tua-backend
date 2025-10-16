@@ -1,4 +1,4 @@
-import { PrismaClient, Itinerary, GroupItinerary, Place, Group } from "@/prisma/index";
+import { PrismaClient, Itinerary, GroupItinerary, Group } from "@/prisma/index";
 import { ItineraryCreateRequest, ItineraryUpdateRequest } from "@/types/itinerary/itineraryRequest";
 import { AppError } from "@/types/error/AppError";
 
@@ -23,7 +23,8 @@ export class ItineraryRepository {
                     title: data.title,
                     description: data.description,
                     start_date: new Date(data.start_date),
-                    end_date: new Date(data.end_date)
+                    end_date: new Date(data.end_date),
+                    place_links: data.place_links || []
                 },
                 include: {
                     groups: {
@@ -120,6 +121,7 @@ export class ItineraryRepository {
             if (data.description !== undefined) updateData.description = data.description;
             if (data.start_date) updateData.start_date = new Date(data.start_date);
             if (data.end_date) updateData.end_date = new Date(data.end_date);
+            if (data.place_links !== undefined) updateData.place_links = data.place_links;
 
             const itinerary = await this.prisma.itinerary.update({
                 where: { itinerary_id: itineraryId },
@@ -258,6 +260,27 @@ export class ItineraryRepository {
             return !!group;
         } catch (error: any) {
             throw new AppError(`Failed to check group existence: ${error.message}`, 500);
+        }
+    }
+
+    /**
+     * Get all groups where user is the leader
+     */
+    async getUserGroups(userId: number): Promise<any[]> {
+        try {
+            const groups = await this.prisma.group.findMany({
+                where: {
+                    group_leader_id: userId
+                },
+                select: {
+                    group_id: true,
+                    group_name: true
+                }
+            });
+
+            return groups;
+        } catch (error: any) {
+            throw new AppError(`Failed to get user groups: ${error.message}`, 500);
         }
     }
 }

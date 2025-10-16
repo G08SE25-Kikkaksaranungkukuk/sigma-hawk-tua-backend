@@ -8,6 +8,7 @@ export interface ItineraryCreateRequest {
     description?: string;
     start_date: string; // ISO date string
     end_date: string; // ISO date string
+    place_links?: string[]; // Array of place URLs/links
 }
 
 export interface ItineraryUpdateRequest {
@@ -15,6 +16,7 @@ export interface ItineraryUpdateRequest {
     description?: string;
     start_date?: string; // ISO date string
     end_date?: string; // ISO date string
+    place_links?: string[]; // Array of place URLs/links
 }
 
 export interface GroupItineraryAssignRequest {
