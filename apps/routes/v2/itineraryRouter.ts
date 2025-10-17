@@ -26,6 +26,12 @@ export class ItineraryRouterV2 extends BaseRouter {
         );
 
         this.router.get(
+            "/",
+            authMiddleware,
+            this.itineraryController.getAllItineraries.bind(this.itineraryController)
+        );
+
+        this.router.get(
             "/:itinerary_id",
             authMiddleware,
             this.itineraryController.getItineraryById.bind(this.itineraryController)
