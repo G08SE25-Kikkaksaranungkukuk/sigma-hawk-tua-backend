@@ -1,4 +1,5 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
+import { verifyJwt } from "@/utils/jwt";
 import { authRegisterReq } from "@/types/auth/authRequest";
 import { BaseController } from "@/controllers/BaseController";
 import { AppError } from "@/types/error/AppError";
@@ -98,4 +99,46 @@ export class BlogController extends BaseController {
             this.handleError(error,res);
         }
     }
+
+    async searchBlogs(req: Request, res: Response): Promise<void> {
+        try {
+            const q = String(req.query.q ?? "").trim();
+            if (!q) throw new AppError("Query parameter `q` is required", 400);
+
+            const page = Math.max(1, Number(req.query.page ?? 1));
+            const limit = Math.max(1, Number(req.query.limit ?? 10));
+            const includeUnpublished = String(req.query.includeUnpublished ?? "false").toLowerCase() === "true";
+            const userIdParam = req.query.user_id !== undefined ? Number(req.query.user_id) : undefined;
+
+            // try to parse token if provided (optional auth)
+            let requester: any | undefined;
+            const authHeader = req.headers.authorization;
+            const token = req.cookies?.accessToken ?? (authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined);
+            if (token) {
+                try {
+                    requester = verifyJwt(token, config.ACCESSTOKEN_SECRET);
+                } catch {
+                    // ignore invalid token for public search
+                }
+            }
+
+            // If includeUnpublished requested, require admin
+            if (includeUnpublished && (!requester || requester.role !== "ADMIN")) {
+                throw new AppError("Forbidden: only admin can include unpublished blogs", 403);
+            }
+
+            // If filtering by specific user, require either that user or admin
+            if (typeof userIdParam === "number" && !Number.isNaN(userIdParam)) {
+                if (!requester || (requester.user_id !== userIdParam && requester.role !== "ADMIN")) {
+                    throw new AppError("Forbidden: cannot filter by other user's blogs", 403);
+                }
+            }
+
+            const results = await this.blogService.searchBlogs(q, page, limit, userIdParam);
+            this.handleSuccess(res, results, 200, "success");
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+
 }

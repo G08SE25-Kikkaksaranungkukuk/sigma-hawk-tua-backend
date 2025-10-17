@@ -3,7 +3,7 @@ import { BaseRouter } from "../baseRouter";
 import multer from "multer";
 import { BlogController } from "@/controllers/blog/blogController";
 import { blogMiddleware } from "@/middlewares/blogMiddleware";
-
+    
 const upload = multer({ 
     dest: "uploads/", 
     storage: multer.memoryStorage(),
@@ -67,6 +67,11 @@ export class BlogRouterV2 extends BaseRouter {
             this.blogController.getMyBlog.bind(this.blogController)
         );
 
+        this.router.get(
+            "/search",
+            blogMiddleware,
+            this.blogController.searchBlogs.bind(this.blogController)
+        );
     }
 
     public getRouter(): Router {

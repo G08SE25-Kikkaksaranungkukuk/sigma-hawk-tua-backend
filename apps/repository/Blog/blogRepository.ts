@@ -104,4 +104,38 @@ export class BlogRepository {
         })
         return ret.html_output
     }
+
+    async searchBlogs(
+        query: string,
+        page = 1,
+        limit = 10,
+        user_id?: number
+    ): Promise<Blog[]> {
+        const q = (query ?? "").trim();
+        if (!q) throw new AppError("Query is required", 400);
+
+        const where: any = { AND: [] };
+
+        if (typeof user_id === "number") where.AND.push({ user_id });
+
+        where.AND.push({
+            OR: [
+                { title: { contains: q, mode: "insensitive" } },
+                { description: { contains: q, mode: "insensitive" } },
+            ]
+        });
+
+        const skip = (Math.max(page, 1) - 1) * Math.max(limit, 1);
+        const take = Math.max(limit, 1);
+
+        const results = await prisma.blog.findMany({
+            where,
+            skip,
+            take,
+            orderBy: { created_at: "desc" }
+        });
+
+        return results;
+    }
 }
+

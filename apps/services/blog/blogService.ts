@@ -100,4 +100,15 @@ export class BlogService {
         }
     }
 
+    async searchBlogs(q: string, page: number, limit: number, userIdParam: number | undefined) {
+        try {
+            const ret = await this.repo.searchBlogs(q, page, limit,userIdParam);
+            return ret;
+        } catch (error: any) {
+            throw new AppError(
+                `Failed to search blogs: ${error.message}`,
+                500
+            );
+        }
+    }
 }
