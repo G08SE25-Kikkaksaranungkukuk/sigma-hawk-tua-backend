@@ -1,4 +1,6 @@
 node_modules/
+prisma/migrations/
+prisma/migration_lock.toml
 dist/
 .env
 .DS_Store
