@@ -184,6 +184,15 @@ export class UserRepository {
         });
     }
 
+    async getUserProfilePicture(user: User): Promise<Buffer | null> {
+        if (!user.profile_url) return null;
+        const response = await axios.get(
+            config.FILE_SERVER_URL + user.profile_url,
+            { responseType: "arraybuffer" }
+        );
+        return response.data;
+    }
+
     async getUserProfile(email: string): Promise<Partial<User> | null> {
         const user = await prisma.user.findFirst({
             where: { email },

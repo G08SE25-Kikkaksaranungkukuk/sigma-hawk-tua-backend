@@ -170,6 +170,25 @@ export class UserService {
         }
     }
 
+    async getUserProfilePicture(email : string) : Promise<Buffer | null> {
+        try {
+            const user = await this.repo.retrieveUser(email);
+            if (!user) {
+                throw new AppError("User not found", 404);
+            }
+            if (!user.profile_url) {
+                return null; // No profile picture set
+            }
+            const pic = await this.repo.getUserProfilePicture(user);
+            return pic;
+        } catch (error: any) {
+            throw new AppError(
+                `Failed to fetch user profile picture: ${error.message}`,
+                500
+            );
+        }
+    }
+
     async getUserTravelStyles(email: string) {
         try {
             const travelStyles = await this.repo.getUserTravelStylesByEmail(email);
