@@ -32,6 +32,13 @@ export class GroupRouterV1 extends BaseRouter {
             this.groupController.createGroup.bind(this.groupController)
         );
 
+        this.router.put(
+            "/:groupId",
+            upload.single('profile'),
+            groupMiddleware,
+            this.groupController.updateGroup.bind(this.groupController)
+        );
+
         this.router.get(
             "/filter",
             this.groupController.filterGroups.bind(this.groupController)
