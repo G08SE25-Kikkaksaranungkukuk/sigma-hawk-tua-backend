@@ -107,10 +107,12 @@ export class BlogController extends BaseController {
 
             const page = Math.max(1, Number(req.query.page ?? 1));
             const limit = Math.max(1, Number(req.query.limit ?? 10));
-            const includeUnpublished = String(req.query.includeUnpublished ?? "false").toLowerCase() === "true";
             const userIdParam = req.query.user_id !== undefined ? Number(req.query.user_id) : undefined;
 
-            // try to parse token if provided (optional auth)
+            const rawSort = String(req.query.sort ?? "newest").toLowerCase();
+            const allowedSorts = ["newest", "oldest", "most likes"];
+            const sort = allowedSorts.includes(rawSort) ? (rawSort as "newest" | "oldest" | "most likes") : "newest";
+
             let requester: any | undefined;
             const authHeader = req.headers.authorization;
             const token = req.cookies?.accessToken ?? (authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined);
@@ -122,11 +124,6 @@ export class BlogController extends BaseController {
                 }
             }
 
-            // If includeUnpublished requested, require admin
-            if (includeUnpublished && (!requester || requester.role !== "ADMIN")) {
-                throw new AppError("Forbidden: only admin can include unpublished blogs", 403);
-            }
-
             // If filtering by specific user, require either that user or admin
             if (typeof userIdParam === "number" && !Number.isNaN(userIdParam)) {
                 if (!requester || (requester.user_id !== userIdParam && requester.role !== "ADMIN")) {
@@ -134,7 +131,7 @@ export class BlogController extends BaseController {
                 }
             }
 
-            const results = await this.blogService.searchBlogs(q, page, limit, userIdParam);
+            const results = await this.blogService.searchBlogs(q, page, limit, userIdParam, sort);
             this.handleSuccess(res, results, 200, "success");
         } catch (error) {
             this.handleError(error, res);

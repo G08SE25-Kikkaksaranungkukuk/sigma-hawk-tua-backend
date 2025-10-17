@@ -109,7 +109,8 @@ export class BlogRepository {
         query: string,
         page = 1,
         limit = 10,
-        user_id?: number
+        user_id?: number,
+        sortBy: "newest" | "oldest" | "most likes" = "newest"
     ): Promise<Blog[]> {
         const q = (query ?? "").trim();
         if (!q) throw new AppError("Query is required", 400);
@@ -128,11 +129,25 @@ export class BlogRepository {
         const skip = (Math.max(page, 1) - 1) * Math.max(limit, 1);
         const take = Math.max(limit, 1);
 
+        let orderBy: any;
+        switch (sortBy) {
+            case "oldest":
+                orderBy = { created_at: "asc" };
+                break;
+            case "most likes":
+                // order by number of liked_users (descending)
+                orderBy = { _count: { liked_users: "desc" } };
+                break;
+            case "newest":
+            default:
+                orderBy = { created_at: "desc" };
+        }
+        
         const results = await prisma.blog.findMany({
             where,
             skip,
             take,
-            orderBy: { created_at: "desc" }
+            orderBy
         });
 
         return results;

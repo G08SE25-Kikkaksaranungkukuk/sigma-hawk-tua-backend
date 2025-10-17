@@ -69,7 +69,7 @@ export class BlogRouterV2 extends BaseRouter {
 
         this.router.get(
             "/search",
-            blogMiddleware,
+            //blogMiddleware,
             this.blogController.searchBlogs.bind(this.blogController)
         );
     }

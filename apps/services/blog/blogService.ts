@@ -100,9 +100,9 @@ export class BlogService {
         }
     }
 
-    async searchBlogs(q: string, page: number, limit: number, userIdParam: number | undefined) {
+    async searchBlogs(q: string, page: number, limit: number, userIdParam: number | undefined, sort?: "newest" | "oldest" | "most likes") {
         try {
-            const ret = await this.repo.searchBlogs(q, page, limit,userIdParam);
+            const ret = await this.repo.searchBlogs(q, page, limit, userIdParam, sort);
             return ret;
         } catch (error: any) {
             throw new AppError(
