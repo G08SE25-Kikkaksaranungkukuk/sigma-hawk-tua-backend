@@ -22,7 +22,6 @@ export function blogMiddleware(
 ): void {
   const authHeader = req.headers.authorization;
   const { accessToken } = req.cookies
-
   if (accessToken) { // if accesstoken does exist , calculate the accessToken first
     try {
       const decoded_jwt = verifyJwt(accessToken, config.ACCESSTOKEN_SECRET);

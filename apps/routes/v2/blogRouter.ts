@@ -47,14 +47,14 @@ export class BlogRouterV2 extends BaseRouter {
 
         this.router.get(
             "/:blog_id/likes",
-            blogMiddleware,
+            relaxedBlogMiddleware,
             this.blogController.getLikes.bind(this.blogController)
         );
         
         this.router.post(
             "/:blog_id/likes",
-            relaxedBlogMiddleware,
-            this.blogController.isUserLike.bind(this.blogController)
+            blogMiddleware,
+            this.blogController.userLike.bind(this.blogController)
         );
 
         this.router.put(

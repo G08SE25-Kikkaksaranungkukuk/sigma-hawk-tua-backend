@@ -46,12 +46,16 @@ export class BlogRepository {
     async getLikes(
         blog_id : string
     ) : Promise<Number> {
-        const likeCount = await prisma.blog.count({
-            where : {
-                "blog_id" : Number(blog_id)
-            }
-        })
-        return likeCount;
+        try {
+            const likeCount = await prisma.blog.count({
+                where : {
+                    "blog_id" : Number(blog_id)
+                }
+            })
+            return likeCount;
+        } catch (error : any) {
+            return 0;
+        }
     }
 
     async isUserLike(
@@ -69,7 +73,19 @@ export class BlogRepository {
         } catch (error : any) {
             return false;
         }
-        
+    }
+
+    async userLike(
+        user_id : number,
+        blog_id : string
+    ) : Promise<number> {
+        const ret = await prisma.likeBlog.create({
+            data : {
+                'user_id' : user_id,
+                'blog_id' : Number(blog_id)
+            }
+        })
+        return ret.like_id
     }
 
     async getBlogManifest(
