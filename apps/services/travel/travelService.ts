@@ -8,7 +8,7 @@ export class TravelService {
     }
 
     async getTravelHistory(user_id : number) {
-        const travelHistory = this.repo.getTravelHistory(user_id);
+        const travelHistory = await this.repo.getTravelHistory(user_id);
         return travelHistory;
     }
 
