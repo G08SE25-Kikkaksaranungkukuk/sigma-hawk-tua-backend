@@ -113,7 +113,6 @@ export class BlogRepository {
         sortBy: "newest" | "oldest" | "most likes" = "newest"
     ): Promise<Blog[]> {
         const q = (query ?? "").trim();
-        if (!q) throw new AppError("Query is required", 400);
 
         const where: any = { AND: [] };
 

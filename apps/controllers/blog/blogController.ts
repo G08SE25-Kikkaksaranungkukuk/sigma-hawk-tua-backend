@@ -103,8 +103,7 @@ export class BlogController extends BaseController {
     async searchBlogs(req: Request, res: Response): Promise<void> {
         try {
             const q = String(req.query.q ?? "").trim();
-            if (!q) throw new AppError("Query parameter `q` is required", 400);
-
+    
             const page = Math.max(1, Number(req.query.page ?? 1));
             const limit = Math.max(1, Number(req.query.limit ?? 10));
             const userIdParam = req.query.user_id !== undefined ? Number(req.query.user_id) : undefined;
