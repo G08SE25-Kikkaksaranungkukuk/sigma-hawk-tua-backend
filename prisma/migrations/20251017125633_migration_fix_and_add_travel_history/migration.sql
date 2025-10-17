@@ -132,6 +132,16 @@ CREATE TABLE "blogs" (
 );
 
 -- CreateTable
+CREATE TABLE "like_blog" (
+    "like_id" SERIAL NOT NULL,
+    "user_id" INTEGER NOT NULL,
+    "blog_id" INTEGER NOT NULL,
+    "like_time" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "like_blog_pkey" PRIMARY KEY ("like_id")
+);
+
+-- CreateTable
 CREATE TABLE "group_itineraries" (
     "id" SERIAL NOT NULL,
     "group_id" INTEGER NOT NULL,
@@ -139,6 +149,18 @@ CREATE TABLE "group_itineraries" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "group_itineraries_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "travel_history" (
+    "id" SERIAL NOT NULL,
+    "group_id" INTEGER,
+    "user_id" INTEGER NOT NULL,
+    "itinerary_id" INTEGER,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expires_at" TIMESTAMP(3) NOT NULL DEFAULT NOW() + INTERVAL '1 year',
+
+    CONSTRAINT "travel_history_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -157,14 +179,6 @@ CREATE TABLE "_Belongs" (
     "B" INTEGER NOT NULL,
 
     CONSTRAINT "_Belongs_AB_pkey" PRIMARY KEY ("A","B")
-);
-
--- CreateTable
-CREATE TABLE "_Like" (
-    "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL,
-
-    CONSTRAINT "_Like_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
@@ -186,16 +200,19 @@ CREATE UNIQUE INDEX "user_travel_styles_user_id_travel_style_id_key" ON "user_tr
 CREATE UNIQUE INDEX "request_joins_user_id_group_id_key" ON "request_joins"("user_id", "group_id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "like_blog_user_id_blog_id_key" ON "like_blog"("user_id", "blog_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "group_itineraries_group_id_itinerary_id_key" ON "group_itineraries"("group_id", "itinerary_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "travel_history_group_id_user_id_itinerary_id_key" ON "travel_history"("group_id", "user_id", "itinerary_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "group_interests_group_id_interest_id_key" ON "group_interests"("group_id", "interest_id");
 
 -- CreateIndex
 CREATE INDEX "_Belongs_B_index" ON "_Belongs"("B");
-
--- CreateIndex
-CREATE INDEX "_Like_B_index" ON "_Like"("B");
 
 -- AddForeignKey
 ALTER TABLE "user_interests" ADD CONSTRAINT "user_interests_interest_id_fkey" FOREIGN KEY ("interest_id") REFERENCES "interests"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -222,10 +239,25 @@ ALTER TABLE "request_joins" ADD CONSTRAINT "request_joins_user_id_fkey" FOREIGN 
 ALTER TABLE "interactions" ADD CONSTRAINT "interactions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "like_blog" ADD CONSTRAINT "like_blog_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "like_blog" ADD CONSTRAINT "like_blog_blog_id_fkey" FOREIGN KEY ("blog_id") REFERENCES "blogs"("blog_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "group_itineraries" ADD CONSTRAINT "group_itineraries_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "groups"("group_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "group_itineraries" ADD CONSTRAINT "group_itineraries_itinerary_id_fkey" FOREIGN KEY ("itinerary_id") REFERENCES "itineraries"("itinerary_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "travel_history" ADD CONSTRAINT "travel_history_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "groups"("group_id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "travel_history" ADD CONSTRAINT "travel_history_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "travel_history" ADD CONSTRAINT "travel_history_itinerary_id_fkey" FOREIGN KEY ("itinerary_id") REFERENCES "itineraries"("itinerary_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "group_interests" ADD CONSTRAINT "group_interests_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "groups"("group_id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -238,9 +270,3 @@ ALTER TABLE "_Belongs" ADD CONSTRAINT "_Belongs_A_fkey" FOREIGN KEY ("A") REFERE
 
 -- AddForeignKey
 ALTER TABLE "_Belongs" ADD CONSTRAINT "_Belongs_B_fkey" FOREIGN KEY ("B") REFERENCES "User"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_Like" ADD CONSTRAINT "_Like_A_fkey" FOREIGN KEY ("A") REFERENCES "blogs"("blog_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_Like" ADD CONSTRAINT "_Like_B_fkey" FOREIGN KEY ("B") REFERENCES "User"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
