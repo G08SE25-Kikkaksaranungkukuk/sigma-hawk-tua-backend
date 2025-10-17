@@ -3,6 +3,7 @@ import { BaseRouter } from "../baseRouter";
 import multer from "multer";
 import { BlogController } from "@/controllers/blog/blogController";
 import { blogMiddleware } from "@/middlewares/blogMiddleware";
+import { relaxedBlogMiddleware } from "@/middlewares/relaxedBlogMiddleware";
 
 const upload = multer({ 
     dest: "uploads/", 
@@ -42,6 +43,18 @@ export class BlogRouterV2 extends BaseRouter {
             "/:blog_id/manifest",
             blogMiddleware,
             this.blogController.getBlogManifest.bind(this.blogController)
+        );
+
+        this.router.get(
+            "/:blog_id/likes",
+            blogMiddleware,
+            this.blogController.getLikes.bind(this.blogController)
+        );
+        
+        this.router.post(
+            "/:blog_id/likes",
+            relaxedBlogMiddleware,
+            this.blogController.isUserLike.bind(this.blogController)
         );
 
         this.router.put(

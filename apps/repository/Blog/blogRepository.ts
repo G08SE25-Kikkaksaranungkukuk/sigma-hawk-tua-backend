@@ -3,7 +3,7 @@ import axios from "axios";
 import { config } from "@/config/config";
 import { blogCreateReq } from "@/types/blog/blogRequest";
 import { prisma } from "@/config/prismaClient";
-import { Blog } from "@/prisma/index";
+import { Blog, LikeBlog } from "@/prisma/index";
 
 export class BlogRepository {
     async uploadMedia(
@@ -41,6 +41,35 @@ export class BlogRepository {
             }
         })
         return ret
+    }
+
+    async getLikes(
+        blog_id : string
+    ) : Promise<Number> {
+        const likeCount = await prisma.blog.count({
+            where : {
+                "blog_id" : Number(blog_id)
+            }
+        })
+        return likeCount;
+    }
+
+    async isUserLike(
+        user_id : number,
+        blog_id : string
+    ) : Promise<Boolean> {
+        try {
+            await prisma.blog.findFirstOrThrow({
+                where : {
+                    "user_id" : user_id,
+                    "blog_id" : Number(blog_id)
+                }
+            })
+            return true;
+        } catch (error : any) {
+            return false;
+        }
+        
     }
 
     async getBlogManifest(

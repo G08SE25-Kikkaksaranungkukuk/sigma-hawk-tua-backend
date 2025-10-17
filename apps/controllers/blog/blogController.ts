@@ -48,6 +48,32 @@ export class BlogController extends BaseController {
         }
     }
 
+    async getLikes(req : Request , res : Response) : Promise<void> {
+        try {
+            const {blog_id} = req.params;
+            if(!blog_id) throw new AppError("No specified blog's manifest",404);
+            const dat = await this.blogService.getLikes(blog_id);
+            this.handleSuccess(res,dat,200,"success")
+        }
+        catch(error : any) {
+            this.handleError(error,res);
+        }
+    }
+
+    async isUserLike(req : Request , res : Response) : Promise<void> {
+        try {
+            const userInfo = req.user
+            const {blog_id} = req.params;
+            if(!userInfo) throw new AppError("Not Logged In",401)
+            if(!blog_id) throw new AppError("No specified blog's manifest",404);
+            const dat = await this.blogService.isUserLike(userInfo.user_id,blog_id);
+            this.handleSuccess(res,dat,200,"success")
+        }
+        catch(error : any) {
+            this.handleError(error,res);
+        }
+    }
+
     async getBlogManifest(req : Request , res : Response) : Promise<void> {
         try {
             const {blog_id} = req.params

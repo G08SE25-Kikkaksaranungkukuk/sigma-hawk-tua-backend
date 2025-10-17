@@ -49,6 +49,32 @@ export class BlogService {
         }
     }
 
+    async getLikes(blog_id : string) {
+        try {
+            const ret = await this.repo.getLikes(blog_id);
+            return ret;
+        }
+        catch(error : any) {
+            throw new AppError(
+                `Failed to retrieve like count from blog: ${error.message}`,
+                500
+            )
+        }
+    }
+
+    async isUserLike(user_id : number, blog_id : string) {
+        try {
+            const ret = await this.repo.isUserLike(user_id, blog_id);
+            return ret;
+        }
+        catch(error : any) {
+            throw new AppError(
+                `Failed to get user like status : ${error.message}`,
+                500
+            )
+        }
+    }
+
     async getBlogManifest(user_id : number , blog_id : string) : Promise<Blog> {
         try {
             const ret = await this.repo.getBlogManifest(user_id , blog_id);
