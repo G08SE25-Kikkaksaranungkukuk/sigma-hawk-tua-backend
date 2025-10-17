@@ -49,9 +49,9 @@ export class BlogService {
         }
     }
 
-    async getLikes(blog_id : string) {
+    async getLikes(user_id : number, blog_id : string) {
         try {
-            const ret = await this.repo.getLikes(blog_id);
+            const ret = await this.repo.getLikes(user_id, blog_id);
             return ret;
         }
         catch(error : any) {
@@ -83,6 +83,19 @@ export class BlogService {
         catch(error : any) {
             throw new AppError(
                 `Failed to like blog : ${error.message}`,
+                500
+            )
+        }
+    }
+
+    async userUnlike(user_id : number, blog_id : string) {
+        try {
+            const ret = await this.repo.userUnlike(user_id , blog_id);
+            return ret
+        }
+        catch(error : any) {
+            throw new AppError(
+                `Failed to unlike blog : ${error.message}`,
                 500
             )
         }

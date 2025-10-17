@@ -57,6 +57,12 @@ export class BlogRouterV2 extends BaseRouter {
             this.blogController.userLike.bind(this.blogController)
         );
 
+        this.router.delete(
+            "/:blog_id/likes",
+            blogMiddleware,
+            this.blogController.userUnlike.bind(this.blogController)
+        );
+
         this.router.put(
             "/:blog_id/",
             blogMiddleware,

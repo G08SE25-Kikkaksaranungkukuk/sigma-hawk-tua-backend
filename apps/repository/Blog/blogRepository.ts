@@ -38,17 +38,21 @@ export class BlogRepository {
         const ret = await prisma.blog.findMany({
             where : {
                 "user_id" : user_id
+            }, include : {
+                likes: true
             }
         })
         return ret
     }
 
     async getLikes(
+        user_id : number,
         blog_id : string
     ) : Promise<Number> {
         try {
-            const likeCount = await prisma.blog.count({
+            const likeCount = await prisma.likeBlog.count({
                 where : {
+                    "user_id" : user_id,
                     "blog_id" : Number(blog_id)
                 }
             })
@@ -63,7 +67,7 @@ export class BlogRepository {
         blog_id : string
     ) : Promise<Boolean> {
         try {
-            await prisma.blog.findFirstOrThrow({
+            await prisma.likeBlog.findFirstOrThrow({
                 where : {
                     "user_id" : user_id,
                     "blog_id" : Number(blog_id)
@@ -86,6 +90,29 @@ export class BlogRepository {
             }
         })
         return ret.like_id
+    }
+
+    async userUnlike(
+        user_id : number,
+        blog_id : string
+    ) : Promise<void> {
+        try {
+            await prisma.likeBlog.findFirstOrThrow({
+                where : {
+                    "user_id" : user_id,
+                    "blog_id" : Number(blog_id)
+                }
+            })
+
+            await prisma.likeBlog.deleteMany({
+                where : {
+                    "user_id" : user_id,
+                    "blog_id" : Number(blog_id)
+                }
+            })
+        } catch (error : any) {
+
+        }
     }
 
     async getBlogManifest(
