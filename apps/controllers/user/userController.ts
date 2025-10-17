@@ -146,4 +146,20 @@ export class UserController extends BaseController {
             this.handleError(error, res);
         }
     }
+
+    async getUserProfilePicture(req: Request, res: Response): Promise<void> {
+        try {
+            //no need cookies, just need email
+            const email = req.params.email;
+            const pic = await this.service.getUserProfilePicture(email);
+            if (!pic) {
+                this.handleError(new Error("Profile picture not found"), res);
+                return;
+            }
+            res.set("Content-Type", "image/jpeg");
+            res.send(pic);
+        } catch (error) {
+            this.handleError(error, res);
+        }
+    }
 }
