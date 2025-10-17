@@ -48,6 +48,50 @@ export class BlogController extends BaseController {
         }
     }
 
+    async getLikes(req : Request , res : Response) : Promise<void> {
+        try {
+            const userInfo = req.user
+            const {blog_id} = req.params;
+            if(!userInfo) throw new AppError("Not Logged In",401)
+            if(!blog_id) throw new AppError("No specified blog's manifest",404);
+            const response_data  = {
+                "is_like_by_me" : await this.blogService.isUserLike(userInfo.user_id, blog_id),
+                "count" : await this.blogService.getLikes(userInfo.user_id,blog_id)
+            }
+            this.handleSuccess(res,response_data,200,"success")
+        }
+        catch(error : any) {
+            this.handleError(error,res);
+        }
+    }
+
+    async userLike(req : Request , res : Response) : Promise<void> {
+        try {
+            const userInfo = req.user
+            const {blog_id} = req.params;
+            if(!userInfo) throw new AppError("Not Logged In",401)
+            if(!blog_id) throw new AppError("No specified blog's manifest",404);
+            const dat = await this.blogService.userLike(userInfo.user_id, blog_id);
+            this.handleSuccess(res,dat,200,"success")
+        }
+        catch(error : any) {
+            this.handleError(error,res);
+        }
+    }
+
+    async userUnlike(req : Request , res : Response) : Promise<void> {
+        try {
+            const userInfo = req.user
+            const {blog_id} = req.params
+            if(!userInfo) throw new AppError("Not Logged In",401)
+            if(!blog_id) throw new AppError("No specified blog's manifest",404);
+            const dat = await this.blogService.userUnlike(userInfo.user_id,blog_id)
+            this.handleSuccess(res,null,200,"deleted")
+        } catch(error) {
+            this.handleError(error,res);
+        }
+    }
+
     async getBlogManifest(req : Request , res : Response) : Promise<void> {
         try {
             const {blog_id} = req.params
