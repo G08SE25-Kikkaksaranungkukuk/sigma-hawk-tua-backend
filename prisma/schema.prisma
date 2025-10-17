@@ -25,6 +25,7 @@ model User {
   updated_at       DateTime          @updatedAt
   Belongs          Belongs[]
   headOf           Group[]           @relation("IsHeadOf")
+  Interaction      Interaction[]     @relation("UserInteractions")
   requests         RequestJoin[]     @relation("UserRequests")
   userInterests    UserInterest[]    @relation("UserHasInterests")
   userTravelStyles UserTravelStyle[] @relation("UserHasTravelStyles")
@@ -113,6 +114,19 @@ model RequestJoin {
 
   @@unique([user_id, group_id])
   @@map("request_joins")
+}
+
+model Interaction {
+  id         Int      @id @default(autoincrement())
+  message    String?
+  like       Boolean?
+  dislike    Boolean?
+  picture    String?
+  user_id    Int
+  created_at DateTime @default(now())
+  user       User     @relation("UserInteractions", fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@map("interactions")
 }
 
 model Itinerary {
