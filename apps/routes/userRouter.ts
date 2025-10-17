@@ -63,6 +63,11 @@ export class UserRouter extends BaseRouter {
             upload.single("profile"),
             this.controller.uploadUserProfile.bind(this.controller)
         );
+
+        this.router.get(
+            "/:email/profile_pic",
+            this.controller.getUserProfilePicture.bind(this.controller)
+        );
     }
 
     public getRouter(): Router {
