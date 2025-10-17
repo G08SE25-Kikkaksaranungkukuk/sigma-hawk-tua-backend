@@ -29,7 +29,7 @@ model User {
   requests         RequestJoin[]     @relation("UserRequests")
   userInterests    UserInterest[]    @relation("UserHasInterests")
   userTravelStyles UserTravelStyle[] @relation("UserHasTravelStyles")
-  likes_blog       Blog[]            @relation("Like")
+  likes            LikeBlog[]        @relation("UserLikes")
 }
 
 model Interest {
@@ -151,9 +151,21 @@ model Blog {
   created_at    DateTime        @default(now())
   json_config   String
   html_output   String
-  liked_users   User[]          @relation("Like")
+  likes         LikeBlog[]      @relation("BlogLiked")
 
   @@map("blogs")
+}
+
+model LikeBlog {
+  like_id       Int             @id @default(autoincrement())
+  user_id       Int
+  blog_id       Int
+  like_time     DateTime        @default(now())
+  User          User            @relation("UserLikes", fields: [user_id], references: [user_id], onDelete: Cascade)
+  blogs         Blog            @relation("BlogLiked", fields: [blog_id], references: [blog_id], onDelete: Cascade)
+
+  @@unique([user_id, blog_id])
+  @@map("like_blog")
 }
 
 model GroupItinerary {
@@ -181,10 +193,10 @@ model GroupInterest {
 }
 
 model Belongs {
-  A      Int
-  B      Int
-  groups Group @relation(fields: [A], references: [group_id], onDelete: Cascade)
-  User   User  @relation(fields: [B], references: [user_id], onDelete: Cascade)
+  A         Int       
+  B         Int
+  groups    Group     @relation(fields: [A], references: [group_id], onDelete: Cascade)
+  User      User      @relation(fields: [B], references: [user_id], onDelete: Cascade)
 
   @@id([A, B], map: "_Belongs_AB_pkey")
   @@index([B], map: "_Belongs_B_index")
