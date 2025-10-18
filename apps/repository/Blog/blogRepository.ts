@@ -217,13 +217,18 @@ export class BlogRepository {
         })
     }
 
-    async getBlogContent(blog_id : string) : Promise<string> {
-        const ret = await prisma.blog.findFirstOrThrow({
-            where : {
-                "blog_id" : Number(blog_id)
+    async getBlogContent(blog_id: string): Promise<{ title: string; description: string | null; html_output: string }> {
+        const blogContent = await prisma.blog.findFirstOrThrow({
+            where: {
+                "blog_id": Number(blog_id)
+            },
+            select: {
+                title: true,
+                description: true,
+                html_output: true
             }
-        })
-        return ret.html_output
+        });
+        return blogContent;
     }
 
     /**
