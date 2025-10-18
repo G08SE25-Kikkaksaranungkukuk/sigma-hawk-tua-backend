@@ -131,16 +131,23 @@ export class BlogRepository {
     }
 
     async getBlogManifest(
-        user_id : number,
-        blog_id : string
-    ) : Promise<Blog> {
+        user_id: number,
+        blog_id: string
+    ): Promise<Blog> {
         const blogData = await prisma.blog.findFirstOrThrow({
-            where : {
-                "blog_id" : Number(blog_id),
-                "user_id" : user_id
-            }
-        })
-        return blogData
+            where: {
+                "blog_id": Number(blog_id),
+                "user_id": user_id
+            },
+            include: {
+                blog_interests: {
+                    include: {
+                        interest: true, // Include the actual interest data (name, etc.)
+                    },
+                },
+            },
+        });
+        return blogData;
     }
 
     async updateBlog(
