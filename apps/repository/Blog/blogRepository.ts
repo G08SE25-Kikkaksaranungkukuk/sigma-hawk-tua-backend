@@ -21,16 +21,34 @@ export class BlogRepository {
     }
 
     async createBlog(
-        user_id : number,
-        dat : blogCreateReq
-    ) : Promise<number> {
-        const ret = await prisma.blog.create({
-            data : {
-                'user_id' : user_id,
-                ...dat
-            }
-        })
-        return ret.blog_id
+        user_id: number,
+        dat: blogCreateReq
+    ): Promise<number> {
+        // 1. Destructure the interest IDs from the rest of the blog data.
+        // It's assumed 'dat' has a property like 'interest_id' which is an array of numbers.
+        const { interest_id, ...blogData } = dat as any; // Use 'as any' to avoid type errors until blogCreateReq is updated
+
+        // 2. Create the main blog record to get its unique ID.
+        const newBlog = await prisma.blog.create({
+            data: {
+                user_id: user_id,
+                ...blogData,
+            },
+        });
+
+        // 3. If an array of interest IDs was provided, create the associations.
+        if (interest_id && Array.isArray(interest_id) && interest_id.length > 0) {
+            // Create all the link records in the 'BlogInterest' join table in one go.
+            await prisma.blogInterest.createMany({
+                data: interest_id.map((id: number) => ({
+                    blog_id: newBlog.blog_id,
+                    interest_id: id,
+                })),
+            });
+        }
+
+        // 4. Return the ID of the newly created blog.
+        return newBlog.blog_id;
     }
 
     async getMyBlog(
