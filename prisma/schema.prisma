@@ -155,7 +155,7 @@ model Blog {
   created_at    DateTime       @default(now())
   json_config   String
   html_output   String
-  blogInterests BlogInterest[] @relation("BlogHasInterests")
+  blog_interests BlogInterest[] @relation("BlogHasInterests")
   likes         LikeBlog[]      @relation("BlogLiked")
 
   @@map("blogs")

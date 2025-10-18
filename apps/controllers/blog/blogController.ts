@@ -15,12 +15,12 @@ export class BlogController extends BaseController {
     }
 
     /**
-     * Search and filter blogs by keyword, tag, author, date
-     * GET /blog/search?keyword=...&tag=...&author=...&date=...
+     * Search and filter blogs by keyword, tag, interest_id, date
+     * GET /blog/search?keyword=...&tag=...&interest_id=...&date=...
      */
     async searchBlogs(req: Request, res: Response): Promise<void> {
         try {
-            const { keyword, interest_id, author, date, page, page_size } = req.query;
+            const { keyword, interest_id, date, page, page_size } = req.query;
             // Parse interest_id from query: can be string, string[], or undefined
             let interestIds: number[] | undefined = undefined;
             if (interest_id) {
@@ -34,7 +34,6 @@ export class BlogController extends BaseController {
             const filter = {
                 keyword: keyword as string | undefined,
                 interest_id: interestIds,
-                author: author as string | undefined,
                 date: date as string | undefined,
                 page: page ? Number(page) : 1,
                 page_size: page_size ? Number(page_size) : 10,

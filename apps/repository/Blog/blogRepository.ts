@@ -179,10 +179,10 @@ export class BlogRepository {
     }
 
     /**
-     * Search and filter blogs by keyword, tag, author, date
+     * Search and filter blogs by keyword, interest_id, date
      */
     async searchBlogs(filter: BlogSearchFilter) {
-        const { keyword, interest_id, author, date, page = 1, page_size = 10 } = filter;
+        const { keyword, interest_id, date, page = 1, page_size = 10 } = filter;
         const where: any = {};
 
         if (keyword) {
@@ -192,7 +192,6 @@ export class BlogRepository {
                 { html_output: { contains: keyword, mode: "insensitive" } }
             ];
         }
-        // No author field in Blog schema, so skip author
         if (date) {
             // Assuming date is in YYYY-MM-DD format
             const dateObj = new Date(date);
@@ -204,10 +203,10 @@ export class BlogRepository {
             }
         }
 
-        // Filter by interest_id using BlogInterest join table
+        // Filter by interest_id using blog_interests join table
         let blogWhere = where;
         let include: any = {
-            blogInterests: {
+            blog_interests: {
                 select: { interest_id: true }
             }
         };
@@ -216,7 +215,7 @@ export class BlogRepository {
             blogWhere = {
                 ...where,
                 AND: interest_id.map((id) => ({
-                    blogInterests: {
+                    blog_interests: {
                         some: { interest_id: id }
                     }
                 }))
