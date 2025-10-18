@@ -14,6 +14,37 @@ export class BlogController extends BaseController {
         this.blogService = new BlogService();
     }
 
+    /**
+     * Search and filter blogs by keyword, tag, interest_id, date
+     * GET /blog/search?keyword=...&tag=...&interest_id=...&date=...
+     */
+    async searchBlogs(req: Request, res: Response): Promise<void> {
+        try {
+            const { keyword, interest_id, date, page, page_size } = req.query;
+            // Parse interest_id from query: can be string, string[], or undefined
+            let interestIds: number[] | undefined = undefined;
+            if (interest_id) {
+                if (Array.isArray(interest_id)) {
+                    interestIds = interest_id.map((id) => Number(id)).filter((id) => !isNaN(id));
+                } else if (typeof interest_id === 'string') {
+                    // Support comma-separated values or single value
+                    interestIds = interest_id.split(',').map((id) => Number(id)).filter((id) => !isNaN(id));
+                }
+            }
+            const filter = {
+                keyword: keyword as string | undefined,
+                interest_id: interestIds,
+                date: date as string | undefined,
+                page: page ? Number(page) : 1,
+                page_size: page_size ? Number(page_size) : 10,
+            };
+            const result = await this.blogService.searchBlogs(filter);
+            this.handleSuccess(res, result, 200);
+            } catch (error) {
+            this.handleError(error, res);
+        }
+    }
+    
     async uploadBlogMedia(req: Request, res: Response): Promise<void> {
         try {
             const ret = await this.blogService.uploadBlogMedia(req.file);

@@ -44,6 +44,7 @@ model Interest {
   updated_at     DateTime        @updatedAt
   groupInterests GroupInterest[] @relation("InterestBelongsToGroups")
   userInterests  UserInterest[]  @relation("InterestBelongsToUsers")
+  BlogInterest   BlogInterest[]
 
   @@map("interests")
 }
@@ -147,16 +148,29 @@ model Itinerary {
 }
 
 model Blog {
-  blog_id       Int             @id @default(autoincrement())
+  blog_id       Int            @id @default(autoincrement())
   user_id       Int
   title         String
   description   String
-  created_at    DateTime        @default(now())
+  created_at    DateTime       @default(now())
   json_config   String
   html_output   String
+  blog_interests BlogInterest[] @relation("BlogHasInterests")
   likes         LikeBlog[]      @relation("BlogLiked")
 
   @@map("blogs")
+}
+
+model BlogInterest {
+  id          Int      @id @default(autoincrement())
+  blog_id     Int
+  interest_id Int
+  created_at  DateTime @default(now())
+  blog        Blog     @relation("BlogHasInterests", fields: [blog_id], references: [blog_id], onDelete: Cascade)
+  interest    Interest @relation(fields: [interest_id], references: [id], onDelete: Cascade)
+
+  @@unique([blog_id, interest_id])
+  @@map("blog_interests")
 }
 
 model LikeBlog {
