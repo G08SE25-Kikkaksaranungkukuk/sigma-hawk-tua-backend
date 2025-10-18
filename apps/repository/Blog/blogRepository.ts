@@ -3,7 +3,7 @@ import axios from "axios";
 import { config } from "@/config/config";
 import { blogCreateReq } from "@/types/blog/blogRequest";
 import { prisma } from "@/config/prismaClient";
-import { Blog } from "@/prisma/index";
+import { Blog, LikeBlog } from "@/prisma/index";
 
 export class BlogRepository {
     async uploadMedia(
@@ -38,9 +38,81 @@ export class BlogRepository {
         const ret = await prisma.blog.findMany({
             where : {
                 "user_id" : user_id
+            }, include : {
+                likes: true
             }
         })
         return ret
+    }
+
+    async getLikes(
+        user_id : number,
+        blog_id : string
+    ) : Promise<Number> {
+        try {
+            const likeCount = await prisma.likeBlog.count({
+                where : {
+                    "user_id" : user_id,
+                    "blog_id" : Number(blog_id)
+                }
+            })
+            return likeCount;
+        } catch (error : any) {
+            return 0;
+        }
+    }
+
+    async isUserLike(
+        user_id : number,
+        blog_id : string
+    ) : Promise<Boolean> {
+        try {
+            await prisma.likeBlog.findFirstOrThrow({
+                where : {
+                    "user_id" : user_id,
+                    "blog_id" : Number(blog_id)
+                }
+            })
+            return true;
+        } catch (error : any) {
+            return false;
+        }
+    }
+
+    async userLike(
+        user_id : number,
+        blog_id : string
+    ) : Promise<number> {
+        const ret = await prisma.likeBlog.create({
+            data : {
+                'user_id' : user_id,
+                'blog_id' : Number(blog_id)
+            }
+        })
+        return ret.like_id
+    }
+
+    async userUnlike(
+        user_id : number,
+        blog_id : string
+    ) : Promise<void> {
+        try {
+            await prisma.likeBlog.findFirstOrThrow({
+                where : {
+                    "user_id" : user_id,
+                    "blog_id" : Number(blog_id)
+                }
+            })
+
+            await prisma.likeBlog.deleteMany({
+                where : {
+                    "user_id" : user_id,
+                    "blog_id" : Number(blog_id)
+                }
+            })
+        } catch (error : any) {
+
+        }
     }
 
     async getBlogManifest(

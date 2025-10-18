@@ -3,6 +3,7 @@ import { verifyJwt } from "@/utils/jwt";
 import { config } from "@/config/config";
 
 import type { Request, Response, NextFunction } from "express";
+import { numKeys } from "zod/v4/core/util.cjs";
 
 // merging declaration
 declare module "express" {
@@ -15,21 +16,21 @@ declare module "express" {
   }
 }
 
-export function blogMiddleware(
+export function relaxedBlogMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
 ): void {
   const authHeader = req.headers.authorization;
   const { accessToken } = req.cookies
+
   if (accessToken) { // if accesstoken does exist , calculate the accessToken first
     try {
       const decoded_jwt = verifyJwt(accessToken, config.ACCESSTOKEN_SECRET);
       req.user = decoded_jwt;
       next()
     } catch (error: unknown) {
-      console.error("JWT berification error:", error);
-      throw new AppError("Unauthorized: Invalid token", 401);
+      req.user = undefined;
     }
   }
   else if (authHeader && authHeader.startsWith("Bearer ")) { // if authorization do exists, calculate the authorization code
@@ -39,11 +40,10 @@ export function blogMiddleware(
       req.user = decoded;
       next();
     } catch (error: unknown) {
-      console.error("JWT verification error:", error);
-      throw new AppError("Unauthorized: Invalid token", 401);
+      req.user = undefined;
     }
   }
   else { // else , unAuthorized
-    throw new AppError("Unauthorized: No token provided", 401);
+    req.user = undefined;
   }
 }
