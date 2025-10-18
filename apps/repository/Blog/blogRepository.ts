@@ -4,7 +4,7 @@ import { BlogSearchFilter } from "@/types/blog/blogRequest";
 import axios from "axios";
 import { config } from "@/config/config";
 import { blogCreateReq } from "@/types/blog/blogRequest";
-import { Blog, LikeBlog } from "@/prisma/index";
+import { Blog, BlogInterest, LikeBlog } from "@/prisma/index";
 
 export class BlogRepository {
     async uploadMedia(
@@ -24,11 +24,8 @@ export class BlogRepository {
         user_id: number,
         dat: blogCreateReq
     ): Promise<number> {
-        // 1. Destructure the interest IDs from the rest of the blog data.
-        // It's assumed 'dat' has a property like 'interest_id' which is an array of numbers.
-        const { interest_id, ...blogData } = dat as any; // Use 'as any' to avoid type errors until blogCreateReq is updated
+        const { interest_id, ...blogData } = dat as any; 
 
-        // 2. Create the main blog record to get its unique ID.
         const newBlog = await prisma.blog.create({
             data: {
                 user_id: user_id,
@@ -36,9 +33,8 @@ export class BlogRepository {
             },
         });
 
-        // 3. If an array of interest IDs was provided, create the associations.
         if (interest_id && Array.isArray(interest_id) && interest_id.length > 0) {
-            // Create all the link records in the 'BlogInterest' join table in one go.
+
             await prisma.blogInterest.createMany({
                 data: interest_id.map((id: number) => ({
                     blog_id: newBlog.blog_id,
@@ -47,7 +43,7 @@ export class BlogRepository {
             });
         }
 
-        // 4. Return the ID of the newly created blog.
+
         return newBlog.blog_id;
     }
 
@@ -148,27 +144,54 @@ export class BlogRepository {
     }
 
     async updateBlog(
-        user_id : number,
-        blog_id : string,
-        dat : blogCreateReq
-    ) : Promise<Blog> {
-        
-        await prisma.blog.findFirstOrThrow({
-            where : {
-                "user_id" : user_id,
-                "blog_id" : Number(blog_id)
-            }
-        })
-        
-        const blogData = await prisma.blog.update({
-            where : {
-                "user_id" : user_id,
-                "blog_id" : Number(blog_id)
-            },
-            data : dat
-        })
+        user_id: number,
+        blog_id: string,
+        dat: blogCreateReq
+    ): Promise<Blog> {
+        const { interest_id, ...blogData } = dat as any;
+        const numericBlogId = Number(blog_id);
 
-        return blogData
+        await prisma.$transaction(async (tx) => {
+            await tx.blog.update({
+                where: {
+                    blog_id: numericBlogId,
+                    user_id: user_id,
+                },
+                data: blogData,
+            });
+
+            if ("interest_id" in dat) {
+                await tx.blogInterest.deleteMany({
+                    where: { blog_id: numericBlogId },
+                });
+
+                if (interest_id && Array.isArray(interest_id) && interest_id.length > 0) {
+                    await tx.blogInterest.createMany({
+                        data: interest_id.map((id: number) => ({
+                            blog_id: numericBlogId,
+                            interest_id: id,
+                        })),
+                    });
+                }
+            }
+        });
+
+        const result = await prisma.blog.findUnique({
+            where: { blog_id: numericBlogId },
+            include: {
+                blog_interests: {
+                    include: {
+                        interest: true,
+                    },
+                },
+            },
+        });
+
+        if (!result) {
+            throw new AppError("Failed to retrieve updated blog after transaction", 500);
+        }
+
+        return result;
     }
 
     async deleteBlog(user_id : number , blog_id : string) : Promise<void> {
