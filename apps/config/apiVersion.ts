@@ -15,12 +15,12 @@ export const API_VERSIONS: Record<string, ApiVersionConfig> = {
         description: "Initial API version with core travel companion functionality",
     },
     // Future versions
-    // v2: {
-    //     version: "2.0.0", 
-    //     prefix: "/api/v2",
-    //     isActive: false,
-    //     description: "Enhanced API with advanced matching algorithms"
-    // }
+    v2: {
+        version: "2.0.0", 
+        prefix: "/api/v2",
+        isActive: true,
+        description: "Enhanced API with advanced matching algorithms"
+    }
 };
 
 export const DEFAULT_API_VERSION = "v1";

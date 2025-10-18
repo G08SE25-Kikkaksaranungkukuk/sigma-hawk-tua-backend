@@ -29,7 +29,8 @@ model User {
   requests         RequestJoin[]     @relation("UserRequests")
   userInterests    UserInterest[]    @relation("UserHasInterests")
   userTravelStyles UserTravelStyle[] @relation("UserHasTravelStyles")
-  likes_blog       Blog[]            @relation("Like")
+  likes            LikeBlog[]        @relation("UserLikes")
+  travelHistories  TravelHistory[]   @relation("UserHasTravelHistory")
 }
 
 model Interest {
@@ -42,7 +43,6 @@ model Interest {
   created_at     DateTime        @default(now())
   updated_at     DateTime        @updatedAt
   groupInterests GroupInterest[] @relation("InterestBelongsToGroups")
-  placeInterests PlaceInterest[] @relation("InterestBelongsToPlaces")
   userInterests  UserInterest[]  @relation("InterestBelongsToUsers")
   BlogInterest   BlogInterest[]
 
@@ -101,6 +101,7 @@ model Group {
   itineraries     GroupItinerary[] @relation("GroupHasItineraries")
   leader          User             @relation("IsHeadOf", fields: [group_leader_id], references: [user_id], onDelete: Cascade)
   requests        RequestJoin[]    @relation("GroupReceivesRequests")
+  travelHistories TravelHistory[]  @relation("GroupHasTravelHistory")
 
   @@map("groups")
 }
@@ -131,36 +132,17 @@ model Interaction {
   @@map("interactions")
 }
 
-model Place {
-  place_id       Int             @id @default(autoincrement())
-  name           String
-  description    String?
-  place_type     String?
-  latitude       Float?
-  longitude      Float?
-  picture_url    String?
-  phone_num      String?
-  social_media   String?
-  address        String?
-  rating         Float?          @default(0)
-  created_at     DateTime        @default(now())
-  updated_at     DateTime        @updatedAt
-  placeInterests PlaceInterest[] @relation("PlaceHasInterests")
-  Itinerary      Itinerary[]     @relation("CreateEditItinerary")
-
-  @@map("places")
-}
-
 model Itinerary {
   itinerary_id Int              @id @default(autoincrement())
   title        String?
   description  String?
   start_date   DateTime
   end_date     DateTime
+  place_links  String[]         @default([])
   created_at   DateTime         @default(now())
   updated_at   DateTime         @updatedAt
   groups       GroupItinerary[] @relation("ItineraryBelongsToGroups")
-  places       Place[]          @relation("CreateEditItinerary")
+  travelHistories TravelHistory[]  @relation("ItineraryHasTravelHistory")
 
   @@map("itineraries")
 }
@@ -173,8 +155,8 @@ model Blog {
   created_at    DateTime       @default(now())
   json_config   String
   html_output   String
-  liked_users   User[]         @relation("Like")
   blogInterests BlogInterest[] @relation("BlogHasInterests")
+  likes         LikeBlog[]      @relation("BlogLiked")
 
   @@map("blogs")
 }
@@ -191,6 +173,18 @@ model BlogInterest {
   @@map("blog_interests")
 }
 
+model LikeBlog {
+  like_id       Int             @id @default(autoincrement())
+  user_id       Int
+  blog_id       Int
+  like_time     DateTime        @default(now())
+  User          User            @relation("UserLikes", fields: [user_id], references: [user_id], onDelete: Cascade)
+  blogs         Blog            @relation("BlogLiked", fields: [blog_id], references: [blog_id], onDelete: Cascade)
+
+  @@unique([user_id, blog_id])
+  @@map("like_blog")
+}
+
 model GroupItinerary {
   id           Int       @id @default(autoincrement())
   group_id     Int
@@ -201,6 +195,21 @@ model GroupItinerary {
 
   @@unique([group_id, itinerary_id])
   @@map("group_itineraries")
+}
+
+model TravelHistory {
+  id           Int       @id @default(autoincrement())
+  group_id     Int?
+  user_id      Int
+  itinerary_id Int?
+  created_at   DateTime  @default(now())
+  expires_at   DateTime  @default(dbgenerated("NOW() + INTERVAL '1 year'"))
+  group        Group?    @relation("GroupHasTravelHistory", fields: [group_id], references: [group_id], onDelete: SetNull)
+  user         User      @relation("UserHasTravelHistory", fields: [user_id], references: [user_id], onDelete: Cascade)
+  itinerary    Itinerary? @relation("ItineraryHasTravelHistory", fields: [itinerary_id], references: [itinerary_id], onDelete: SetNull)
+
+  @@unique([group_id, user_id, itinerary_id])
+  @@map("travel_history")
 }
 
 model GroupInterest {
@@ -215,23 +224,11 @@ model GroupInterest {
   @@map("group_interests")
 }
 
-model PlaceInterest {
-  id          Int      @id @default(autoincrement())
-  place_id    Int
-  interest_id Int
-  created_at  DateTime @default(now())
-  interest    Interest @relation("InterestBelongsToPlaces", fields: [interest_id], references: [id], onDelete: Cascade)
-  place       Place    @relation("PlaceHasInterests", fields: [place_id], references: [place_id], onDelete: Cascade)
-
-  @@unique([place_id, interest_id])
-  @@map("place_interests")
-}
-
 model Belongs {
-  A      Int
-  B      Int
-  groups Group @relation(fields: [A], references: [group_id], onDelete: Cascade)
-  User   User  @relation(fields: [B], references: [user_id], onDelete: Cascade)
+  A         Int       
+  B         Int
+  groups    Group     @relation(fields: [A], references: [group_id], onDelete: Cascade)
+  User      User      @relation(fields: [B], references: [user_id], onDelete: Cascade)
 
   @@id([A, B], map: "_Belongs_AB_pkey")
   @@index([B], map: "_Belongs_B_index")

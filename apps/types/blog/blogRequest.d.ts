@@ -6,3 +6,10 @@ export interface BlogSearchFilter {
     page?: number;
     page_size?: number;
 }
+
+export interface blogCreateReq {
+    title: string;
+    description: string;
+    json_config: string;
+    html_output: string;
+}
