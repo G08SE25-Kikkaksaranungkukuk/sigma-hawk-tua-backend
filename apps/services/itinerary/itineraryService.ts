@@ -56,11 +56,11 @@ export class ItineraryService implements IItineraryService {
      */
     async getGroupItineraries(groupId: number, userId: number): Promise<ItineraryListResponse[]> {
         try {
-            // Check if user is a member of the group
-            const isMember = await this.repository.isUserGroupMember(userId, groupId);
-            if (!isMember) {
-                throw new AppError("You must be a member of this group to view its itineraries", 403);
-            }
+            // // Check if user is a member of the group
+            // const isMember = await this.repository.isUserGroupMember(userId, groupId);
+            // if (!isMember) {
+            //     throw new AppError("You must be a member of this group to view its itineraries", 403);
+            // }
 
             // Check if group exists
             const groupExists = await this.repository.groupExists(groupId);
