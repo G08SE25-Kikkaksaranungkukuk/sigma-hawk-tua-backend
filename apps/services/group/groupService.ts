@@ -151,5 +151,25 @@ export class GroupService {
             throw new AppError("Failed to get group profile", 500);
         }
     }
+
+    async updateGroup(group_id: number, user_id: number, update_data: Partial<groupCreateReq>) {
+        try {
+            // Verify the group exists and user is the leader
+            await this.grouprepository.isGroupLeader({ group_id, user_id });
+            
+            // Update the group
+            const updatedGroup = await this.grouprepository.updateGroup(group_id, update_data);
+            
+            // Return the updated group with full details
+            const groupDetails = await this.grouprepository.getGroupWithDetails(group_id);
+            return groupDetails;
+        } catch (error: unknown) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            console.error("Error updating group:", error);
+            throw new AppError("Failed to update group", 500);
+        }
+    }
 }
 

@@ -421,10 +421,17 @@ export class GroupRepository {
                 throw new AppError("Unsupported file format. Supported formats: jpg, jpeg, png, gif, webp", 400);
             }
             
-            const uploadPath = `/public/group/${group_id}.${file_ext}`;
+            // Add timestamp to filename to bust browser cache
+            const timestamp = Date.now();
+            const uploadPath = `/public/group/${group_id}_${timestamp}.${file_ext}`;
+            
+            console.log('📤 Uploading to file server:', config.FILE_SERVER_URL + uploadPath);
+            
             try {
                 await axios.put(config.FILE_SERVER_URL + uploadPath, img.buffer);
-            } catch (uploadError) {
+                console.log('✅ File server upload successful');
+            } catch (uploadError: any) {
+                console.error('❌ File server upload failed:', uploadError.message);
                 throw new AppError("Failed to upload image to file server", 500);
             }
         
@@ -433,7 +440,9 @@ export class GroupRepository {
                 data: {
                     profile_url: uploadPath
                 }
-            });            
+            });
+            
+            console.log('💾 Database updated with new profile_url:', uploadPath);
         } catch (error) {
             if (error instanceof AppError) {
                 throw error;
@@ -508,6 +517,56 @@ export class GroupRepository {
                 throw error;
             }
             throw new AppError("Cannot find specified group", 404);
+        }
+    }
+
+    async updateGroup(group_id: number, update_data: Partial<groupCreateReq>): Promise<Group> {
+        try {
+            const { interest_fields, profile, ...groupData } = update_data;
+            
+            // Handle profile image upload first if provided
+            if (profile) {
+                try {
+                    await this.uploadGroupProfile(group_id, profile);
+                } catch (profileError) {
+                    console.error('❌ Failed to upload group profile image during update:', profileError);
+                    // Continue even if profile upload fails
+                }
+            }
+            
+            // Update basic group info only if there are fields to update
+            if (Object.keys(groupData).length > 0) {
+                await prisma.group.update({
+                    where: { group_id },
+                    data: groupData
+                });
+            }
+
+            // Update interests if provided
+            if (interest_fields !== undefined) {
+                // Remove all existing interests
+                await prisma.groupInterest.deleteMany({
+                    where: { group_id }
+                });
+                
+                // Add new interests if any
+                if (interest_fields.length > 0) {
+                    await this.addGroupInterestsByKeys(group_id, interest_fields);
+                }
+            }
+
+            // Fetch and return the final state from database to ensure we have the latest profile_url
+            const finalGroup = await prisma.group.findFirstOrThrow({
+                where: { group_id }
+            });
+            
+            return finalGroup;
+        } catch (error) {
+            if (error instanceof AppError) {
+                throw error;
+            }
+            console.error('❌ Error in updateGroup:', error);
+            throw new AppError("Failed to update group", 500);
         }
     }
 }
