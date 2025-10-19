@@ -5,8 +5,8 @@ import { travelMiddleware } from "@/middlewares/travelMiddleware";
 
 /**
  * Travel Router v2
- * Handles user management endpoints for API version 1
- * Includes profile management, interests, and travel styles
+ * Handles travel history endpoints for authenticated users.
+ * Provides access to the user's travel history.
  */
 
 export class TravelRouterV2 extends BaseRouter {
