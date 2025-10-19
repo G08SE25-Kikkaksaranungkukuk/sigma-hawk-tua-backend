@@ -27,3 +27,12 @@ export const groupCreateSchema = z.object({
     max_members: z.coerce.number().int().min(1).max(100).optional().default(10),
     interest_fields: z.array(z.enum(validInterestKeys)).optional()
 })
+
+export const groupUpdateSchema = z.object({
+    group_name: z.string().min(1, "Group name must not be empty").optional(),
+    description: z.string().optional(),
+    profile: ImageFileSchema.optional(),
+    max_members: z.coerce.number().int().min(1).max(100).optional(),
+    interest_fields: z.array(z.enum(validInterestKeys)).optional(),
+    user_id: z.coerce.number().int().optional()
+})

@@ -10,6 +10,15 @@ export interface groupCreateReq {
   interest_fields?: string[];  // Changed from interest_ids to interest_fields
 }
 
+export interface groupUpdateReq {
+  group_name?: string;
+  description?: string;
+  profile?: Express.Multer.File;
+  max_members?: number;
+  interest_fields?: string[];
+  user_id?: number; // Added for authorization
+}
+
 export interface groupMemberReq {
   group_id : number; 
   user_id : number;
