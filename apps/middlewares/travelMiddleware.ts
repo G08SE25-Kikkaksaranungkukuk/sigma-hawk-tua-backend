@@ -29,7 +29,7 @@ export function travelMiddleware(
       req.user = decoded_jwt;
       next()
     } catch (error: unknown) {
-      console.error("JWT berification error:", error);
+      console.error("JWT verification error:", error);
       throw new AppError("Unauthorized: Invalid token", 401);
     }
   }
