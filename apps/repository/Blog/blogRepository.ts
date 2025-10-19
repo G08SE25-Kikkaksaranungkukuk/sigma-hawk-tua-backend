@@ -230,7 +230,7 @@ export class BlogRepository {
      * Search and filter blogs by keyword, interest_id, date
      */
     async searchBlogs(filter: BlogSearchFilter) {
-        const { keyword, interest_id, date, page = 1, page_size = 10 } = filter;
+        const { keyword, interest_id, date, sort_by, page = 1, page_size = 10 } = filter;
         const where: any = {};
 
         if (keyword) {
@@ -256,7 +256,9 @@ export class BlogRepository {
         let include: any = {
             blog_interests: {
                 select: { interest_id: true }
-            }
+            },
+            // include likes so consumers can know like info and Prisma can order by relation count
+            likes: true
         };
         if (interest_id && Array.isArray(interest_id) && interest_id.length > 0) {
             // Only return blogs that have ALL matching interests
@@ -270,12 +272,21 @@ export class BlogRepository {
             };
         }
 
+        // determine order by
+        let orderBy: any = { created_at: "desc" };
+        if (sort_by) {
+            const s = String(sort_by).toLowerCase();
+            if (s === 'oldest') orderBy = { created_at: 'asc' };
+            else if (s === 'newest') orderBy = { created_at: 'desc' };
+            else if (s === 'most_like' || s === 'most-like' || s === 'most like') orderBy = { likes: { _count: 'desc' } };
+        }
+
         try {
             const [blogs, total] = await Promise.all([
                 prisma.blog.findMany({
                     where: blogWhere,
                     include,
-                    orderBy: { created_at: "desc" },
+                    orderBy,
                     skip: (page - 1) * page_size,
                     take: page_size,
                 }),

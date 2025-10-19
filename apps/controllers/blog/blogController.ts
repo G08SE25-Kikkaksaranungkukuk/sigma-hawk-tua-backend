@@ -35,6 +35,7 @@ export class BlogController extends BaseController {
                 keyword: keyword as string | undefined,
                 interest_id: interestIds,
                 date: date as string | undefined,
+                sort_by: (req.query.sort_by as string) || undefined,
                 page: page ? Number(page) : 1,
                 page_size: page_size ? Number(page_size) : 10,
             };
