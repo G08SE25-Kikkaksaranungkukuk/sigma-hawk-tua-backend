@@ -234,3 +234,15 @@ model Belongs {
   @@index([B], map: "_Belongs_B_index")
   @@map("_Belongs")
 }
+
+model Report {
+  id          Int      @id @default(autoincrement())
+  title       String
+  reason      String
+  description String
+  created_at  DateTime @default(now())
+
+  @@map("reports")
+}
+
+
