@@ -1,6 +1,7 @@
 export interface BlogSearchFilter {
     keyword?: string;
     interest_id?: number[];
+    sort_by?: string;
     author?: string;
     date?: string;
     page?: number;
