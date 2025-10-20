@@ -81,6 +81,11 @@ export class BlogRouterV2 extends BaseRouter {
         );
 
         this.router.get(
+            "/:blog_id/banner",
+            this.blogController.getBlogBanner.bind(this.blogController)
+        );
+
+        this.router.get(
             "/list/me",
             blogMiddleware,
             this.blogController.getMyBlog.bind(this.blogController)

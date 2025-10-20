@@ -174,4 +174,15 @@ export class BlogController extends BaseController {
             this.handleError(error,res);
         }
     }
+
+    async getBlogBanner(req : Request , res : Response) : Promise<void> {
+        try {
+            const {blog_id} = req.params
+            const dat = await this.blogService.getBlogBanner(blog_id);
+            this.handleSuccess(res,dat,200,"success");
+        }
+        catch(error) {
+            this.handleError(error,res);
+        }
+    }
 }
