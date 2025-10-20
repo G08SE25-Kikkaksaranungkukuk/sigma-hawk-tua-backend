@@ -1,7 +1,8 @@
 import { Router } from "express"
 import { BlogRouterV2 } from "./blogRouter"
 import { ItineraryRouterV2, GroupItineraryRouterV2 } from "./itineraryRouter"
-import { ReportRouterV2 } from "./ReportRouter"
+import { ReportRouterV2 } from "./ReportRouter";
+import { TravelRouterV2 } from "./travelRouter";
 
 /**
  * RouterManager v2
@@ -14,6 +15,7 @@ export class RouterManagerV2 {
     private readonly itineraryRouter: ItineraryRouterV2
     private readonly groupItineraryRouter: GroupItineraryRouterV2
     private readonly reportRouter: ReportRouterV2
+    private readonly travelRouter : TravelRouterV2;
 
     constructor() {
         this.router = Router()
@@ -23,8 +25,8 @@ export class RouterManagerV2 {
         this.reportRouter = new ReportRouterV2()
         this.itineraryRouter = new ItineraryRouterV2()
         this.groupItineraryRouter = new GroupItineraryRouterV2()
-
-        this.initializeRoutes()
+        this.travelRouter = new TravelRouterV2();
+        this.initializeRoutes();
     }
 
     private initializeRoutes(): void {
@@ -33,6 +35,7 @@ export class RouterManagerV2 {
         this.router.use("/itineraries", this.itineraryRouter.getRouter())
         this.router.use("/groups", this.groupItineraryRouter.getRouter())
         this.router.use("/reports", this.reportRouter.getRouter())
+        this.router.use("/travel",this.travelRouter.getRouter());
     }
 
     public getRouter(): Router {
