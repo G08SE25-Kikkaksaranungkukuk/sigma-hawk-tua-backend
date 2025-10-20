@@ -183,4 +183,16 @@ export class BlogService {
             )
         }
     }
+
+    async getBlogBanner(blog_id : string) {
+        try {
+            const ret = await this.blogRepository.getBlogBanner(blog_id);
+            return ret
+        } catch(error : any) {
+            throw new AppError(
+                `Failed to fetch blog's content : ${error.message}`,
+                500
+            ) 
+        }
+    }
 }

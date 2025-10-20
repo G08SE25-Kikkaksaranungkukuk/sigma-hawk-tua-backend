@@ -247,4 +247,20 @@ export class BlogRepository {
             throw new AppError("Failed to search blogs", 500);
         }
     }
+
+    async getBlogBanner(blog_id : string) {
+        try {
+            const ret = await prisma.blog.findFirstOrThrow({
+                where : {
+                    "blog_id" : Number(blog_id)
+                }
+            })
+            let img_tag_patt = new RegExp('\<img.*">')
+            let url_patt = new RegExp(`src="([^"]+)"`)
+            return Array.from(ret.html_output.match(img_tag_patt)?.at(0)?.match(url_patt)?.at(0) as String).slice(5,-1).join("")
+        }
+        catch (error) {
+            return "https://placehold.co/600x400"
+        }
+    }
 }
