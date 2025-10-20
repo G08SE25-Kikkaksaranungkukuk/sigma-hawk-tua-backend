@@ -13,7 +13,19 @@ export class TravelRepository {
                 }
             },
             include : {
-                itineraries : true
+                itineraries : {
+                    include : {
+                        itinerary : {
+                            'select' : {
+                                'title' : true,
+                                'description' : true,
+                                'start_date' : true,
+                                'end_date' : true,
+                                'place_links' : true,
+                            }
+                        }
+                    }
+                }
             }
         });
         return user_groups_itineraries; 
