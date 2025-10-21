@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["es2022"],
+    "lib": [
+      "es2022"
+    ],
     "module": "commonjs",
     "rootDir": "./",
     "outDir": "./dist",
@@ -13,7 +15,37 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "declaration": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "apps/*"
+      ],
+      "@/controllers/*": [
+        "apps/controllers/*"
+      ],
+      "@/services/*": [
+        "apps/services/*"
+      ],
+      "@/utils/*": [
+        "apps/utils/*"
+      ],
+      "@/types/*": [
+        "apps/types/*"
+      ],
+      "@/middlewares/*": [
+        "apps/middlewares/*"
+      ],
+      "@/routes/*": [
+        "apps/routes/*"
+      ],
+      "@/config/*": [
+        "apps/config/*"
+      ],
+      "@/prisma/*": [
+        "generated/prisma/*"
+      ]
+    }
   },
   "include": [
     "apps/**/*",
