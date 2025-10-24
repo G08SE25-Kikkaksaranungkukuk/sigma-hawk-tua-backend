@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+env:
+  NODE_VERSION: 18.x
+  PNPM_VERSION: 8
+  DATABASE_URL: ${secrets.DATABASE_URL}
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18.x, 20.x, 22.x] 
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: sigma
+          POSTGRES_PASSWORD: strongpassword
+          POSTGRES_DB: sigmadb
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sigma_hawk_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm prisma:generate
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      - name: Prepare DB (migrate & seed)
+        run: |
+          npx prisma migrate reset --force --skip-seed || true
+          pnpm prisma:seed
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Run tests
+        run: pnpm run test -- --ci --reporter=dot
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+          ACCESSTOKEN_SECRET: ${{ secrets.ACCESSTOKEN_SECRET }}
+          NODE_ENV: ${secrets.NODE_ENV}
+
+      - name: Upload coverage
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-node-${{ matrix.node }}
+          path: coverage/
