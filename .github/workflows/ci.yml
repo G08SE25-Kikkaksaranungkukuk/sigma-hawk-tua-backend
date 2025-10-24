@@ -70,10 +70,13 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Prepare DB (migrate & seed)
-        run: |
-          npx prisma migrate reset --force --skip-seed || true
-          pnpm db:seed
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Seed database
+        run: pnpm db:seed
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
