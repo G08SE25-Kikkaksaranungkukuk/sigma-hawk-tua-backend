@@ -8,8 +8,7 @@ on:
 
 env:
   NODE_VERSION: 18.x
-  PNPM_VERSION: 8
-  DATABASE_URL: ${secrets.DATABASE_URL}
+  PNPM_VERSION: 9
 
 jobs:
   build-test:
@@ -67,16 +66,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm prisma:generate
+        run: pnpm db:generate
         env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Prepare DB (migrate & seed)
         run: |
           npx prisma migrate reset --force --skip-seed || true
-          pnpm prisma:seed
+          pnpm db:seed
         env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Lint
         run: pnpm run lint
@@ -87,9 +86,9 @@ jobs:
       - name: Run tests
         run: pnpm run test -- --ci --reporter=dot
         env:
-          DATABASE_URL: ${{ env.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           ACCESSTOKEN_SECRET: ${{ secrets.ACCESSTOKEN_SECRET }}
-          NODE_ENV: ${secrets.NODE_ENV}
+          NODE_ENV: ${{ secrets.NODE_ENV }}
 
       - name: Upload coverage
         if: success() || failure()
