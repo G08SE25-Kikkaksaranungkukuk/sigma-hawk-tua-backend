@@ -28,7 +28,7 @@ jobs:
         ports:
           - 5433:5432
         options: >-
-          --health-cmd "pg_isready -U postgres -d sigma_hawk_ci"
+          --health-cmd "pg_isready -U sigma -d sigmadb"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -88,7 +88,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           ACCESSTOKEN_SECRET: ${{ secrets.ACCESSTOKEN_SECRET }}
-          NODE_ENV: ${{ secrets.NODE_ENV }}
+          NODE_ENV: test
 
       - name: Upload coverage
         if: success() || failure()
