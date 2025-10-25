@@ -61,7 +61,6 @@ export class ItineraryController extends BaseController {
                 return;
             }
 
-            console.log("Request Body:", req.body);
             const validatedData = itineraryCreateSchema.parse(req.body);
             const itinerary = await this.itineraryService.createItinerary(validatedData);
             
