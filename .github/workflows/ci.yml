@@ -21,6 +21,8 @@ jobs:
           POSTGRES_USER: sigma
           POSTGRES_PASSWORD: strongpassword
           POSTGRES_DB: sigmadb
+        ports: 
+          - 5433:5432
         options: >-
           --health-cmd="pg_isready -U sigma -d sigmadb"
           --health-interval=10s
@@ -59,23 +61,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Wait for Postgres
-        run: npx wait-on tcp:postgres:5432
-
       - name: Generate Prisma client
         run: pnpm db:generate
         env:
-          DATABASE_URL: postgresql://sigma:strongpassword@postgres:5432/sigmadb
+          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
 
       - name: Push database schema
         run: npx prisma db push --accept-data-loss --skip-generate
         env:
-          DATABASE_URL: postgresql://sigma:strongpassword@postgres:5432/sigmadb
+          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
 
       - name: Seed database
         run: pnpm db:seed
         env:
-          DATABASE_URL: postgresql://sigma:strongpassword@postgres:5432/sigmadb
+          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
 
       - name: Build
         run: pnpm run build
@@ -105,6 +104,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with: 
           args: |
+            --all-projects
             --severity-threshold=high \
             --sarif-file-output=snyk-test.sarif
 
