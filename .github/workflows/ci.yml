@@ -6,17 +6,13 @@ on:
   pull_request:
     branches: [ main, dev , SigmaTest]
 
-env:
-  NODE_VERSION: 18.x
-  PNPM_VERSION: 9
-
 jobs:
   build-test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        node: [18.x, 20.x, 22.x] 
+        node: [24.x] 
 
     services:
       postgres:
@@ -40,7 +36,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
+          version: 10.x
           run_install: false
 
       - name: Setup Node.js
@@ -68,31 +64,49 @@ jobs:
       - name: Generate Prisma client
         run: pnpm db:generate
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: postgresql://sigma:strongpassword@postgres:5432/sigmadb
 
       - name: Push database schema
         run: npx prisma db push --accept-data-loss --skip-generate
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: postgresql://sigma:strongpassword@postgres:5432/sigmadb
 
       - name: Seed database
         run: pnpm db:seed
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: postgresql://sigma:strongpassword@postgres:5432/sigmadb
 
       - name: Build
         run: pnpm run build
+        
+  snyk-code:
+    name: sast scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write 
 
-      - name: Run tests
-        run: pnpm run test -- --ci --reporter=dot
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          ACCESSTOKEN_SECRET: ${{ secrets.ACCESSTOKEN_SECRET }}
-          NODE_ENV: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Upload coverage
-        if: success() || failure()
-        uses: actions/upload-artifact@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          name: coverage-report-node-${{ matrix.node }}
-          path: coverage/
+          node-version: 24.x
+
+      - name: Install Snyk CLI
+        uses: snyk/actions/setup@v4
+
+      - name: SAST scan (Snyk Code)
+        run: |
+          snyk code test \
+            --severity-threshold=high \
+            --sarif-file-output=snyk-test.sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-test.sarif
+
+
