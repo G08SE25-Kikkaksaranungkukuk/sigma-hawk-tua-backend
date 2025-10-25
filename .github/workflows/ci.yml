@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev]
+  pull_request:
+    branches: [ main, dev , SigmaTest]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [24.x] 
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: sigma
+          POSTGRES_PASSWORD: strongpassword
+          POSTGRES_DB: sigmadb
+        ports: 
+          - 5433:5432
+        options: >-
+          --health-cmd="pg_isready -U sigma -d sigmadb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.x
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+        env:
+          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
+
+      - name: Push database schema
+        run: npx prisma db push --accept-data-loss --skip-generate
+        env:
+          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
+
+      - name: Seed database
+        run: pnpm db:seed
+        env:
+          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
+
+      - name: Build
+        run: pnpm run build
+        
+  snyk-code:
+    name: sast scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write 
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          
+      - name: Setup Snyk
+        uses: snyk/actions/setup@master
+
+
+      - name: SAST scan (Snyk Code)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk code test \
+          --severity-threshold=high \
+          --sarif-file-output=snyk-test.sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-test.sarif
+
+
