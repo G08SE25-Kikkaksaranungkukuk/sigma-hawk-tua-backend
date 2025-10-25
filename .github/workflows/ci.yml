@@ -59,6 +59,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Wait for Postgres
+        run: npx wait-on tcp:postgres:5432
+
       - name: Generate Prisma client
         run: pnpm db:generate
         env:
@@ -104,7 +107,6 @@ jobs:
           args: |
             --severity-threshold=high \
             --sarif-file-output=snyk-test.sarif
-          command: monitor
 
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
