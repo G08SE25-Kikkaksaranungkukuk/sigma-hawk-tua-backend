@@ -105,7 +105,7 @@ jobs:
         with: 
           args: |
             --all-projects
-            --severity-threshold=high \
+            --severity-threshold=medium \
             --sarif-file-output=snyk-test.sarif
 
       - name: Upload SARIF
