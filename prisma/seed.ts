@@ -53,6 +53,25 @@ async function main() {
     });
   }
 
+  const reportTags = [
+      { key: "HARASSMENT", label: "Harassment", emoji: '🚫', description: "Bullying, threats, or intimidation" },
+      { key: "INAPPROPRIATE_CONTENT", label: "Inappropriate Content", emoji: '⚠️', description: "Offensive or unsuitable material" },
+      { key: "SPAM", label: "Spam", emoji: '📧', description: "Repetitive or unwanted messages" },
+      { key: "FAKE_PROFILE", label: "Fake Profile", emoji: '🎭', description: "False identity or impersonation" },
+      { key: "SCAM", label: "Scam", emoji: '💰', description: "Fraudulent or deceptive behavior" },
+      { key: "VIOLENCE", label: "Violence", emoji: '⚔️', description: "Threats or promotion of violence" },
+      { key: "OTHER", label: "Other", emoji: '❓', description: "Other violations not listed above" },
+  ];
+
+  console.log('⚠️ Seeding report reasons...');
+  for (const reportTag of reportTags) {
+    await prisma.reportTag.upsert({
+      where: { key: reportTag.key },
+      update: reportTag,
+      create: reportTag,
+    });
+  }
+
   console.log('✅ Database seeding completed successfully!');
 }
 
