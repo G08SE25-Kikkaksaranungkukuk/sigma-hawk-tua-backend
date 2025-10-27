@@ -237,7 +237,7 @@ model Belongs {
 }
 
 model Report {
-  id          Int               @id @default(autoincrement())
+  report_id   Int               @id @default(autoincrement())
   user_id     Int
   title       String
   reason      ReportReason[]    @relation("ReportHasReason")
@@ -267,7 +267,7 @@ model ReportReason {
   report_tag_id   Int
   created_at      DateTime    @default(now())
   report_tag      ReportTag   @relation("ReportTagBelongsToReportReason", fields: [report_tag_id], references: [id], onDelete: Cascade)
-  report          Report      @relation("ReportHasReason", fields: [report_id], references: [id], onDelete: Cascade)
+  report          Report      @relation("ReportHasReason", fields: [report_id], references: [report_id], onDelete: Cascade)
   
   @@unique([report_id])
   @@map("report_reasons")

@@ -28,19 +28,19 @@ export class ReportController extends BaseController {
 
         const reportData: CreateReportRequest = {
             title: req.body.title,
-            reason: req.body.reason,
+            report_tag_id: req.body.report_tag_id || [],
             description: req.body.description || ""
         };
 
         // Validate required fields
-        if (!reportData.title || !reportData.reason) {
+        if (!reportData.title || !reportData.report_tag_id || reportData.report_tag_id.length === 0) {
             return res.status(400).json({ 
                 success: false, 
-                message: "Missing required fields: title, reason" 
+                message: "Missing required fields: title and at least one report tag" 
             });
         }
 
-                        const result = await this.reportService.createReport(reportData);
+                        const result = await this.reportService.createReport(userId, reportData);
 
             if (result.success) {
                 return this.handleSuccess(res, result.report, 201, result.message);
@@ -114,6 +114,11 @@ export class ReportController extends BaseController {
      */
     async updateReport(req: Request, res: Response) {
         try {
+            const userId = req.user?.user_id;
+            if (!userId) {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
+
             const reportId = parseInt(req.params.id);
             
             if (!reportId || isNaN(reportId)) {
@@ -122,8 +127,8 @@ export class ReportController extends BaseController {
 
             const updateData: UpdateReportRequest = {
                 title: req.body.title,
-                reason: req.body.reason,
-                description: req.body.description
+                description: req.body.description,
+                report_tag_id: req.body.report_tag_id
             };
 
             // Remove undefined fields
@@ -137,7 +142,7 @@ export class ReportController extends BaseController {
                 return res.status(400).json({ success: false, message: "No fields to update" });
             }
 
-            const result = await this.reportService.updateReport(reportId, updateData);
+            const result = await this.reportService.updateReport(reportId, userId, updateData);
 
             if (result.success) {
                 return this.handleSuccess(res, result.report, 200, result.message);
