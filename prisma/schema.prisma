@@ -237,13 +237,38 @@ model Belongs {
 }
 
 model Report {
-  id          Int      @id @default(autoincrement())
+  id          Int               @id @default(autoincrement())
+  user_id     Int
   title       String
-  reason      String
+  reason      ReportReason[]    @relation("ReportHasReason")
   description String
-  created_at  DateTime @default(now())
+  created_at  DateTime          @default(now())
+  is_resolved Boolean           @default(false)
 
   @@map("reports")
 }
 
+model ReportTag {
+  id              Int             @id @default(autoincrement())
+  key             String          @unique
+  label           String
+  emoji           String
+  description     String
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+  report_reasons  ReportReason[]  @relation("ReportTagBelongsToReportReason")
 
+  @@map("report_tags")
+}
+
+model ReportReason {
+  id              Int         @id @default(autoincrement())
+  report_id       Int
+  report_tag_id   Int
+  created_at      DateTime    @default(now())
+  report_tag      ReportTag   @relation("ReportTagBelongsToReportReason", fields: [report_tag_id], references: [id], onDelete: Cascade)
+  report          Report      @relation("ReportHasReason", fields: [report_id], references: [id], onDelete: Cascade)
+  
+  @@unique([report_id])
+  @@map("report_reasons")
+}
