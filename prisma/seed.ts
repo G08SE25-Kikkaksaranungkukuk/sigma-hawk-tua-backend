@@ -54,13 +54,14 @@ async function main() {
   }
 
   const reportTags = [
-      { key: "HARASSMENT", label: "Harassment", emoji: '🚫', description: "Bullying, threats, or intimidation" },
-      { key: "INAPPROPRIATE_CONTENT", label: "Inappropriate Content", emoji: '⚠️', description: "Offensive or unsuitable material" },
-      { key: "SPAM", label: "Spam", emoji: '📧', description: "Repetitive or unwanted messages" },
-      { key: "FAKE_PROFILE", label: "Fake Profile", emoji: '🎭', description: "False identity or impersonation" },
-      { key: "SCAM", label: "Scam", emoji: '💰', description: "Fraudulent or deceptive behavior" },
-      { key: "VIOLENCE", label: "Violence", emoji: '⚔️', description: "Threats or promotion of violence" },
-      { key: "OTHER", label: "Other", emoji: '❓', description: "Other violations not listed above" },
+      { key: "BUG", label: "Bug/Error", emoji: '�', description: "Application crashes, errors, or unexpected behavior" },
+      { key: "PERFORMANCE", label: "Performance Issue", emoji: '⚡', description: "Slow loading, lag, or system performance problems" },
+      { key: "UI_UX", label: "UI/UX Problem", emoji: '🎨', description: "Design issues, layout problems, or usability concerns" },
+      { key: "DATA_LOSS", label: "Data Loss", emoji: '💾', description: "Missing data, sync issues, or data corruption" },
+      { key: "LOGIN_AUTH", label: "Login/Authentication", emoji: '�', description: "Cannot login, logout issues, or authentication problems" },
+      { key: "NETWORK", label: "Network/Connectivity", emoji: '📡', description: "Connection errors, timeout, or network-related issues" },
+      { key: "FEATURE_REQUEST", label: "Feature Request", emoji: '✨', description: "Suggestions for new features or improvements" },
+      { key: "OTHER", label: "Other", emoji: '❓', description: "Other technical issues not listed above" },
   ];
 
   console.log('⚠️ Seeding report reasons...');
