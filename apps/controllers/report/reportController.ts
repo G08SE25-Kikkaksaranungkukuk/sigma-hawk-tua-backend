@@ -28,15 +28,15 @@ export class ReportController extends BaseController {
 
         const reportData: CreateReportRequest = {
             title: req.body.title,
-            report_tag_id: req.body.report_tag_id || [],
+            reason: req.body.reason || "",
             description: req.body.description || ""
         };
 
         // Validate required fields
-        if (!reportData.title || !reportData.report_tag_id || reportData.report_tag_id.length === 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Missing required fields: title and at least one report tag" 
+        if (!reportData.title || !reportData.reason || reportData.reason.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields: title and reason"
             });
         }
 
@@ -127,8 +127,8 @@ export class ReportController extends BaseController {
 
             const updateData: UpdateReportRequest = {
                 title: req.body.title,
-                description: req.body.description,
-                report_tag_id: req.body.report_tag_id
+                reason: req.body.reason,
+                description: req.body.description
             };
 
             // Remove undefined fields

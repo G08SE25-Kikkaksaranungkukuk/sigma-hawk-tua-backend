@@ -12,7 +12,8 @@ export class ReportRepository {
      * Create a new report
      */
     async createReport(user_id: number, payload: CreateReportRequest): Promise<Report> {
-        const { report_tag_id, ...reportData } = payload;
+        // payload contains { title, reason, description }
+        const { reason, ...reportData } = payload as any;
 
         const newReportIssue = await prisma.report.create({
             data: {
@@ -21,16 +22,40 @@ export class ReportRepository {
             },
         });
 
-        if (report_tag_id && Array.isArray(report_tag_id) && report_tag_id.length > 0) {
+        // If a reason (string) was provided, try to map it to a ReportTag and create a ReportReason
+        if (reason && typeof reason === 'string' && reason.trim().length > 0) {
+            // Try to find existing tag by key or label
+            let tag = await prisma.reportTag.findFirst({
+                where: {
+                    OR: [
+                        { key: reason },
+                        { label: reason }
+                    ]
+                }
+            });
 
-            await prisma.reportReason.createMany({
-                data: report_tag_id.map((id: number) => ({
+            // If no tag exists, create a minimal one (use a slug for key)
+            if (!tag) {
+                const slug = reason.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                tag = await prisma.reportTag.create({
+                    data: {
+                        key: slug,
+                        label: reason,
+                        emoji: '',
+                        description: ''
+                    }
+                });
+            }
+
+            // Create the reportReason relation record
+            await prisma.reportReason.create({
+                data: {
                     report_id: newReportIssue.report_id,
-                    report_tag_id: id,
-                })),
+                    report_tag_id: tag.id
+                }
             });
         }
-        
+
         return newReportIssue;
     }
 
@@ -98,27 +123,46 @@ export class ReportRepository {
      */
     async updateReport(reportId: number, user_id: number, payload: UpdateReportRequest) {
         try {
-            const { report_tag_id, ...updateData } = payload;
-            
+            // If reason provided, handle tag relation
+            const { reason, ...updateData } = payload as any;
+
             const updatedReport = await prisma.report.update({
                 where: { report_id: reportId, user_id: user_id },
                 data: updateData
             });
 
-            // Update report tags if provided
-            if (report_tag_id !== undefined) {
-                // Delete existing report tags
-                await prisma.reportReason.deleteMany({
-                    where: { report_id: reportId }
-                });
+            if (reason !== undefined) {
+                // Remove existing reportReason if any
+                await prisma.reportReason.deleteMany({ where: { report_id: reportId } });
 
-                // Create new report tags if array is not empty
-                if (Array.isArray(report_tag_id) && report_tag_id.length > 0) {
-                    await prisma.reportReason.createMany({
-                        data: report_tag_id.map((id: number) => ({
+                if (reason && typeof reason === 'string' && reason.trim().length > 0) {
+                    // find or create tag
+                    let tag = await prisma.reportTag.findFirst({
+                        where: {
+                            OR: [
+                                { key: reason },
+                                { label: reason }
+                            ]
+                        }
+                    });
+
+                    if (!tag) {
+                        const slug = reason.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                        tag = await prisma.reportTag.create({
+                            data: {
+                                key: slug,
+                                label: reason,
+                                emoji: '',
+                                description: ''
+                            }
+                        });
+                    }
+
+                    await prisma.reportReason.create({
+                        data: {
                             report_id: reportId,
-                            report_tag_id: id,
-                        })),
+                            report_tag_id: tag.id
+                        }
                     });
                 }
             }

@@ -32,10 +32,10 @@ export class ReportService {
                 };
             }
 
-            if (!reportData.report_tag_id || !Array.isArray(reportData.report_tag_id) || reportData.report_tag_id.length === 0) {
+            if (!reportData.reason || !reportData.reason.trim()) {
                 return {
                     success: false,
-                    message: "At least one report tag is required"
+                    message: "Reason is required"
                 };
             }
 
