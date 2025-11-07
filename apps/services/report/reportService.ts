@@ -241,4 +241,17 @@ export class ReportService {
             };
         }
     }
+
+    /**
+     * Get all available report reasons/tags
+     */
+    async getAllReportReasons() {
+        try {
+            const tags = await this.reportRepository.getAllReportReason();
+            return { success: true, reasons: tags };
+        } catch (error) {
+            console.error('Error in getAllReportReasons service:', error);
+            return { success: false, reasons: [] };
+        }
+    }
 }

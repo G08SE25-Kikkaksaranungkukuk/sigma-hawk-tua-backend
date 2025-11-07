@@ -84,6 +84,23 @@ export class ReportController extends BaseController {
     }
 
     /**
+     * Get all report reasons/tags (public)
+     * GET /api/v2/reports/reasons
+     */
+    async getAllReportReasons(req: Request, res: Response) {
+        try {
+            const result = await this.reportService.getAllReportReasons();
+            if (result.success) {
+                return this.handleSuccess(res, { reasons: result.reasons }, 200, "Report reasons fetched successfully");
+            }
+            return res.status(500).json({ success: false, reasons: [] });
+        } catch (error) {
+            console.error("Error in getAllReportReasons controller:", error);
+            return this.handleError(error, res);
+        }
+    }
+
+    /**
      * Get report by ID
      * GET /api/v2/reports/:id
      */

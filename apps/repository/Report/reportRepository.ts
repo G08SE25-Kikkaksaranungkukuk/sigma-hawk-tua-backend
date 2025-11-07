@@ -8,10 +8,21 @@ import { CreateReportRequest, UpdateReportRequest, ReportFilters } from "@/types
  * Using the existing schema: id, report_id, user_id, title, reason, description, created_at
  */
 export class ReportRepository {
+    // Helper to map a report's reason relation to only emoji and label
+    private transformReport(report: any) {
+        if (!report) return report;
+        const { reason, ...rest } = report;
+        return {
+            ...rest,
+            reason: Array.isArray(reason)
+                ? reason.map((r: any) => ({ emoji: r.report_tag?.emoji ?? null, label: r.report_tag?.label ?? null }))
+                : []
+        };
+    }
     /**
      * Create a new report
      */
-    async createReport(user_id: number, payload: CreateReportRequest): Promise<Report> {
+    async createReport(user_id: number, payload: CreateReportRequest): Promise<any> {
         // payload contains { title, reason, description }
         const { reason, ...reportData } = payload as any;
 
@@ -56,7 +67,12 @@ export class ReportRepository {
             });
         }
 
-        return newReportIssue;
+        // return the created report including its reason relation (transformed)
+        const created = await prisma.report.findUnique({
+            where: { report_id: newReportIssue.report_id },
+            include: { reason: { include: { report_tag: true } } }
+        });
+        return this.transformReport(created);
     }
 
     /**
@@ -75,13 +91,34 @@ export class ReportRepository {
         const skip = (page - 1) * limit;
 
         const whereClause: any = {};
-        
-        if (id) whereClause.id = id;
+
+        // filter by report_id (controller may pass id)
+        if (id) whereClause.report_id = id;
         if (title) whereClause.title = { contains: title, mode: 'insensitive' };
-        if (reason) whereClause.reason = { contains: reason, mode: 'insensitive' };            const reports = await prisma.report.findMany({
+
+        // filter by reason: look into related ReportReason -> ReportTag (key or label)
+        if (reason) {
+            whereClause.reason = {
+                some: {
+                    report_tag: {
+                        OR: [
+                            { key: { contains: reason, mode: 'insensitive' } },
+                            { label: { contains: reason, mode: 'insensitive' } }
+                        ]
+                    }
+                }
+            };
+        }
+
+            const reports = await prisma.report.findMany({
                 where: whereClause,
                 skip,
                 take: limit,
+                include: {
+                    reason: {
+                        include: { report_tag: true }
+                    }
+                },
                 orderBy: {
                     created_at: 'desc'
                 }
@@ -89,8 +126,10 @@ export class ReportRepository {
 
             const total = await prisma.report.count({ where: whereClause });
 
+            const transformed = reports.map(r => this.transformReport(r));
+
             return {
-                reports,
+                reports: transformed,
                 pagination: {
                     current_page: page,
                     total_pages: Math.ceil(total / limit),
@@ -105,13 +144,33 @@ export class ReportRepository {
     }
 
     /**
+     * Get all available report tags/reasons
+     */
+    async getAllReportReason() {
+        try {
+            const tags = await prisma.reportTag.findMany({
+                select: { id: true, key: true, label: true, emoji: true, description: true },
+                orderBy: { label: 'asc' }
+            });
+            return tags;
+        } catch (error) {
+            console.error('Error fetching report reasons:', error);
+            throw new Error('Failed to fetch report reasons');
+        }
+    }
+
+    /**
      * Get report by ID
      */
     async getReportById(reportId: number) {
         try {
-            return await prisma.report.findUnique({
-                where: { report_id: reportId }
+            const report = await prisma.report.findUnique({
+                where: { report_id: reportId },
+                include: {
+                    reason: { include: { report_tag: true } }
+                }
             });
+            return this.transformReport(report);
         } catch (error) {
             console.error("Error fetching report by ID:", error);
             throw new Error("Failed to fetch report");
@@ -121,7 +180,7 @@ export class ReportRepository {
     /**
      * Update report (can update title, reason, description)
      */
-    async updateReport(reportId: number, user_id: number, payload: UpdateReportRequest) {
+    async updateReport(reportId: number, user_id: number, payload: UpdateReportRequest): Promise<any> {
         try {
             // If reason provided, handle tag relation
             const { reason, ...updateData } = payload as any;
@@ -167,7 +226,12 @@ export class ReportRepository {
                 }
             }
 
-            return updatedReport;
+            // return the updated report including its reason relation (transformed)
+            const updated = await prisma.report.findUnique({
+                where: { report_id: reportId },
+                include: { reason: { include: { report_tag: true } } }
+            });
+            return this.transformReport(updated);
         } catch (error) {
             console.error("Error updating report:", error);
             throw new Error("Failed to update report");
@@ -204,13 +268,16 @@ export class ReportRepository {
             const reports = await prisma.report.findMany({
                 skip,
                 take: limit,
+                include: { reason: { include: { report_tag: true } } },
                 orderBy: { created_at: 'desc' }
             });
 
             const total = await prisma.report.count();
 
+            const transformed = reports.map(r => this.transformReport(r));
+
             return {
-                reports,
+                reports: transformed,
                 pagination: {
                     current_page: page,
                     total_pages: Math.ceil(total / limit),
