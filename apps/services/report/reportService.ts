@@ -117,6 +117,61 @@ export class ReportService {
     }
 
     /**
+     * Update report
+     */
+    async updateReport(
+        reportId: number,
+        user_id: number,
+        updateData: UpdateReportRequest
+    ) {
+        try {
+            // Check if report exists
+            const existingReport = await this.reportRepository.getReportById(
+                reportId
+            )
+            if (!existingReport) {
+                return {
+                    success: false,
+                    message: "Report not found",
+                }
+            }
+
+            // Validate update data
+            if (updateData.title && updateData.title.length > 200) {
+                return {
+                    success: false,
+                    message: "Title must be less than 200 characters",
+                }
+            }
+
+            if (updateData.description && updateData.description.length > 500) {
+                return {
+                    success: false,
+                    message: "Description must be less than 500 characters",
+                }
+            }
+
+            const updatedReport = await this.reportRepository.updateReport(
+                reportId,
+                user_id,
+                updateData
+            )
+
+            return {
+                success: true,
+                message: "Report updated successfully",
+                report: updatedReport,
+            }
+        } catch (error) {
+            console.error("Error in updateReport service:", error)
+            return {
+                success: false,
+                message: "Failed to update report",
+            }
+        }
+    }
+
+    /**
      * Delete report
      */
     async deleteReport(reportId: number) {

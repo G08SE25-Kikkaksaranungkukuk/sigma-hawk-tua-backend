@@ -154,6 +154,73 @@ export class ReportController extends BaseController {
     }
 
     /**
+     * Update report
+     * PUT /api/v2/reports/:id
+     */
+    async updateReport(req: Request, res: Response) {
+        try {
+            const userId = req.user?.user_id
+            if (!userId) {
+                return res
+                    .status(401)
+                    .json({ success: false, message: "Unauthorized" })
+            }
+
+            const reportId = parseInt(req.params.id)
+
+            if (!reportId || isNaN(reportId)) {
+                return res
+                    .status(400)
+                    .json({ success: false, message: "Invalid report ID" })
+            }
+
+            const updateData: UpdateReportRequest = {
+                title: req.body.title,
+                description: req.body.description,
+                reason_id: req.body.report_tag_id,
+            }
+
+            // Remove undefined fields
+            Object.keys(updateData).forEach((key) => {
+                if (
+                    updateData[key as keyof UpdateReportRequest] === undefined
+                ) {
+                    delete updateData[key as keyof UpdateReportRequest]
+                }
+            })
+
+            if (Object.keys(updateData).length === 0) {
+                return res
+                    .status(400)
+                    .json({ success: false, message: "No fields to update" })
+            }
+
+            const result = await this.reportService.updateReport(
+                reportId,
+                userId,
+                updateData
+            )
+
+            if (result.success) {
+                return this.handleSuccess(
+                    res,
+                    result.report,
+                    200,
+                    result.message
+                )
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    message: result.message || "Failed to update report",
+                })
+            }
+        } catch (error) {
+            console.error("Error in updateReport controller:", error)
+            return this.handleError(error, res)
+        }
+    }
+
+    /**
      * Delete report
      * DELETE /api/v2/reports/:id
      */

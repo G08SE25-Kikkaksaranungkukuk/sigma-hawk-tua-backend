@@ -97,6 +97,27 @@ export class ReportRepository {
     }
 
     /**
+     * Update report (can update title, reason, description)
+     */
+    async updateReport(
+        reportId: number,
+        user_id: number,
+        payload: UpdateReportRequest
+    ) {
+        try {
+            const updatedReport = await prisma.report.update({
+                where: { report_id: reportId, user_id: user_id },
+                data: payload,
+            })
+
+            return updatedReport
+        } catch (error) {
+            console.error("Error updating report:", error)
+            throw new Error("Failed to update report")
+        }
+    }
+
+    /**
      * Delete report
      */
     async deleteReport(reportId: number) {

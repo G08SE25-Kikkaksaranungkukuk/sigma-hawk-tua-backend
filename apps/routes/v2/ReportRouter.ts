@@ -53,6 +53,15 @@ export class ReportRouterV2 extends BaseRouter {
             this.reportController.getReportById.bind(this.reportController)
         )
 
+        // UPDATE - Update report
+        this.router.put(
+            "/:id",
+            authMiddleware,
+            validateReportId,
+            validateUpdateReport,
+            this.reportController.updateReport.bind(this.reportController)
+        )
+
         // DELETE - Delete report (Admin functionality)
         this.router.delete(
             "/:id",

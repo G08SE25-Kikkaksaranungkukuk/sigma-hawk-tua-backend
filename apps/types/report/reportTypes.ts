@@ -31,7 +31,7 @@ export interface GetReportsResponse {
 export interface UpdateReportRequest {
     title?: string
     description?: string
-    report_tag_id?: number[]
+    reason_id?: number
 }
 
 export interface ReportFilters {
