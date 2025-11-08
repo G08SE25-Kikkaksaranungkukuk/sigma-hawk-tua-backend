@@ -39,6 +39,7 @@ export interface ReportFilters {
     id?: number; // filter by specific report ID
     title?: string; // search by title
     reason?: string; // filter by reason
+    is_resolved?: boolean; // filter by resolution status
     page?: number;
     limit?: number;
 }

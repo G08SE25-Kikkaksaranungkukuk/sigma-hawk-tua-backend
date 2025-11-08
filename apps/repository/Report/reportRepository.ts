@@ -72,6 +72,7 @@ export class ReportRepository {
             id,
             title,
             reason,
+            is_resolved,
             page = 1,
             limit = 10
         } = filters;
@@ -92,6 +93,11 @@ export class ReportRepository {
                     { label: { contains: reason, mode: 'insensitive' } }
                 ]
             };
+        }
+
+        // filter by is_resolved
+        if (is_resolved !== undefined) {
+            whereClause.is_resolved = is_resolved;
         }
 
             const reports = await prisma.report.findMany({

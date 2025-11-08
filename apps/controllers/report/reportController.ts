@@ -65,6 +65,7 @@ export class ReportController extends BaseController {
                 id: req.query.id ? parseInt(req.query.id as string) : undefined,
                 title: req.query.title ? req.query.title as string : undefined,
                 reason: req.query.reason ? req.query.reason as string : undefined,
+                is_resolved: req.query.is_resolved ? req.query.is_resolved === 'true' : undefined,
                 page: req.query.page ? parseInt(req.query.page as string) : 1,
                 limit: req.query.limit ? parseInt(req.query.limit as string) : 10
             };
