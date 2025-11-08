@@ -1,71 +1,70 @@
-import { ReportRepository } from "@/repository/Report/reportRepository";
-import { 
-    CreateReportRequest, 
-    CreateReportResponse, 
+import { ReportRepository } from "@/repository/Report/reportRepository"
+import {
+    CreateReportRequest,
+    CreateReportResponse,
     GetReportsResponse,
     UpdateReportRequest,
     ReportFilters,
-    ReportStatsResponse
-} from "@/types/report/reportTypes";
+    ReportStatsResponse,
+} from "@/types/report/reportTypes"
 
 /**
  * Report Service
  * Handles business logic for report operations
  */
 export class ReportService {
-    private reportRepository: ReportRepository;
+    private reportRepository: ReportRepository
 
     constructor() {
-        this.reportRepository = new ReportRepository();
+        this.reportRepository = new ReportRepository()
     }
 
     /**
      * Create a new report
      */
-    async createReport(user_id: number, reportData: CreateReportRequest): Promise<CreateReportResponse> {
+    async createReport(
+        user_id: number,
+        reportData: CreateReportRequest
+    ): Promise<CreateReportResponse> {
         try {
             // Validate report data
             if (!reportData.title.trim()) {
                 return {
                     success: false,
-                    message: "Title is required"
-                };
-            }
-
-            if (!reportData.report_tag_id || !Array.isArray(reportData.report_tag_id) || reportData.report_tag_id.length === 0) {
-                return {
-                    success: false,
-                    message: "At least one report tag is required"
-                };
+                    message: "Title is required",
+                }
             }
 
             if (reportData.title.length > 200) {
                 return {
                     success: false,
-                    message: "Title must be less than 200 characters"
-                };
+                    message: "Title must be less than 200 characters",
+                }
             }
 
             if (reportData.description && reportData.description.length > 500) {
                 return {
                     success: false,
-                    message: "Description must be less than 500 characters"
-                };
+                    message: "Description must be less than 500 characters",
+                }
             }
 
-            const report = await this.reportRepository.createReport(user_id, reportData);
+            const report = await this.reportRepository.createReport(
+                user_id,
+                reportData
+            )
 
             return {
                 success: true,
                 message: "Report created successfully",
-                report
-            };
+                report,
+            }
         } catch (error) {
-            console.error("Error in createReport service:", error);
+            console.error("Error in createReport service:", error)
             return {
                 success: false,
-                message: "Failed to create report"
-            };
+                message: "Failed to create report",
+            }
         }
     }
 
@@ -74,19 +73,19 @@ export class ReportService {
      */
     async getReports(filters: ReportFilters): Promise<GetReportsResponse> {
         try {
-            const result = await this.reportRepository.getReports(filters);
-            
+            const result = await this.reportRepository.getReports(filters)
+
             return {
                 success: true,
                 reports: result.reports,
-                pagination: result.pagination
-            };
+                pagination: result.pagination,
+            }
         } catch (error) {
-            console.error("Error in getReports service:", error);
+            console.error("Error in getReports service:", error)
             return {
                 success: false,
-                reports: []
-            };
+                reports: [],
+            }
         }
     }
 
@@ -95,70 +94,25 @@ export class ReportService {
      */
     async getReportById(reportId: number) {
         try {
-            const report = await this.reportRepository.getReportById(reportId);
-            
+            const report = await this.reportRepository.getReportById(reportId)
+
             if (!report) {
                 return {
                     success: false,
-                    message: "Report not found"
-                };
+                    message: "Report not found",
+                }
             }
 
             return {
                 success: true,
-                report
-            };
+                report,
+            }
         } catch (error) {
-            console.error("Error in getReportById service:", error);
+            console.error("Error in getReportById service:", error)
             return {
                 success: false,
-                message: "Failed to fetch report"
-            };
-        }
-    }
-
-    /**
-     * Update report
-     */
-    async updateReport(reportId: number, user_id: number, updateData: UpdateReportRequest) {
-        try {
-            // Check if report exists
-            const existingReport = await this.reportRepository.getReportById(reportId);
-            if (!existingReport) {
-                return {
-                    success: false,
-                    message: "Report not found"
-                };
+                message: "Failed to fetch report",
             }
-
-            // Validate update data
-            if (updateData.title && updateData.title.length > 200) {
-                return {
-                    success: false,
-                    message: "Title must be less than 200 characters"
-                };
-            }
-
-            if (updateData.description && updateData.description.length > 500) {
-                return {
-                    success: false,
-                    message: "Description must be less than 500 characters"
-                };
-            }
-
-            const updatedReport = await this.reportRepository.updateReport(reportId, user_id, updateData);
-
-            return {
-                success: true,
-                message: "Report updated successfully",
-                report: updatedReport
-            };
-        } catch (error) {
-            console.error("Error in updateReport service:", error);
-            return {
-                success: false,
-                message: "Failed to update report"
-            };
         }
     }
 
@@ -168,26 +122,28 @@ export class ReportService {
     async deleteReport(reportId: number) {
         try {
             // Check if report exists
-            const existingReport = await this.reportRepository.getReportById(reportId);
+            const existingReport = await this.reportRepository.getReportById(
+                reportId
+            )
             if (!existingReport) {
                 return {
                     success: false,
-                    message: "Report not found"
-                };
+                    message: "Report not found",
+                }
             }
 
-            await this.reportRepository.deleteReport(reportId);
+            await this.reportRepository.deleteReport(reportId)
 
             return {
                 success: true,
-                message: "Report deleted successfully"
-            };
+                message: "Report deleted successfully",
+            }
         } catch (error) {
-            console.error("Error in deleteReport service:", error);
+            console.error("Error in deleteReport service:", error)
             return {
                 success: false,
-                message: "Failed to delete report"
-            };
+                message: "Failed to delete report",
+            }
         }
     }
 
@@ -200,20 +156,23 @@ export class ReportService {
      */
     async getAllReportsAdmin(page: number = 1, limit: number = 10) {
         try {
-            const result = await this.reportRepository.getAllReports(page, limit);
-            
+            const result = await this.reportRepository.getAllReports(
+                page,
+                limit
+            )
+
             return {
                 success: true,
                 reports: result.reports,
-                pagination: result.pagination
-            };
+                pagination: result.pagination,
+            }
         } catch (error) {
-            console.error("Error in getAllReportsAdmin service:", error);
+            console.error("Error in getAllReportsAdmin service:", error)
             return {
                 success: false,
                 reports: [],
-                message: "Failed to fetch all reports"
-            };
+                message: "Failed to fetch all reports",
+            }
         }
     }
 
@@ -222,23 +181,23 @@ export class ReportService {
      */
     async getReportStats(): Promise<ReportStatsResponse> {
         try {
-            const totalReports = await this.reportRepository.getReportsCount();
+            const totalReports = await this.reportRepository.getReportsCount()
 
             return {
                 success: true,
                 stats: {
-                    total_reports: totalReports
+                    total_reports: totalReports,
                     // Removed user/blog specific stats since we have simple schema
-                }
-            };
+                },
+            }
         } catch (error) {
-            console.error("Error in getReportStats service:", error);
+            console.error("Error in getReportStats service:", error)
             return {
                 success: false,
                 stats: {
-                    total_reports: 0
-                }
-            };
+                    total_reports: 0,
+                },
+            }
         }
     }
 }

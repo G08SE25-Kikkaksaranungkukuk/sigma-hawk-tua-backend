@@ -240,10 +240,11 @@ model Report {
   report_id   Int               @id @default(autoincrement())
   user_id     Int
   title       String
-  reason      ReportReason[]    @relation("ReportHasReason")
+  reason_id   Int
   description String
   created_at  DateTime          @default(now())
   is_resolved Boolean           @default(false)
+  reason      ReportTag         @relation(fields: [reason_id], references: [id], onDelete: Cascade)
 
   @@map("reports")
 }
@@ -256,19 +257,8 @@ model ReportTag {
   description     String
   created_at      DateTime        @default(now())
   updated_at      DateTime        @updatedAt
-  report_reasons  ReportReason[]  @relation("ReportTagBelongsToReportReason")
+  reports         Report[]
 
   @@map("report_tags")
 }
 
-model ReportReason {
-  id              Int         @id @default(autoincrement())
-  report_id       Int
-  report_tag_id   Int
-  created_at      DateTime    @default(now())
-  report_tag      ReportTag   @relation("ReportTagBelongsToReportReason", fields: [report_tag_id], references: [id], onDelete: Cascade)
-  report          Report      @relation("ReportHasReason", fields: [report_id], references: [report_id], onDelete: Cascade)
-  
-  @@unique([report_id])
-  @@map("report_reasons")
-}
