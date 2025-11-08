@@ -8,71 +8,19 @@ import { CreateReportRequest, UpdateReportRequest, ReportFilters } from "@/types
  * Using the existing schema: id, report_id, user_id, title, reason, description, created_at
  */
 export class ReportRepository {
-    // Helper to map a report's reason relation to only emoji and label
-    private transformReport(report: any) {
-        if (!report) return report;
-        const { reason, ...rest } = report;
-        return {
-            ...rest,
-            reason: Array.isArray(reason)
-                ? reason.map((r: any) => ({ emoji: r.report_tag?.emoji ?? null, label: r.report_tag?.label ?? null }))
-                : []
-        };
-    }
     /**
      * Create a new report
      */
     async createReport(user_id: number, payload: CreateReportRequest): Promise<any> {
-        // payload contains { title, reason, description }
-        const { reason, ...reportData } = payload as any;
+        const { report_tag, ...reportData } = payload as any;
 
-        const newReportIssue = await prisma.report.create({
-            data: {
-                user_id: user_id,
-                ...reportData,
-            },
+        const report = await prisma.report.create({
+            data: reportData,
         });
 
-        // If a reason (string) was provided, try to map it to a ReportTag and create a ReportReason
-        if (reason && typeof reason === 'string' && reason.trim().length > 0) {
-            // Try to find existing tag by key or label
-            let tag = await prisma.reportTag.findFirst({
-                where: {
-                    OR: [
-                        { key: reason },
-                        { label: reason }
-                    ]
-                }
-            });
+        
 
-            // If no tag exists, create a minimal one (use a slug for key)
-            if (!tag) {
-                const slug = reason.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-                tag = await prisma.reportTag.create({
-                    data: {
-                        key: slug,
-                        label: reason,
-                        emoji: '',
-                        description: ''
-                    }
-                });
-            }
-
-            // Create the reportReason relation record
-            await prisma.reportReason.create({
-                data: {
-                    report_id: newReportIssue.report_id,
-                    report_tag_id: tag.id
-                }
-            });
-        }
-
-        // return the created report including its reason relation (transformed)
-        const created = await prisma.report.findUnique({
-            where: { report_id: newReportIssue.report_id },
-            include: { reason: { include: { report_tag: true } } }
-        });
-        return this.transformReport(created);
+        return report
     }
 
     /**
@@ -115,9 +63,7 @@ export class ReportRepository {
                 skip,
                 take: limit,
                 include: {
-                    reason: {
-                        include: { report_tag: true }
-                    }
+                    report_tag: true
                 },
                 orderBy: {
                     created_at: 'desc'
@@ -125,11 +71,8 @@ export class ReportRepository {
             });
 
             const total = await prisma.report.count({ where: whereClause });
-
-            const transformed = reports.map(r => this.transformReport(r));
-
             return {
-                reports: transformed,
+                reports: reports,
                 pagination: {
                     current_page: page,
                     total_pages: Math.ceil(total / limit),
@@ -167,74 +110,13 @@ export class ReportRepository {
             const report = await prisma.report.findUnique({
                 where: { report_id: reportId },
                 include: {
-                    reason: { include: { report_tag: true } }
+                    report_tag: true
                 }
             });
-            return this.transformReport(report);
+            return report;
         } catch (error) {
             console.error("Error fetching report by ID:", error);
             throw new Error("Failed to fetch report");
-        }
-    }
-
-    /**
-     * Update report (can update title, reason, description)
-     */
-    async updateReport(reportId: number, user_id: number, payload: UpdateReportRequest): Promise<any> {
-        try {
-            // If reason provided, handle tag relation
-            const { reason, ...updateData } = payload as any;
-
-            const updatedReport = await prisma.report.update({
-                where: { report_id: reportId, user_id: user_id },
-                data: updateData
-            });
-
-            if (reason !== undefined) {
-                // Remove existing reportReason if any
-                await prisma.reportReason.deleteMany({ where: { report_id: reportId } });
-
-                if (reason && typeof reason === 'string' && reason.trim().length > 0) {
-                    // find or create tag
-                    let tag = await prisma.reportTag.findFirst({
-                        where: {
-                            OR: [
-                                { key: reason },
-                                { label: reason }
-                            ]
-                        }
-                    });
-
-                    if (!tag) {
-                        const slug = reason.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-                        tag = await prisma.reportTag.create({
-                            data: {
-                                key: slug,
-                                label: reason,
-                                emoji: '',
-                                description: ''
-                            }
-                        });
-                    }
-
-                    await prisma.reportReason.create({
-                        data: {
-                            report_id: reportId,
-                            report_tag_id: tag.id
-                        }
-                    });
-                }
-            }
-
-            // return the updated report including its reason relation (transformed)
-            const updated = await prisma.report.findUnique({
-                where: { report_id: reportId },
-                include: { reason: { include: { report_tag: true } } }
-            });
-            return this.transformReport(updated);
-        } catch (error) {
-            console.error("Error updating report:", error);
-            throw new Error("Failed to update report");
         }
     }
 
@@ -252,12 +134,6 @@ export class ReportRepository {
         }
     }
 
-    // Removed hasUserReportedBlog since we don't have user_id or blog_id in simple schema
-
-    // Removed getReportsByUser since we don't have user_id in simple schema
-
-    // Removed getReportsByBlog since we don't have blog_id in simple schema
-
     /**
      * Get all reports
      */
@@ -268,16 +144,13 @@ export class ReportRepository {
             const reports = await prisma.report.findMany({
                 skip,
                 take: limit,
-                include: { reason: { include: { report_tag: true } } },
+                include: { report_tag: true },
                 orderBy: { created_at: 'desc' }
             });
 
             const total = await prisma.report.count();
-
-            const transformed = reports.map(r => this.transformReport(r));
-
             return {
-                reports: transformed,
+                reports: reports,
                 pagination: {
                     current_page: page,
                     total_pages: Math.ceil(total / limit),

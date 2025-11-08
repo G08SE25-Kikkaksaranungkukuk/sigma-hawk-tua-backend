@@ -28,17 +28,22 @@ export class ReportController extends BaseController {
 
         const reportData: CreateReportRequest = {
             title: req.body.title,
-            reason: req.body.reason || "",
-            description: req.body.description || ""
+            report_tag: req.body.report_tag || "",
+            description: req.body.description || "",
+            user_id: req.body.user_id
         };
 
         // Validate required fields
-        if (!reportData.title || !reportData.reason || reportData.reason.trim().length === 0) {
+        if (!reportData.title || !reportData.report_tag || reportData.report_tag.trim().length === 0 ||
+            !reportData.user_id
+        ) {
             return res.status(400).json({
                 success: false,
-                message: "Missing required fields: title and reason"
+                message: "Missing required fields: title or report_tag or description or user_id"
             });
         }
+
+
 
                         const result = await this.reportService.createReport(userId, reportData);
 
