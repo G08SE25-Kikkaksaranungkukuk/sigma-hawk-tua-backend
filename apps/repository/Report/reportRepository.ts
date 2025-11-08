@@ -12,15 +12,49 @@ export class ReportRepository {
      * Create a new report
      */
     async createReport(user_id: number, payload: CreateReportRequest): Promise<any> {
-        const { report_tag, ...reportData } = payload as any;
+        const { reason, ...reportData } = payload as any;
 
         const report = await prisma.report.create({
-            data: reportData,
+            data: {
+                user_id,
+                ...reportData
+            }
         });
 
-        
+        // If a reason string is provided, map it to a ReportTag and connect
+        if (reason && typeof reason === 'string' && reason.trim().length > 0) {
+            let tag = await prisma.reportTag.findFirst({
+                where: {
+                    OR: [
+                        { key: reason },
+                        { label: reason }
+                    ]
+                }
+            });
 
-        return report
+            if (!tag) {
+                const slug = reason.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                tag = await prisma.reportTag.create({
+                    data: {
+                        key: slug,
+                        label: reason,
+                        emoji: '',
+                        description: ''
+                    }
+                });
+            }
+
+            await prisma.report.update({
+                where: { report_id: report.report_id },
+                data: {
+                    report_tag: {
+                        connect: { id: tag.id }
+                    }
+                }
+            });
+        }
+
+        return report;
     }
 
     /**
@@ -117,6 +151,70 @@ export class ReportRepository {
         } catch (error) {
             console.error("Error fetching report by ID:", error);
             throw new Error("Failed to fetch report");
+        }
+    }
+
+    /**
+     * Update report (can update title, reason, description)
+     */
+    async updateReport(reportId: number, user_id: number, payload: UpdateReportRequest) {
+        try {
+            const { reason, ...updateData } = payload as any;
+
+            const updatedReport = await prisma.report.update({
+                where: { report_id: reportId, user_id: user_id },
+                data: updateData
+            });
+
+
+            // Update report tag relation using the `report_tag` relation (connect to found/created tag)
+            if (reason !== undefined) {
+                if (reason && typeof reason === 'string' && reason.trim().length > 0) {
+                    let tag = await prisma.reportTag.findFirst({
+                        where: {
+                            OR: [
+                                { key: reason },
+                                { label: reason }
+                            ]
+                        }
+                    });
+
+                    if (!tag) {
+                        const slug = reason.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                        tag = await prisma.reportTag.create({
+                            data: {
+                                key: slug,
+                                label: reason,
+                                emoji: '',
+                                description: ''
+                            }
+                        });
+                    }
+
+                    await prisma.report.update({
+                        where: { report_id: reportId },
+                        data: {
+                            report_tag: {
+                                connect: { id: tag.id }
+                            }
+                        }
+                    });
+                } else {
+                    // If an explicit empty reason was provided, attempt to connect to a generic OTHER tag if it exists
+                    const other = await prisma.reportTag.findUnique({ where: { key: 'OTHER' } });
+                    if (other) {
+                        await prisma.report.update({
+                            where: { report_id: reportId },
+                            data: { report_tag: { connect: { id: other.id } } }
+                        });
+                    }
+                }
+            }
+
+            return updatedReport;
+        } catch (error) {
+            console.error("Error updating report:", error);
+            throw new Error("Failed to update report");
         }
     }
 

@@ -64,6 +64,15 @@ async function main() {
       { key: "OTHER", label: "Other", emoji: '❓', description: "Other technical issues not listed above" },
   ];
 
+  console.log('⚠️ Seeding report reasons...');
+  for (const reportTag of reportTags) {
+    await prisma.reportTag.upsert({
+      where: { key: reportTag.key },
+      update: reportTag,
+      create: reportTag,
+    });
+  }
+
   console.log('✅ Database seeding completed successfully!');
 }
 
