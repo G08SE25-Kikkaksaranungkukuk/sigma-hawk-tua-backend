@@ -14,16 +14,10 @@ export class ReportRepository {
     async createReport(user_id: number, payload: CreateReportRequest): Promise<any> {
         const { reason, ...reportData } = payload as any;
 
-        const report = await prisma.report.create({
-            data: {
-                user_id,
-                ...reportData
-            }
-        });
-
-        // If a reason string is provided, map it to a ReportTag and connect
+        // Determine tag to connect (required relation)
+        let tagToUse: any = null;
         if (reason && typeof reason === 'string' && reason.trim().length > 0) {
-            let tag = await prisma.reportTag.findFirst({
+            tagToUse = await prisma.reportTag.findFirst({
                 where: {
                     OR: [
                         { key: reason },
@@ -32,9 +26,9 @@ export class ReportRepository {
                 }
             });
 
-            if (!tag) {
+            if (!tagToUse) {
                 const slug = reason.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-                tag = await prisma.reportTag.create({
+                tagToUse = await prisma.reportTag.create({
                     data: {
                         key: slug,
                         label: reason,
@@ -43,16 +37,28 @@ export class ReportRepository {
                     }
                 });
             }
-
-            await prisma.report.update({
-                where: { report_id: report.report_id },
-                data: {
-                    report_tag: {
-                        connect: { id: tag.id }
+        } else {
+            // No reason provided: fallback to an 'OTHER' tag (create if missing)
+            tagToUse = await prisma.reportTag.findUnique({ where: { key: 'OTHER' } });
+            if (!tagToUse) {
+                tagToUse = await prisma.reportTag.create({
+                    data: {
+                        key: 'OTHER',
+                        label: 'Other',
+                        emoji: '❓',
+                        description: 'Other issues'
                     }
-                }
-            });
+                });
+            }
         }
+
+        const report = await prisma.report.create({
+            data: {
+                user_id,
+                ...reportData,
+                report_tag: { connect: { id: tagToUse.id } }
+            }
+        });
 
         return report;
     }
@@ -78,17 +84,13 @@ export class ReportRepository {
         if (id) whereClause.report_id = id;
         if (title) whereClause.title = { contains: title, mode: 'insensitive' };
 
-        // filter by reason: look into related ReportReason -> ReportTag (key or label)
+        // filter by reason: match against the related ReportTag (single relation)
         if (reason) {
-            whereClause.reason = {
-                some: {
-                    report_tag: {
-                        OR: [
-                            { key: { contains: reason, mode: 'insensitive' } },
-                            { label: { contains: reason, mode: 'insensitive' } }
-                        ]
-                    }
-                }
+            whereClause.report_tag = {
+                OR: [
+                    { key: { contains: reason, mode: 'insensitive' } },
+                    { label: { contains: reason, mode: 'insensitive' } }
+                ]
             };
         }
 
@@ -161,13 +163,21 @@ export class ReportRepository {
         try {
             const { reason, ...updateData } = payload as any;
 
+            // Verify report exists and that the user owns it
+            const existing = await prisma.report.findUnique({ where: { report_id: reportId } });
+            if (!existing) {
+                throw new Error('Report not found');
+            }
+            if (existing.user_id !== user_id) {
+                throw new Error('Unauthorized to update this report');
+            }
+
             const updatedReport = await prisma.report.update({
-                where: { report_id: reportId, user_id: user_id },
+                where: { report_id: reportId },
                 data: updateData
             });
 
-
-            // Update report tag relation using the `report_tag` relation (connect to found/created tag)
+            // Update report_tag relation if reason provided
             if (reason !== undefined) {
                 if (reason && typeof reason === 'string' && reason.trim().length > 0) {
                     let tag = await prisma.reportTag.findFirst({
@@ -194,13 +204,11 @@ export class ReportRepository {
                     await prisma.report.update({
                         where: { report_id: reportId },
                         data: {
-                            report_tag: {
-                                connect: { id: tag.id }
-                            }
+                            report_tag: { connect: { id: tag.id } }
                         }
                     });
                 } else {
-                    // If an explicit empty reason was provided, attempt to connect to a generic OTHER tag if it exists
+                    // If an explicit empty reason was provided, connect to OTHER if exists
                     const other = await prisma.reportTag.findUnique({ where: { key: 'OTHER' } });
                     if (other) {
                         await prisma.report.update({
