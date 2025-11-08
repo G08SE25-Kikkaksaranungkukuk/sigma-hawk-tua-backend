@@ -147,7 +147,8 @@ export class ReportController extends BaseController {
             const updateData: UpdateReportRequest = {
                 title: req.body.title,
                 reason: req.body.reason,
-                description: req.body.description
+                description: req.body.description,
+                is_resolved: req.body.is_resolved
             };
 
             // Remove undefined fields

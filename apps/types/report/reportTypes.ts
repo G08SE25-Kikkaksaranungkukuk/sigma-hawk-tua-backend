@@ -32,6 +32,7 @@ export interface UpdateReportRequest {
     title?: string;
     description?: string;
     reason?: string;
+    is_resolved?: boolean;
 }
 
 export interface ReportFilters {
