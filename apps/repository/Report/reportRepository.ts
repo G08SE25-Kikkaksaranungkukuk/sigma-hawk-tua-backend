@@ -102,7 +102,7 @@ export class ReportRepository {
                     report_tag: true
                 },
                 orderBy: {
-                    created_at: 'desc'
+                    report_id: 'asc'
                 }
             });
 
