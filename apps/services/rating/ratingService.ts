@@ -121,53 +121,7 @@ export class RatingService {
     }
   }
 
-  /**
-   * Get user rating statistics
-   */
-  async getUserRatingStats(userId: number) {
-    try {
-      const stats = await this.ratingRepository.getUserRatingStats(userId);
-      return {
-        success: true,
-        data: stats,
-        message: 'Rating statistics retrieved successfully'
-      };
-    } catch (error) {
-      throw new Error(`Failed to get rating statistics: ${(error as Error).message}`);
-    }
-  }
 
-  /**
-   * Check if a user has already rated another user
-   */
-  async checkIfUserRated(userId: number, raterId: number) {
-    try {
-      const hasRated = await this.ratingRepository.hasUserRated(userId, raterId);
-      return {
-        success: true,
-        data: { has_rated: hasRated },
-        message: hasRated ? 'User has already rated' : 'User has not rated yet'
-      };
-    } catch (error) {
-      throw new Error(`Failed to check rating status: ${(error as Error).message}`);
-    }
-  }
-
-  /**
-   * Get all ratings given by a specific user
-   */
-  async getRatingsByRater(raterId: number) {
-    try {
-      const ratings = await this.ratingRepository.getRatingsByRater(raterId);
-      return {
-        success: true,
-        data: ratings,
-        message: 'Ratings retrieved successfully'
-      };
-    } catch (error) {
-      throw new Error(`Failed to get ratings by rater: ${(error as Error).message}`);
-    }
-  }
 
   /**
    * Get simple user ratings (scores + who voted)
@@ -232,68 +186,5 @@ export class RatingService {
     }
   }
 
-  /**
-   * Get all ratings received by a specific user
-   */
-  async getRatingsForUser(userId: number) {
-    try {
-      if (!Number.isInteger(userId) || userId <= 0) {
-        throw new Error('Invalid user ID');
-      }
-      
-      const ratings = await this.ratingRepository.getRatingsForUser(userId);
-      return {
-        success: true,
-        data: ratings,
-        message: 'Ratings retrieved successfully'
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new Error(`Failed to get ratings for user: ${message}`);
-    }
-  }
 
-  /**
-   * Get detailed rating statistics with advanced analytics
-   */
-  async getDetailedUserRatingStats(userId: number) {
-    try {
-      if (!Number.isInteger(userId) || userId <= 0) {
-        throw new Error('Invalid user ID');
-      }
-      
-      const stats = await this.ratingRepository.getDetailedUserRatingStats(userId);
-      
-      return {
-        success: true,
-        data: stats,
-        message: 'Detailed rating statistics retrieved successfully'
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new Error(`Failed to get detailed rating statistics: ${message}`);
-    }
-  }
-
-  /**
-   * Get top rated users leaderboard
-   */
-  async getTopRatedUsers(limit: number = 10) {
-    try {
-      if (!Number.isInteger(limit) || limit <= 0 || limit > 100) {
-        throw new Error('Limit must be between 1 and 100');
-      }
-      
-      const topUsers = await this.ratingRepository.getTopRatedUsers(limit);
-      
-      return {
-        success: true,
-        data: topUsers,
-        message: 'Top rated users retrieved successfully'
-      };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new Error(`Failed to get top rated users: ${message}`);
-    }
-  }
 }
