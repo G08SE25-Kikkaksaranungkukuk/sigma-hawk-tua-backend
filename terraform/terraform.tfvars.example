@@ -1,0 +1,27 @@
+# Development environment configuration
+project_id  = "your-gcp-project-id"
+region      = "asia-southeast1"
+environment = "development"
+
+# Database
+db_name     = "sigmadb"
+db_user     = "sigma"
+db_password = "your-secure-db-password" # Change this!
+db_tier     = "db-f1-micro"
+db_disk_size = 10
+
+# Cloud Run
+cloud_run_cpu    = "1"
+cloud_run_memory = "512Mi"
+min_instances    = "0"
+max_instances    = "5"
+image_tag        = "latest"
+
+# Security
+jwt_access_secret  = "your-jwt-access-secret-here"  # Change this!
+jwt_refresh_secret = "your-jwt-refresh-secret-here" # Change this!
+
+# Application
+file_server_url              = "https://your-file-server.com"
+allow_public_access          = true
+enable_health_check_scheduler = false

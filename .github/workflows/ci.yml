@@ -5,6 +5,8 @@ on:
     branches: [ main, dev]
   pull_request:
     branches: [ main, dev , SigmaTest]
+  schedule:
+    - cron: '17 10 * * 1'
 
 jobs:
   build-test:
@@ -14,24 +16,11 @@ jobs:
       matrix:
         node: [24.x] 
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: sigma
-          POSTGRES_PASSWORD: strongpassword
-          POSTGRES_DB: sigmadb
-        ports: 
-          - 5433:5432
-        options: >-
-          --health-cmd="pg_isready -U sigma -d sigmadb"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -61,23 +50,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: pnpm db:generate
-        env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
+      - name: Run tests
+        run: pnpm run test
 
-      - name: Push database schema
-        run: npx prisma db push --accept-data-loss --skip-generate
-        env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
+      - name: SonarQube Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.projectKey=thamroi
+            -Dsonar.organization=ThamRoi
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            
 
-      - name: Seed database
-        run: pnpm db:seed
+      - name: SonarQube Quality Gate Check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          pollingTimeoutSec: 600
         env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
-
-      - name: Build
-        run: pnpm run build
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         
   snyk-code:
     name: sast scan
@@ -89,15 +80,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24.x
           
       - name: Setup Snyk
         uses: snyk/actions/setup@master
-
 
       - name: SAST scan (Snyk Code)
         env:
@@ -107,9 +92,64 @@ jobs:
           --severity-threshold=high \
           --sarif-file-output=snyk-test.sarif
 
+      - name: SCA scan (Snyk Open Source)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk test \
+            --severity-threshold=high \
+            --sarif-file-output=snyk-oss.sarif
+
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-test.sarif
+      
+      - name: Upload SARIF (Snyk OSS)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-oss.sarif
+
+  trivy:
+    name: trivy scans
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trivy FS (deps & repo)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-fs.sarif'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          exit-code: '1'
+
+      - name: Upload SARIF (Trivy FS)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-fs.sarif
+
+      - name: Trivy Config
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          format: 'sarif'
+          output: 'trivy-config.sarif'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+
+      - name: Upload SARIF (Trivy Config)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-config.sarif
+
+
 
 
