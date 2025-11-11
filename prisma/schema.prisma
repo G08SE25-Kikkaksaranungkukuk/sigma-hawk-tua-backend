@@ -261,18 +261,6 @@ model ReportTag {
   @@map("report_tags")
 }
 
-model ReportReason {
-  id              Int         @id @default(autoincrement())
-  report_id       Int
-  report_tag_id   Int
-  created_at      DateTime    @default(now())
-  report_tag      ReportTag   @relation("ReportTagBelongsToReportReason", fields: [report_tag_id], references: [id], onDelete: Cascade)
-  report          Report      @relation("ReportHasReason", fields: [report_id], references: [report_id], onDelete: Cascade)
-  
-  @@unique([report_id])
-  @@map("report_reasons")
-}
-
 model Rating {
   id               Int      @id @default(autoincrement())
   user_id          Int      // User being rated
