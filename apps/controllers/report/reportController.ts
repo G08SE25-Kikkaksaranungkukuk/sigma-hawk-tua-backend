@@ -28,17 +28,19 @@ export class ReportController extends BaseController {
 
         const reportData: CreateReportRequest = {
             title: req.body.title,
-            report_tag_id: req.body.report_tag_id || [],
+            reason: req.body.reason || "",
             description: req.body.description || ""
         };
 
         // Validate required fields
-        if (!reportData.title || !reportData.report_tag_id || reportData.report_tag_id.length === 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Missing required fields: title and at least one report tag" 
+        if (!reportData.title || !reportData.reason || reportData.reason.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields: title and reason"
             });
         }
+
+
 
                         const result = await this.reportService.createReport(userId, reportData);
 
@@ -63,6 +65,7 @@ export class ReportController extends BaseController {
                 id: req.query.id ? parseInt(req.query.id as string) : undefined,
                 title: req.query.title ? req.query.title as string : undefined,
                 reason: req.query.reason ? req.query.reason as string : undefined,
+                is_resolved: req.query.is_resolved ? req.query.is_resolved === 'true' : undefined,
                 page: req.query.page ? parseInt(req.query.page as string) : 1,
                 limit: req.query.limit ? parseInt(req.query.limit as string) : 10
             };
@@ -79,6 +82,23 @@ export class ReportController extends BaseController {
             }
         } catch (error) {
             console.error("Error in getAllReports controller:", error);
+            return this.handleError(error, res);
+        }
+    }
+
+    /**
+     * Get all report reasons/tags (public)
+     * GET /api/v2/reports/reasons
+     */
+    async getAllReportReasons(req: Request, res: Response) {
+        try {
+            const result = await this.reportService.getAllReportReasons();
+            if (result.success) {
+                return this.handleSuccess(res, { reasons: result.reasons }, 200, "Report reasons fetched successfully");
+            }
+            return res.status(500).json({ success: false, reasons: [] });
+        } catch (error) {
+            console.error("Error in getAllReportReasons controller:", error);
             return this.handleError(error, res);
         }
     }
@@ -127,8 +147,9 @@ export class ReportController extends BaseController {
 
             const updateData: UpdateReportRequest = {
                 title: req.body.title,
+                reason: req.body.reason,
                 description: req.body.description,
-                report_tag_id: req.body.report_tag_id
+                is_resolved: req.body.is_resolved
             };
 
             // Remove undefined fields

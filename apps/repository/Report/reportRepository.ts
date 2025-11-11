@@ -11,27 +11,58 @@ export class ReportRepository {
     /**
      * Create a new report
      */
-    async createReport(user_id: number, payload: CreateReportRequest): Promise<Report> {
-        const { report_tag_id, ...reportData } = payload;
+    async createReport(user_id: number, payload: CreateReportRequest): Promise<any> {
+        const { reason, ...reportData } = payload as any;
 
-        const newReportIssue = await prisma.report.create({
+        // Determine tag to connect (required relation)
+        let tagToUse: any = null;
+        if (reason && typeof reason === 'string' && reason.trim().length > 0) {
+            tagToUse = await prisma.reportTag.findFirst({
+                where: {
+                    OR: [
+                        { key: reason },
+                        { label: reason }
+                    ]
+                }
+            });
+
+            if (!tagToUse) {
+                const slug = reason.toLowerCase()
+                    .replaceAll(/[^a-z0-9]+/g, '_')
+                    .replaceAll(/(^_|_$)/g, '');
+                tagToUse = await prisma.reportTag.create({
+                    data: {
+                        key: slug,
+                        label: reason,
+                        emoji: '',
+                        description: ''
+                    }
+                });
+            }
+        } else {
+            // No reason provided: fallback to an 'OTHER' tag (create if missing)
+            tagToUse = await prisma.reportTag.findUnique({ where: { key: 'OTHER' } });
+            if (!tagToUse) {
+                tagToUse = await prisma.reportTag.create({
+                    data: {
+                        key: 'OTHER',
+                        label: 'Other',
+                        emoji: '❓',
+                        description: 'Other issues'
+                    }
+                });
+            }
+        }
+
+        const report = await prisma.report.create({
             data: {
-                user_id: user_id,
+                user_id,
                 ...reportData,
-            },
+                report_tag: { connect: { id: tagToUse.id } }
+            }
         });
 
-        if (report_tag_id && Array.isArray(report_tag_id) && report_tag_id.length > 0) {
-
-            await prisma.reportReason.createMany({
-                data: report_tag_id.map((id: number) => ({
-                    report_id: newReportIssue.report_id,
-                    report_tag_id: id,
-                })),
-            });
-        }
-        
-        return newReportIssue;
+        return report;
     }
 
     /**
@@ -43,6 +74,7 @@ export class ReportRepository {
             id,
             title,
             reason,
+            is_resolved,
             page = 1,
             limit = 10
         } = filters;
@@ -50,22 +82,41 @@ export class ReportRepository {
         const skip = (page - 1) * limit;
 
         const whereClause: any = {};
-        
-        if (id) whereClause.id = id;
+
+        // filter by report_id (controller may pass id)
+        if (id) whereClause.report_id = id;
         if (title) whereClause.title = { contains: title, mode: 'insensitive' };
-        if (reason) whereClause.reason = { contains: reason, mode: 'insensitive' };            const reports = await prisma.report.findMany({
+
+        // filter by reason: match against the related ReportTag (single relation)
+        if (reason) {
+            whereClause.report_tag = {
+                OR: [
+                    { key: { contains: reason, mode: 'insensitive' } },
+                    { label: { contains: reason, mode: 'insensitive' } }
+                ]
+            };
+        }
+
+        // filter by is_resolved
+        if (is_resolved !== undefined) {
+            whereClause.is_resolved = is_resolved;
+        }
+
+            const reports = await prisma.report.findMany({
                 where: whereClause,
                 skip,
                 take: limit,
+                include: {
+                    report_tag: true
+                },
                 orderBy: {
-                    created_at: 'desc'
+                    report_id: 'asc'
                 }
             });
 
             const total = await prisma.report.count({ where: whereClause });
-
             return {
-                reports,
+                reports: reports,
                 pagination: {
                     current_page: page,
                     total_pages: Math.ceil(total / limit),
@@ -80,13 +131,33 @@ export class ReportRepository {
     }
 
     /**
+     * Get all available report tags/reasons
+     */
+    async getAllReportReason() {
+        try {
+            const tags = await prisma.reportTag.findMany({
+                select: { id: true, key: true, label: true, emoji: true, description: true },
+                orderBy: { label: 'asc' }
+            });
+            return tags;
+        } catch (error) {
+            console.error('Error fetching report reasons:', error);
+            throw new Error('Failed to fetch report reasons');
+        }
+    }
+
+    /**
      * Get report by ID
      */
     async getReportById(reportId: number) {
         try {
-            return await prisma.report.findUnique({
-                where: { report_id: reportId }
+            const report = await prisma.report.findUnique({
+                where: { report_id: reportId },
+                include: {
+                    report_tag: true
+                }
             });
+            return report;
         } catch (error) {
             console.error("Error fetching report by ID:", error);
             throw new Error("Failed to fetch report");
@@ -98,28 +169,63 @@ export class ReportRepository {
      */
     async updateReport(reportId: number, user_id: number, payload: UpdateReportRequest) {
         try {
-            const { report_tag_id, ...updateData } = payload;
-            
+            const { reason, ...updateData } = payload as any;
+
+            // Verify report exists and that the user owns it
+            const existing = await prisma.report.findUnique({ where: { report_id: reportId } });
+            if (!existing) {
+                throw new Error('Report not found');
+            }
+            if (existing.user_id !== user_id) {
+                throw new Error('Unauthorized to update this report');
+            }
+
             const updatedReport = await prisma.report.update({
-                where: { report_id: reportId, user_id: user_id },
+                where: { report_id: reportId },
                 data: updateData
             });
 
-            // Update report tags if provided
-            if (report_tag_id !== undefined) {
-                // Delete existing report tags
-                await prisma.reportReason.deleteMany({
-                    where: { report_id: reportId }
-                });
-
-                // Create new report tags if array is not empty
-                if (Array.isArray(report_tag_id) && report_tag_id.length > 0) {
-                    await prisma.reportReason.createMany({
-                        data: report_tag_id.map((id: number) => ({
-                            report_id: reportId,
-                            report_tag_id: id,
-                        })),
+            // Update report_tag relation if reason provided
+            if (reason !== undefined) {
+                if (reason && typeof reason === 'string' && reason.trim().length > 0) {
+                    let tag = await prisma.reportTag.findFirst({
+                        where: {
+                            OR: [
+                                { key: reason },
+                                { label: reason }
+                            ]
+                        }
                     });
+
+                    if (!tag) {
+                        const slug = reason.toLowerCase()
+                            .replaceAll(/[^a-z0-9]+/g, '_')
+                            .replaceAll(/(^_|_$)/g, '');
+                        tag = await prisma.reportTag.create({
+                            data: {
+                                key: slug,
+                                label: reason,
+                                emoji: '',
+                                description: ''
+                            }
+                        });
+                    }
+
+                    await prisma.report.update({
+                        where: { report_id: reportId },
+                        data: {
+                            report_tag: { connect: { id: tag.id } }
+                        }
+                    });
+                } else {
+                    // If an explicit empty reason was provided, connect to OTHER if exists
+                    const other = await prisma.reportTag.findUnique({ where: { key: 'OTHER' } });
+                    if (other) {
+                        await prisma.report.update({
+                            where: { report_id: reportId },
+                            data: { report_tag: { connect: { id: other.id } } }
+                        });
+                    }
                 }
             }
 
@@ -144,12 +250,6 @@ export class ReportRepository {
         }
     }
 
-    // Removed hasUserReportedBlog since we don't have user_id or blog_id in simple schema
-
-    // Removed getReportsByUser since we don't have user_id in simple schema
-
-    // Removed getReportsByBlog since we don't have blog_id in simple schema
-
     /**
      * Get all reports
      */
@@ -160,13 +260,13 @@ export class ReportRepository {
             const reports = await prisma.report.findMany({
                 skip,
                 take: limit,
+                include: { report_tag: true },
                 orderBy: { created_at: 'desc' }
             });
 
             const total = await prisma.report.count();
-
             return {
-                reports,
+                reports: reports,
                 pagination: {
                     current_page: page,
                     total_pages: Math.ceil(total / limit),
