@@ -32,7 +32,7 @@ export class ReportService {
                 };
             }
 
-            if (!reportData.reason || !reportData.reason.trim()) {
+            if (!reportData.reason?.trim()) {
                 return {
                     success: false,
                     message: "Reason is required"

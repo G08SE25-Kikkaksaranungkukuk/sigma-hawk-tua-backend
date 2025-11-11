@@ -27,7 +27,9 @@ export class ReportRepository {
             });
 
             if (!tagToUse) {
-                const slug = reason.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                const slug = reason.toLowerCase()
+                    .replaceAll(/[^a-z0-9]+/g, '_')
+                    .replaceAll(/(^_|_$)/g, '');
                 tagToUse = await prisma.reportTag.create({
                     data: {
                         key: slug,
@@ -196,7 +198,9 @@ export class ReportRepository {
                     });
 
                     if (!tag) {
-                        const slug = reason.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                        const slug = reason.toLowerCase()
+                            .replaceAll(/[^a-z0-9]+/g, '_')
+                            .replaceAll(/(^_|_$)/g, '');
                         tag = await prisma.reportTag.create({
                             data: {
                                 key: slug,
