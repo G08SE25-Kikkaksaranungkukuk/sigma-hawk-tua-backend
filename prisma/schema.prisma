@@ -260,3 +260,49 @@ model ReportTag {
 
   @@map("report_tags")
 }
+
+model ReportReason {
+  id              Int         @id @default(autoincrement())
+  report_id       Int
+  report_tag_id   Int
+  created_at      DateTime    @default(now())
+  report_tag      ReportTag   @relation("ReportTagBelongsToReportReason", fields: [report_tag_id], references: [id], onDelete: Cascade)
+  report          Report      @relation("ReportHasReason", fields: [report_id], references: [report_id], onDelete: Cascade)
+  
+  @@unique([report_id])
+  @@map("report_reasons")
+}
+
+model Rating {
+  id               Int      @id @default(autoincrement())
+  user_id          Int      // User being rated
+  rater_id         Int      // User who gives the rating
+  trust_score      Float    @default(0)
+  engagement_score Float    @default(0)
+  experience_score Float    @default(0)
+  total_score      Float    @default(0) // Calculated field: α*trust + β*engagement + γ*experience
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@unique([user_id, rater_id]) // Prevent duplicate ratings from same rater
+  @@map("ratings")
+}
+
+model UserRatingAggregate {
+  id                      Int      @id @default(autoincrement())
+  user_id                 Int      @unique // User who received ratings
+  average_trust_score     Float    @default(0)
+  average_engagement_score Float   @default(0)
+  average_experience_score Float   @default(0)
+  average_total_score     Float    @default(0)
+  median_trust_score      Float    @default(0)
+  median_engagement_score Float    @default(0)
+  median_experience_score Float    @default(0)
+  median_total_score      Float    @default(0)
+  min_total_score         Float    @default(0)
+  max_total_score         Float    @default(0)
+  total_ratings_count     Int      @default(0)
+  last_updated            DateTime @default(now()) @updatedAt
+
+  @@map("user_rating_aggregates")
+}
