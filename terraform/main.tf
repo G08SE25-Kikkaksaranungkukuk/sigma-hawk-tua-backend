@@ -13,7 +13,10 @@ provider "google" {
   region  = var.region
 }
 
+# --------- Infrastructure Resources -------------------
 # Enable required APIs
+# ------------------------------------------------------
+
 resource "google_project_service" "cloud_run_api" {
   service            = "run.googleapis.com"
   disable_on_destroy = false
@@ -34,15 +37,16 @@ resource "google_project_service" "sql_admin_api" {
   disable_on_destroy = false
 }
 
-resource "google_project_service" "compute_api" {
-  service            = "compute.googleapis.com"
+resource "google_project_service" "secretmanager" {
+  service            = "secretmanager.googleapis.com"
   disable_on_destroy = false
 }
 
-resource "google_project_service" "vpc_access_api" {
-  service            = "vpcaccess.googleapis.com"
-  disable_on_destroy = false
-}
+# ------------------------------------------------------
+
+# --------- Infrastructure Resources -------------------
+# Artifact Registry
+# ------------------------------------------------------
 
 # Create Artifact Registry for Docker images
 resource "google_artifact_registry_repository" "backend_repo" {
@@ -53,6 +57,13 @@ resource "google_artifact_registry_repository" "backend_repo" {
 
   depends_on = [google_project_service.artifact_registry_api]
 }
+
+# ------------------------------------------------------
+
+
+# --------- Infrastructure Resources -------------------
+# Cloud SQL (PostgreSQL)
+# ------------------------------------------------------
 
 # Cloud SQL PostgreSQL instance
 resource "google_sql_database_instance" "postgres" {
@@ -106,48 +117,11 @@ resource "google_sql_user" "db_user" {
   password = var.db_password
 }
 
-# VPC Network
-resource "google_compute_network" "vpc_network" {
-  name                    = "${var.app_name}-vpc-${var.environment}"
-  auto_create_subnetworks = false
+# ------------------------------------------------------
 
-  depends_on = [google_project_service.compute_api]
-}
-
-# Subnet
-resource "google_compute_subnetwork" "subnet" {
-  name          = "${var.app_name}-subnet-${var.environment}"
-  ip_cidr_range = "10.0.0.0/24"
-  region        = var.region
-  network       = google_compute_network.vpc_network.id
-}
-
-# VPC Access Connector for Cloud Run to access Cloud SQL
-resource "google_vpc_access_connector" "connector" {
-  name          = "${var.app_name}-vpc-connector"
-  region        = var.region
-  ip_cidr_range = "10.8.0.0/28"
-  network       = google_compute_network.vpc_network.name
-
-  depends_on = [google_project_service.vpc_access_api]
-}
-
-# Private IP for Cloud SQL
-resource "google_compute_global_address" "private_ip_address" {
-  name          = "${var.app_name}-private-ip"
-  purpose       = "VPC_PEERING"
-  address_type  = "INTERNAL"
-  prefix_length = 16
-  network       = google_compute_network.vpc_network.id
-}
-
-resource "google_service_networking_connection" "private_vpc_connection" {
-  network                 = google_compute_network.vpc_network.id
-  service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
-
-  depends_on = [google_project_service.compute_api]
-}
+# --------- Infrastructure Resources -------------------
+# Secret Manager
+# ------------------------------------------------------
 
 # Secret Manager for sensitive data
 resource "google_secret_manager_secret" "db_connection_string" {
@@ -190,6 +164,50 @@ resource "google_secret_manager_secret_version" "jwt_refresh_secret" {
   secret      = google_secret_manager_secret.jwt_refresh_secret.id
   secret_data = var.jwt_refresh_secret
 }
+
+# ------------------------------------------------------
+
+# --------- Infrastructure Resources -------------------
+# Service Account and IAM
+# ------------------------------------------------------
+
+# Cloud Run service account (used by both services)
+resource "google_service_account" "run_sa" {
+  account_id   = "${var.app_name}-run-sa-${var.environment}"
+  display_name = "Cloud Run SA for ${var.app_name} (${var.environment})"
+}
+
+# connect to Cloud SQL
+resource "google_project_iam_member" "run_sa_cloudsql" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.run_sa.email}"
+}
+
+# pull images from Artifact Registry
+resource "google_project_iam_member" "run_sa_ar_reader" {
+  project = var.project_id
+  role    = "roles/artifactregistry.reader"
+  member  = "serviceAccount:${google_service_account.run_sa.email}"
+}
+
+# read secrets
+resource "google_secret_manager_secret_iam_member" "run_sa_secret_access" {
+  for_each = toset([
+    google_secret_manager_secret.database_url.secret_id,
+    google_secret_manager_secret.jwt_access.secret_id,
+    google_secret_manager_secret.jwt_refresh.secret_id
+  ])
+  secret_id = each.value
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.run_sa.email}"
+}
+
+# ------------------------------------------------------
+
+# --------- Infrastructure Resources -------------------
+# Cloud Run Service : Backend
+# ------------------------------------------------------
 
 # Cloud Run Service
 resource "google_cloud_run_service" "backend" {
@@ -294,29 +312,126 @@ resource "google_cloud_run_service" "backend" {
   ]
 }
 
-# Service Account for Cloud Run
-resource "google_service_account" "cloud_run_sa" {
-  account_id   = "${var.app_name}-run-sa-${var.environment}"
-  display_name = "Service Account for Cloud Run ${var.app_name}"
+# ------------------------------------------------------
+
+# --------- Infrastructure Resources -------------------
+# Cloud Run Service : Frontend
+# ------------------------------------------------------
+
+resource "google_cloud_run_service" "frontend" {
+  name     = "${var.app_name}-frontend-${var.environment}"
+  location = var.region
+
+  template {
+    spec {
+      service_account_name = google_service_account.run_sa.email
+
+      containers {
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.repo.repository_id}/${var.app_name}-frontend:${var.image_tag}"
+
+        ports { container_port = 8080 }
+
+        resources {
+          limits = {
+            cpu    = "1"
+            memory = "512Mi"
+          }
+        }
+
+        env { name = "NODE_ENV" value = var.environment }
+        env { name = "PORT"     value = "8080" }
+
+        # Usually no DB for pure SPA; add API_BASE_URL if you need.
+        # env { name = "API_BASE_URL" value = google_cloud_run_service.backend.status[0].url }
+      }
+    }
+
+    metadata {
+      annotations = {
+        "autoscaling.knative.dev/minScale" = "0"
+        "autoscaling.knative.dev/maxScale" = "100"
+        "run.googleapis.com/client-name"   = "terraform"
+      }
+    }
+  }
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+
+  depends_on = [
+    google_project_service.run,
+    google_project_service.artifact_registry
+  ]
 }
 
-# IAM bindings for Service Account
-resource "google_project_iam_member" "cloud_run_sql_client" {
-  project = var.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+# Public access toggle for frontend
+resource "google_cloud_run_service_iam_member" "frontend_public" {
+  count    = var.allow_public_access ? 1 : 0
+  service  = google_cloud_run_service.frontend.name
+  location = google_cloud_run_service.frontend.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
 
-resource "google_secret_manager_secret_iam_member" "cloud_run_secret_accessor" {
-  for_each = toset([
-    google_secret_manager_secret.db_connection_string.secret_id,
-    google_secret_manager_secret.jwt_access_secret.secret_id,
-    google_secret_manager_secret.jwt_refresh_secret.secret_id,
-  ])
+# ------------------------------------------------------
 
-  secret_id = each.value
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+# --------- Infrastructure Resources -------------------
+# I don't know
+# ------------------------------------------------------
+
+resource "google_project_service" "compute_api" {
+  service            = "compute.googleapis.com"
+  disable_on_destroy = false
+}
+
+resource "google_project_service" "vpc_access_api" {
+  service            = "vpcaccess.googleapis.com"
+  disable_on_destroy = false
+}
+
+# VPC Network
+resource "google_compute_network" "vpc_network" {
+  name                    = "${var.app_name}-vpc-${var.environment}"
+  auto_create_subnetworks = false
+
+  depends_on = [google_project_service.compute_api]
+}
+
+# Subnet
+resource "google_compute_subnetwork" "subnet" {
+  name          = "${var.app_name}-subnet-${var.environment}"
+  ip_cidr_range = "10.0.0.0/24"
+  region        = var.region
+  network       = google_compute_network.vpc_network.id
+}
+
+# VPC Access Connector for Cloud Run to access Cloud SQL
+resource "google_vpc_access_connector" "connector" {
+  name          = "${var.app_name}-vpc-connector"
+  region        = var.region
+  ip_cidr_range = "10.8.0.0/28"
+  network       = google_compute_network.vpc_network.name
+
+  depends_on = [google_project_service.vpc_access_api]
+}
+
+# Private IP for Cloud SQL
+resource "google_compute_global_address" "private_ip_address" {
+  name          = "${var.app_name}-private-ip"
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = google_compute_network.vpc_network.id
+}
+
+resource "google_service_networking_connection" "private_vpc_connection" {
+  network                 = google_compute_network.vpc_network.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
+
+  depends_on = [google_project_service.compute_api]
 }
 
 # Allow public access (or restrict with IAM)
