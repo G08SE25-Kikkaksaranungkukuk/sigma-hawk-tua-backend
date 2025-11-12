@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { RatingService } from '../../services/rating/ratingService';
 import { CreateRatingRequest, UpdateRatingRequest } from '../../types/rating/ratingTypes';
+import { UserRepository } from '@/repository/User/userRepository';
 
 export class RatingController {
   private ratingService: RatingService;
@@ -15,7 +16,19 @@ export class RatingController {
    */
   submitRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = parseInt(req.params.userId);
+      const email = req.params.userId;
+      // lookup the user
+      const userRepo = new UserRepository();
+      const user = await userRepo.retrieveUser(email);
+
+      if (!user) {
+        res.status(404).json({ success: false, message: `User with email ${email} not found` });
+        return;
+      }
+
+      // now you have numeric id for the rest of the function
+      const userId = user.user_id;
+
       const raterId = req.user?.user_id; // From JWT middleware
 
       if (!raterId) {
@@ -57,7 +70,18 @@ export class RatingController {
    */
   getUserRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = parseInt(req.params.userId);
+      const email = req.params.userId;
+      // lookup the user
+      const userRepo = new UserRepository();
+      const user = await userRepo.retrieveUser(email);
+
+      if (!user) {
+        res.status(404).json({ success: false, message: `User with email ${email} not found` });
+        return;
+      }
+
+      // now you have numeric id for the rest of the function
+      const userId = user.user_id;
 
       if (isNaN(userId)) {
         res.status(400).json({
@@ -83,7 +107,18 @@ export class RatingController {
    */
   updateRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = parseInt(req.params.userId);
+      const email = req.params.userId;
+      // lookup the user
+      const userRepo = new UserRepository();
+      const user = await userRepo.retrieveUser(email);
+
+      if (!user) {
+        res.status(404).json({ success: false, message: `User with email ${email} not found` });
+        return;
+      }
+
+      // now you have numeric id for the rest of the function
+      const userId = user.user_id;
       const raterId = req.user?.user_id; // From JWT middleware
 
       if (!raterId) {
@@ -124,7 +159,18 @@ export class RatingController {
    */
   deleteRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = parseInt(req.params.userId);
+      const email = req.params.userId;
+      // lookup the user
+      const userRepo = new UserRepository();
+      const user = await userRepo.retrieveUser(email);
+
+      if (!user) {
+        res.status(404).json({ success: false, message: `User with email ${email} not found` });
+        return;
+      }
+
+      // now you have numeric id for the rest of the function
+      const userId = user.user_id;
       const raterId = req.user?.user_id; // From JWT middleware
 
       if (!raterId) {
