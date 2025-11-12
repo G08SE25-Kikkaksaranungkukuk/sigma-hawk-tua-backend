@@ -11,23 +11,37 @@ export class RatingController {
   }
 
   /**
+   * Resolve user by email param and return numeric user_id.
+   * If the user cannot be found or the id is invalid, this helper
+   * sends an HTTP error response and returns null so the caller can exit.
+   */
+  private async resolveUserIdFromParam(req: Request, res: Response): Promise<number | null> {
+    const email = req.params.userId;
+    const userRepo = new UserRepository();
+    const user = await userRepo.retrieveUser(email);
+
+    if (!user) {
+      res.status(404).json({ success: false, message: `User with email ${email} not found` });
+      return null;
+    }
+
+    const userId = user.user_id;
+    if (isNaN(userId)) {
+      res.status(400).json({ success: false, message: 'Invalid user ID' });
+      return null;
+    }
+
+    return userId;
+  }
+
+  /**
    * Submit a rating for a user
    * POST /api/v1/user/:userId/rating
    */
   submitRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const email = req.params.userId;
-      // lookup the user
-      const userRepo = new UserRepository();
-      const user = await userRepo.retrieveUser(email);
-
-      if (!user) {
-        res.status(404).json({ success: false, message: `User with email ${email} not found` });
-        return;
-      }
-
-      // now you have numeric id for the rest of the function
-      const userId = user.user_id;
+      const userId = await this.resolveUserIdFromParam(req, res);
+      if (userId == null) return;
 
       const raterId = req.user?.user_id; // From JWT middleware
 
@@ -70,26 +84,8 @@ export class RatingController {
    */
   getUserRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const email = req.params.userId;
-      // lookup the user
-      const userRepo = new UserRepository();
-      const user = await userRepo.retrieveUser(email);
-
-      if (!user) {
-        res.status(404).json({ success: false, message: `User with email ${email} not found` });
-        return;
-      }
-
-      // now you have numeric id for the rest of the function
-      const userId = user.user_id;
-
-      if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID'
-        });
-        return;
-      }
+      const userId = await this.resolveUserIdFromParam(req, res);
+      if (userId == null) return;
 
       const result = await this.ratingService.getSimpleUserRatings(userId);
       res.status(200).json(result);
@@ -107,32 +103,15 @@ export class RatingController {
    */
   updateRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const email = req.params.userId;
-      // lookup the user
-      const userRepo = new UserRepository();
-      const user = await userRepo.retrieveUser(email);
+      const userId = await this.resolveUserIdFromParam(req, res);
+      if (userId == null) return;
 
-      if (!user) {
-        res.status(404).json({ success: false, message: `User with email ${email} not found` });
-        return;
-      }
-
-      // now you have numeric id for the rest of the function
-      const userId = user.user_id;
       const raterId = req.user?.user_id; // From JWT middleware
 
       if (!raterId) {
         res.status(401).json({
           success: false,
           message: 'Unauthorized: User not authenticated'
-        });
-        return;
-      }
-
-      if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID'
         });
         return;
       }
@@ -159,32 +138,15 @@ export class RatingController {
    */
   deleteRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const email = req.params.userId;
-      // lookup the user
-      const userRepo = new UserRepository();
-      const user = await userRepo.retrieveUser(email);
+      const userId = await this.resolveUserIdFromParam(req, res);
+      if (userId == null) return;
 
-      if (!user) {
-        res.status(404).json({ success: false, message: `User with email ${email} not found` });
-        return;
-      }
-
-      // now you have numeric id for the rest of the function
-      const userId = user.user_id;
       const raterId = req.user?.user_id; // From JWT middleware
 
       if (!raterId) {
         res.status(401).json({
           success: false,
           message: 'Unauthorized: User not authenticated'
-        });
-        return;
-      }
-
-      if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID'
         });
         return;
       }
