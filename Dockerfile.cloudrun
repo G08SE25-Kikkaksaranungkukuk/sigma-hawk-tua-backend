@@ -43,21 +43,19 @@ COPY --from=builder /app/node_modules/.pnpm ./node_modules/.pnpm
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/generated ./generated
 COPY --from=builder /app/prisma ./prisma
-# Copy runtime tsconfig for tsconfig-paths (points to dist instead of apps)
-COPY tsconfig.runtime.json ./tsconfig.json
+
+# Copy tsconfig for runtime path resolution
+COPY --from=builder /app/tsconfig.runtime.json ./tsconfig.json
 
 # Set environment
 ENV NODE_ENV=production
-ENV PORT=8080
 
-# Expose port
+# Expose port (Cloud Run will override PORT automatically)
 EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:8080/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8080) + '/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Start server with tsconfig-paths to resolve path aliases
-# Use NODE_PATH to help resolve modules
-ENV NODE_PATH=/app/dist
 CMD ["node", "-r", "tsconfig-paths/register", "dist/apps/server.js"]

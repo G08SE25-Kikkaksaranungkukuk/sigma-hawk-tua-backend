@@ -47,6 +47,7 @@ app.use((req, res, next) => {
  *                   description: Server uptime in seconds
  */
 app.get("/healthz", (_req: Request, res: Response) => {
+    console.log('✅ /healthz endpoint HIT!');
     res.json({
         status: "healthy",
         timestamp: new Date().toISOString(),
@@ -54,24 +55,53 @@ app.get("/healthz", (_req: Request, res: Response) => {
     });
 });
 
+console.log('✅ /healthz route registered');
+
 // Initialize routing with versioning support
-const routerManager = new RouterManager();
-app.use(routerManager.getRouter());
+try {
+    console.log('🔄 Initializing RouterManager...');
+    const routerManager = new RouterManager();
+    app.use(routerManager.getRouter());
+    console.log('✅ RouterManager initialized');
+} catch (error) {
+    console.error('❌ Failed to initialize RouterManager:', error);
+    // Continue anyway so health check still works
+}
 
 // Setup Swagger documentation
-setupSwagger(app);
+try {
+    console.log('🔄 Setting up Swagger...');
+    setupSwagger(app);
+    console.log('✅ Swagger initialized');
+} catch (error) {
+    console.error('❌ Failed to setup Swagger:', error);
+}
+
+// Debug: Add a catch-all route to see what's being received
+app.use((req, res, next) => {
+    console.log(`🔍 Unmatched route: ${req.method} ${req.url} - Original URL: ${req.originalUrl}`);
+    console.log(`   Headers:`, JSON.stringify(req.headers));
+    next();
+});
 
 async function startServer() {
     try {
         const PORT = process.env.PORT || 8080;
-        app.listen(PORT, () => {
-            console.log(`🚀 Server is running on http://localhost:${PORT}`);
+        const HOST = '0.0.0.0'; // Listen on all interfaces for Cloud Run
+        
+        console.log('🔧 Starting server with configuration:');
+        console.log(`   - PORT: ${PORT}`);
+        console.log(`   - HOST: ${HOST}`);
+        console.log(`   - NODE_ENV: ${process.env.NODE_ENV || "development"}`);
+        
+        app.listen(Number(PORT), HOST, () => {
+            console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
             console.log(
-                `� API Documentation: http://localhost:${PORT}/api-docs`
+                `📚 API Documentation: http://localhost:${PORT}/api-docs`
             );
             console.log(`🏥 Health Check: http://localhost:${PORT}/healthz`);
             console.log(
-                `�📊 Environment: ${process.env.NODE_ENV || "development"}`
+                `📊 Environment: ${process.env.NODE_ENV || "development"}`
             );
         });
     } catch (error) {
@@ -79,5 +109,17 @@ async function startServer() {
         process.exit(1);
     }
 }
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    process.exit(1);
+});
 
 startServer();
