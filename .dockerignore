@@ -16,10 +16,10 @@ postman
 .gitignore
 .prettierrc
 .eslintrc
-tsconfig.json
+# tsconfig.json - needed for TypeScript build
 jest.config.cjs
 nodemon.json
-pnpm-lock.yaml
+# pnpm-lock.yaml - needed for production builds
 terraform
 *.test.ts
 *.spec.ts

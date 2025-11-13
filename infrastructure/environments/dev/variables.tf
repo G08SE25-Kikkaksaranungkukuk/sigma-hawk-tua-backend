@@ -10,22 +10,22 @@ variable "region" {
 }
 
 variable "environment" {
-  description = "Environment (development, staging, production)"
+  description = "Environment name"
   type        = string
-  default     = "development"
+  default     = "dev"
 }
 
 variable "app_name" {
   description = "Application name"
   type        = string
-  default     = "Thamroi"
+  default     = "sigma-hawk-tua-backend"
 }
 
-# Database Configuration
+# Database variables
 variable "db_name" {
   description = "Database name"
   type        = string
-  default     = "sigmadb"
+  default     = "sigmadb_dev"
 }
 
 variable "db_user" {
@@ -41,9 +41,9 @@ variable "db_password" {
 }
 
 variable "db_tier" {
-  description = "Cloud SQL instance tier"
+  description = "Cloud SQL tier"
   type        = string
-  default     = "db-custom-2-7680"
+  default     = "db-g1-small"
 }
 
 variable "db_disk_size" {
@@ -52,38 +52,13 @@ variable "db_disk_size" {
   default     = 10
 }
 
-# Cloud Run Configuration
-variable "cloud_run_cpu" {
-  description = "CPU allocation for Cloud Run"
-  type        = string
-  default     = "1"
-}
-
-variable "cloud_run_memory" {
-  description = "Memory allocation for Cloud Run"
-  type        = string
-  default     = "512Mi"
-}
-
-variable "min_instances" {
-  description = "Minimum number of Cloud Run instances"
-  type        = string
-  default     = "0"
-}
-
-variable "max_instances" {
-  description = "Maximum number of Cloud Run instances"
-  type        = string
-  default     = "10"
-}
-
+# Application variables
 variable "image_tag" {
-  description = "Docker image tag to deploy"
+  description = "Docker image tag"
   type        = string
   default     = "latest"
 }
 
-# Security Configuration
 variable "jwt_access_secret" {
   description = "JWT access token secret"
   type        = string
@@ -96,21 +71,21 @@ variable "jwt_refresh_secret" {
   sensitive   = true
 }
 
-# Application Configuration
 variable "file_server_url" {
   description = "File server URL"
   type        = string
   default     = ""
 }
 
-variable "allow_public_access" {
-  description = "Allow public access to Cloud Run service"
-  type        = bool
-  default     = true
+# GitHub variables for Cloud Build
+variable "github_owner" {
+  description = "GitHub repository owner"
+  type        = string
+  default     = "G08SE25-Kikkaksaranungkukuk"
 }
 
-variable "enable_health_check_scheduler" {
-  description = "Enable Cloud Scheduler for health checks"
-  type        = bool
-  default     = false
+variable "github_repo" {
+  description = "GitHub repository name"
+  type        = string
+  default     = "sigma-hawk-tua-backend"
 }

@@ -35,10 +35,16 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # Install only production dependencies
 RUN pnpm install --prod --frozen-lockfile
 
-# Copy built application from builder
+# Copy generated Prisma Client from builder (includes the @prisma/client package)
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/.pnpm ./node_modules/.pnpm
+
+# Copy built application from builder  
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/generated ./generated
 COPY --from=builder /app/prisma ./prisma
+# Copy runtime tsconfig for tsconfig-paths (points to dist instead of apps)
+COPY tsconfig.runtime.json ./tsconfig.json
 
 # Set environment
 ENV NODE_ENV=production
@@ -51,5 +57,7 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:8080/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Run migrations and start server
-CMD ["sh", "-c", "pnpm db:generate && node dist/apps/server.js"]
+# Start server with tsconfig-paths to resolve path aliases
+# Use NODE_PATH to help resolve modules
+ENV NODE_PATH=/app/dist
+CMD ["node", "-r", "tsconfig-paths/register", "dist/apps/server.js"]

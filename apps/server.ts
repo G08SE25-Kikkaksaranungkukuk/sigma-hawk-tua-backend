@@ -20,13 +20,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Initialize routing with versioning support
-const routerManager = new RouterManager();
-app.use(routerManager.getRouter());
-
-// Setup Swagger documentation
-setupSwagger(app);
-
 /**
  * @swagger
  * /healthz:
@@ -60,6 +53,13 @@ app.get("/healthz", (_req: Request, res: Response) => {
         uptime: process.uptime(),
     });
 });
+
+// Initialize routing with versioning support
+const routerManager = new RouterManager();
+app.use(routerManager.getRouter());
+
+// Setup Swagger documentation
+setupSwagger(app);
 
 async function startServer() {
     try {

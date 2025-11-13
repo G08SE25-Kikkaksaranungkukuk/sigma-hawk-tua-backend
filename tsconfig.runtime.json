@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["dist/apps/*"],
+      "@/controllers/*": ["dist/apps/controllers/*"],
+      "@/services/*": ["dist/apps/services/*"],
+      "@/utils/*": ["dist/apps/utils/*"],
+      "@/types/*": ["dist/apps/types/*"],
+      "@/middlewares/*": ["dist/apps/middlewares/*"],
+      "@/routes/*": ["dist/apps/routes/*"],
+      "@/config/*": ["dist/apps/config/*"],
+      "@/prisma/*": ["generated/prisma/*"],
+      "@/prisma": ["generated/prisma"]
+    }
+  }
+}
