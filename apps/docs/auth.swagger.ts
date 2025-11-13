@@ -142,10 +142,10 @@
 
 /**
  * @swagger
- * /auth/register:
+ * /api/v1/auth/register:
  *   post:
  *     tags:
- *       - Authentication
+ *       - Authentication (v1)
  *     summary: Register a new user
  *     description: Create a new user account with email, password, and profile information
  *     requestBody:
@@ -226,10 +226,10 @@
 
 /**
  * @swagger
- * /auth/logout:
+ * /api/v1/auth/logout:
  *   post:
  *     tags:
- *       - Authentication
+ *       - Authentication (v1)
  *     summary: Logout user
  *     description: Clear authentication cookies and logout user
  *     security:
@@ -252,10 +252,10 @@
 
 /**
  * @swagger
- * /auth/refresh:
+ * /api/v1/auth/refresh:
  *   post:
  *     tags:
- *       - Authentication
+ *       - Authentication (v1)
  *     summary: Refresh access token
  *     description: Get new access token using refresh token from cookies
  *     responses:
@@ -286,10 +286,10 @@
 
 /**
  * @swagger
- * /auth/forgot-password:
+ * /api/v1/auth/forgot-password:
  *   post:
  *     tags:
- *       - Authentication
+ *       - Authentication (v1)
  *     summary: Reset password
  *     description: Reset user password (placeholder implementation)
  *     requestBody:
@@ -328,10 +328,10 @@
 
 /**
  * @swagger
- * /auth/whoami:
+ * /api/v1/auth/whoami:
  *   get:
  *     tags:
- *       - Authentication
+ *       - Authentication (v1)
  *     summary: Get current user information
  *     description: Get information about the currently authenticated user
  *     security:

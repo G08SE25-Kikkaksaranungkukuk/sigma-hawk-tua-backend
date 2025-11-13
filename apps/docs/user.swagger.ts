@@ -83,10 +83,10 @@
 
 /**
  * @swagger
- * /user:
+ * /api/v1/user:
  *   post:
  *     tags:
- *       - User
+ *       - User (v1)
  *     summary: Get a user profile
  *     description: Retrieve the profile information of a user
  *     requestBody:
@@ -214,10 +214,10 @@
 
 /**
  * @swagger
- * /user/interests/all:
+ * /api/v1/user/interests/all:
  *   get:
  *     tags:
- *       - User
+ *       - User (v1)
  *     summary: Get all available interests
  *     description: Retrieve all available interests that users can select
  *     responses:
@@ -239,10 +239,10 @@
 
 /**
  * @swagger
- * /user/travel-styles/all:
+ * /api/v1/user/travel-styles/all:
  *   get:
  *     tags:
- *       - User
+ *       - User (v1)
  *     summary: Get all available travel styles
  *     description: Retrieve all available travel styles that users can select
  *     responses:
@@ -264,10 +264,10 @@
 
 /**
  * @swagger
- * /user/delete:
+ * /api/v1/user/delete:
  *   post:
  *     tags:
- *       - User
+ *       - User (v1)
  *     summary: Delete user account
  *     description: Delete the current user's account (requires authentication)
  *     security:
@@ -302,10 +302,10 @@
 
 /**
  * @swagger
- * /user/interests:
+ * /api/v1/user/interests:
  *   get:
  *     tags:
- *       - User
+ *       - User (v1)
  *     summary: Get user interests
  *     description: Retrieve the interests of a user
  *     requestBody:
