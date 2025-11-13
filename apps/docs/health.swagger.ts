@@ -3,7 +3,7 @@
  * /healthz:
  *   get:
  *     tags:
- *       - Health
+ *       - Health (Global)
  *     summary: Health check
  *     description: Check if the server is running and healthy
  *     responses:

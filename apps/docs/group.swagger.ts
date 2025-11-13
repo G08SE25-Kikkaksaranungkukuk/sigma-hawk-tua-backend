@@ -155,11 +155,11 @@
 
 /**
  * @swagger
- * /group:
+ * /api/v1/group:
  *   post:
  *     tags:
- *       - Group
- *     summary: Create a new group
+ *       - Group (v1)
+     summary: Create a new group
  *     description: Create a new travel group with optional profile image
  *     security:
  *       - bearerAuth: []
@@ -206,10 +206,10 @@
 
 /**
  * @swagger
- * /group/filter:
+ * /api/v1/group/filter:
  *   get:
  *     tags:
- *       - Group
+ *       - Group (v1)
  *     summary: Filter groups
  *     description: Search and filter groups based on various criteria
  *     parameters:
@@ -295,10 +295,10 @@
 
 /**
  * @swagger
- * /group/{groupId}:
+ * /api/v1/group/{groupId}:
  *   get:
  *     tags:
- *       - Group
+ *       - Group (v1)
  *     summary: Get group details
  *     description: Retrieve detailed information about a specific group
  *     parameters:
@@ -331,10 +331,10 @@
 
 /**
  * @swagger
- * /group/{id}/profile:
+ * /api/v1/group/{id}/profile:
  *   put:
  *     tags:
- *       - Group
+ *       - Group (v1)
  *     summary: Upload group profile image
  *     description: Upload or update the profile image for a group
  *     security:
@@ -430,10 +430,10 @@
 
 /**
  * @swagger
- * /group/{id}/member:
+ * /api/v1/group/{id}/member:
  *   put:
  *     tags:
- *       - Group
+ *       - Group (v1)
  *     summary: Add user to group
  *     description: Add a user to the group (requires group access)
  *     security:
@@ -552,10 +552,10 @@
 
 /**
  * @swagger
- * /group/{id}/leave:
+ * /api/v1/group/{id}/leave:
  *   delete:
  *     tags:
- *       - Group
+ *       - Group (v1)
  *     summary: Leave group
  *     description: Leave the group (authenticated user leaves the group)
  *     security:
@@ -603,10 +603,10 @@
 
 /**
  * @swagger
- * /group/{id}/owner:
+ * /api/v1/group/{id}/owner:
  *   patch:
  *     tags:
- *       - Group
+ *       - Group (v1)
  *     summary: Transfer group ownership
  *     description: Transfer ownership of the group to another member
  *     security:
@@ -666,10 +666,10 @@
 
 /**
  * @swagger
- * /group/{id}/members:
+ * /api/v1/group/{id}/members:
  *   get:
  *     tags:
- *       - Group
+ *       - Group (v1)
  *     summary: Get group members
  *     description: Retrieve list of all members in the group
  *     parameters:
@@ -710,10 +710,10 @@
 
 /**
  * @swagger
- * /group/my/groups:
+ * /api/v1/group/my/groups:
  *   get:
  *     tags:
- *       - Group
+ *       - Group (v1)
  *     summary: Get user's groups
  *     description: Retrieve all groups that the authenticated user is a member of
  *     security:
