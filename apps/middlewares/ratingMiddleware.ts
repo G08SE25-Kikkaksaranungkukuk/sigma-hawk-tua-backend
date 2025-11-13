@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { SCORE_LIMITS } from '../types/rating/ratingTypes';
+import { UserRepository } from '@/repository/User/userRepository';
 
 /**
  * Middleware to validate rating scores are within valid range (0-5)
@@ -86,8 +87,19 @@ export const validateRatingScores = (req: Request, res: Response, next: NextFunc
 /**
  * Middleware to validate user ID parameter
  */
-export const validateUserId = (req: Request, res: Response, next: NextFunction): void => {
-  const userId = parseInt(req.params.userId);
+export const validateUserId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const email = req.params.userId;
+  // lookup the user
+  const userRepo = new UserRepository();
+  const user = await userRepo.retrieveUser(email);
+
+  if (!user) {
+    res.status(404).json({ success: false, message: `User with email ${email} not found` });
+    return;
+  }
+
+  // now you have numeric id for the rest of the function
+  const userId = user.user_id;
 
   if (isNaN(userId) || userId <= 0) {
     res.status(400).json({
@@ -103,8 +115,20 @@ export const validateUserId = (req: Request, res: Response, next: NextFunction):
 /**
  * Middleware to prevent self-rating
  */
-export const preventSelfRating = (req: Request, res: Response, next: NextFunction): void => {
-  const userId = parseInt(req.params.userId);
+export const preventSelfRating = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const email = req.params.userId;
+  // lookup the user
+  const userRepo = new UserRepository();
+  const user = await userRepo.retrieveUser(email);
+
+  if (!user) {
+    res.status(404).json({ success: false, message: `User with email ${email} not found` });
+    return;
+  }
+
+  // now you have numeric id for the rest of the function
+  const userId = user.user_id;
+
   const raterId = req.user?.user_id;
 
   if (!raterId) {
@@ -135,9 +159,21 @@ export const rateLimitRating = (() => {
   const MAX_ATTEMPTS = 5; // Maximum 5 rating attempts per user per hour
   const RESET_TIME = 60 * 60 * 1000; // 1 hour in milliseconds
 
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const userId = req.user?.user_id;
-    
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+          const email = req.params.userId;
+      // lookup the user
+      const userRepo = new UserRepository();
+      const user = await userRepo.retrieveUser(email);
+
+      if (!user) {
+        res.status(404).json({ success: false, message: `User with email ${email} not found` });
+        return;
+      }
+
+      // now you have numeric id for the rest of the function
+      const userId = user.user_id;
+
+
     if (!userId) {
       res.status(401).json({
         success: false,
