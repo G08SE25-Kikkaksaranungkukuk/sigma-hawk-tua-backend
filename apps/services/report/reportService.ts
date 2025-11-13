@@ -32,10 +32,10 @@ export class ReportService {
                 };
             }
 
-            if (!reportData.report_tag_id || !Array.isArray(reportData.report_tag_id) || reportData.report_tag_id.length === 0) {
+            if (!reportData.reason?.trim()) {
                 return {
                     success: false,
-                    message: "At least one report tag is required"
+                    message: "Reason is required"
                 };
             }
 
@@ -239,6 +239,19 @@ export class ReportService {
                     total_reports: 0
                 }
             };
+        }
+    }
+
+    /**
+     * Get all available report reasons/tags
+     */
+    async getAllReportReasons() {
+        try {
+            const tags = await this.reportRepository.getAllReportReason();
+            return { success: true, reasons: tags };
+        } catch (error) {
+            console.error('Error in getAllReportReasons service:', error);
+            return { success: false, reasons: [] };
         }
     }
 }

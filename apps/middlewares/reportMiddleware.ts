@@ -56,13 +56,13 @@ export const validateCreateReport = (req: Request, res: Response, next: NextFunc
  * Validates report update data
  */
 export const validateUpdateReport = (req: Request, res: Response, next: NextFunction) => {
-    const { title, reason, description } = req.body;
+    const { title, reason, description, is_resolved } = req.body;
 
     // At least one field must be provided
-    if (!title && !reason && description === undefined) {
+    if (!title && !reason && description === undefined && is_resolved === undefined) {
         return res.status(400).json({
             success: false,
-            message: "At least one field (title, reason, description) must be provided for update"
+            message: "At least one field (title, reason, description, is_resolved) must be provided for update"
         });
     }
 
@@ -111,6 +111,15 @@ export const validateUpdateReport = (req: Request, res: Response, next: NextFunc
             return res.status(400).json({
                 success: false,
                 message: "description must be less than 500 characters"
+            });
+        }
+    }
+
+    if (is_resolved !== undefined) {
+        if (typeof is_resolved !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                message: "is_resolved must be a boolean"
             });
         }
     }

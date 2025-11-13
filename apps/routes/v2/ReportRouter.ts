@@ -45,6 +45,12 @@ export class ReportRouterV2 extends BaseRouter {
             this.reportController.getAllReports.bind(this.reportController)
         );
 
+        // READ - Get all report reasons/tags (public)
+        this.router.get(
+            "/reasons",
+            this.reportController.getAllReportReasons.bind(this.reportController)
+        );
+
         // READ - Get specific report by ID
         this.router.get(
             "/:id",

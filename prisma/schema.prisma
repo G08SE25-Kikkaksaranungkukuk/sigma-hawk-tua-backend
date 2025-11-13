@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -134,30 +133,30 @@ model Interaction {
 }
 
 model Itinerary {
-  itinerary_id Int              @id @default(autoincrement())
-  title        String?
-  description  String?
-  start_date   DateTime
-  end_date     DateTime
-  place_links  String[]         @default([])
-  created_at   DateTime         @default(now())
-  updated_at   DateTime         @updatedAt
-  groups       GroupItinerary[] @relation("ItineraryBelongsToGroups")
+  itinerary_id    Int              @id @default(autoincrement())
+  title           String?
+  description     String?
+  start_date      DateTime
+  end_date        DateTime
+  place_links     String[]         @default([])
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+  groups          GroupItinerary[] @relation("ItineraryBelongsToGroups")
   travelHistories TravelHistory[]  @relation("ItineraryHasTravelHistory")
 
   @@map("itineraries")
 }
 
 model Blog {
-  blog_id       Int            @id @default(autoincrement())
-  user_id       Int
-  title         String
-  description   String
-  created_at    DateTime       @default(now())
-  json_config   String
-  html_output   String
+  blog_id        Int            @id @default(autoincrement())
+  user_id        Int
+  title          String
+  description    String
+  created_at     DateTime       @default(now())
+  json_config    String
+  html_output    String
   blog_interests BlogInterest[] @relation("BlogHasInterests")
-  likes         LikeBlog[]      @relation("BlogLiked")
+  likes          LikeBlog[]     @relation("BlogLiked")
 
   @@map("blogs")
 }
@@ -175,12 +174,12 @@ model BlogInterest {
 }
 
 model LikeBlog {
-  like_id       Int             @id @default(autoincrement())
-  user_id       Int
-  blog_id       Int
-  like_time     DateTime        @default(now())
-  User          User            @relation("UserLikes", fields: [user_id], references: [user_id], onDelete: Cascade)
-  blogs         Blog            @relation("BlogLiked", fields: [blog_id], references: [blog_id], onDelete: Cascade)
+  like_id   Int      @id @default(autoincrement())
+  user_id   Int
+  blog_id   Int
+  like_time DateTime @default(now())
+  User      User     @relation("UserLikes", fields: [user_id], references: [user_id], onDelete: Cascade)
+  blogs     Blog     @relation("BlogLiked", fields: [blog_id], references: [blog_id], onDelete: Cascade)
 
   @@unique([user_id, blog_id])
   @@map("like_blog")
@@ -199,14 +198,14 @@ model GroupItinerary {
 }
 
 model TravelHistory {
-  id           Int       @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   group_id     Int?
   user_id      Int
   itinerary_id Int?
-  created_at   DateTime  @default(now())
-  expires_at   DateTime  @default(dbgenerated("NOW() + INTERVAL '1 year'"))
-  group        Group?    @relation("GroupHasTravelHistory", fields: [group_id], references: [group_id], onDelete: SetNull)
-  user         User      @relation("UserHasTravelHistory", fields: [user_id], references: [user_id], onDelete: Cascade)
+  created_at   DateTime   @default(now())
+  expires_at   DateTime   @default(dbgenerated("NOW() + INTERVAL '1 year'"))
+  group        Group?     @relation("GroupHasTravelHistory", fields: [group_id], references: [group_id], onDelete: SetNull)
+  user         User       @relation("UserHasTravelHistory", fields: [user_id], references: [user_id], onDelete: Cascade)
   itinerary    Itinerary? @relation("ItineraryHasTravelHistory", fields: [itinerary_id], references: [itinerary_id], onDelete: SetNull)
 
   @@unique([group_id, user_id, itinerary_id])
@@ -226,10 +225,10 @@ model GroupInterest {
 }
 
 model Belongs {
-  A         Int       
-  B         Int
-  groups    Group     @relation(fields: [A], references: [group_id], onDelete: Cascade)
-  User      User      @relation(fields: [B], references: [user_id], onDelete: Cascade)
+  A      Int
+  B      Int
+  groups Group @relation(fields: [A], references: [group_id], onDelete: Cascade)
+  User   User  @relation(fields: [B], references: [user_id], onDelete: Cascade)
 
   @@id([A, B], map: "_Belongs_AB_pkey")
   @@index([B], map: "_Belongs_B_index")
@@ -237,38 +236,61 @@ model Belongs {
 }
 
 model Report {
-  report_id   Int               @id @default(autoincrement())
+  report_id   Int       @id @default(autoincrement())
   user_id     Int
   title       String
-  reason      ReportReason[]    @relation("ReportHasReason")
+  report_tag  ReportTag @relation(fields: [reportTagId], references: [id])
   description String
-  created_at  DateTime          @default(now())
-  is_resolved Boolean           @default(false)
+  created_at  DateTime  @default(now())
+  is_resolved Boolean   @default(false)
+  reportTagId Int
 
   @@map("reports")
 }
 
 model ReportTag {
-  id              Int             @id @default(autoincrement())
-  key             String          @unique
-  label           String
-  emoji           String
-  description     String
-  created_at      DateTime        @default(now())
-  updated_at      DateTime        @updatedAt
-  report_reasons  ReportReason[]  @relation("ReportTagBelongsToReportReason")
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  label       String
+  emoji       String
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  Report      Report[]
 
   @@map("report_tags")
 }
 
-model ReportReason {
-  id              Int         @id @default(autoincrement())
-  report_id       Int
-  report_tag_id   Int
-  created_at      DateTime    @default(now())
-  report_tag      ReportTag   @relation("ReportTagBelongsToReportReason", fields: [report_tag_id], references: [id], onDelete: Cascade)
-  report          Report      @relation("ReportHasReason", fields: [report_id], references: [report_id], onDelete: Cascade)
-  
-  @@unique([report_id])
-  @@map("report_reasons")
+model Rating {
+  id               Int      @id @default(autoincrement())
+  user_id          Int      // User being rated
+  rater_id         Int      // User who gives the rating
+  trust_score      Float    @default(0)
+  engagement_score Float    @default(0)
+  experience_score Float    @default(0)
+  total_score      Float    @default(0) // Calculated field: α*trust + β*engagement + γ*experience
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@unique([user_id, rater_id]) // Prevent duplicate ratings from same rater
+  @@map("ratings")
+}
+
+model UserRatingAggregate {
+  id                      Int      @id @default(autoincrement())
+  user_id                 Int      @unique // User who received ratings
+  average_trust_score     Float    @default(0)
+  average_engagement_score Float   @default(0)
+  average_experience_score Float   @default(0)
+  average_total_score     Float    @default(0)
+  median_trust_score      Float    @default(0)
+  median_engagement_score Float    @default(0)
+  median_experience_score Float    @default(0)
+  median_total_score      Float    @default(0)
+  min_total_score         Float    @default(0)
+  max_total_score         Float    @default(0)
+  total_ratings_count     Int      @default(0)
+  last_updated            DateTime @default(now()) @updatedAt
+
+  @@map("user_rating_aggregates")
 }
