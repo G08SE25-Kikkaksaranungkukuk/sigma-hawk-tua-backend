@@ -122,14 +122,6 @@ export const preventSelfRating = async (req: Request, res: Response, next: NextF
   // Parse the userId parameter as a number
   const userId = parseInt(userIdParam, 10);
 
-  if (isNaN(userId) || userId <= 0) {
-    res.status(400).json({
-      success: false,
-      message: 'Valid user ID is required'
-    });
-    return;
-  }
-
   const raterId = req.user?.user_id;
 
   if (!raterId) {
@@ -165,14 +157,6 @@ export const rateLimitRating = (() => {
     
     // Parse the userId parameter as a number
     const userId = parseInt(userIdParam, 10);
-
-    if (isNaN(userId) || userId <= 0) {
-      res.status(400).json({
-        success: false,
-        message: 'Valid user ID is required'
-      });
-      return;
-    }
 
     const userKey = `rating_${userId}`;
     const now = Date.now();
