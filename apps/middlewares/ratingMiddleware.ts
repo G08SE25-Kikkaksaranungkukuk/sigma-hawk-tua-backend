@@ -88,24 +88,25 @@ export const validateRatingScores = (req: Request, res: Response, next: NextFunc
  * Middleware to validate user ID parameter
  */
 export const validateUserId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const email = req.params.userId;
-  // lookup the user
-  const userRepo = new UserRepository();
-  const user = await userRepo.retrieveUser(email);
-
-  if (!user) {
-    res.status(404).json({ success: false, message: `User with email ${email} not found` });
-    return;
-  }
-
-  // now you have numeric id for the rest of the function
-  const userId = user.user_id;
+  const userIdParam = req.params.userId;
+  
+  // Parse the userId parameter as a number
+  const userId = parseInt(userIdParam, 10);
 
   if (isNaN(userId) || userId <= 0) {
     res.status(400).json({
       success: false,
       message: 'Valid user ID is required'
     });
+    return;
+  }
+
+  // Verify the user exists in the database
+  const userRepo = new UserRepository();
+  const user = await userRepo.retrieveUserById(userId);
+
+  if (!user) {
+    res.status(404).json({ success: false, message: `User with ID ${userId} not found` });
     return;
   }
 
@@ -116,18 +117,18 @@ export const validateUserId = async (req: Request, res: Response, next: NextFunc
  * Middleware to prevent self-rating
  */
 export const preventSelfRating = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const email = req.params.userId;
-  // lookup the user
-  const userRepo = new UserRepository();
-  const user = await userRepo.retrieveUser(email);
+  const userIdParam = req.params.userId;
+  
+  // Parse the userId parameter as a number
+  const userId = parseInt(userIdParam, 10);
 
-  if (!user) {
-    res.status(404).json({ success: false, message: `User with email ${email} not found` });
+  if (isNaN(userId) || userId <= 0) {
+    res.status(400).json({
+      success: false,
+      message: 'Valid user ID is required'
+    });
     return;
   }
-
-  // now you have numeric id for the rest of the function
-  const userId = user.user_id;
 
   const raterId = req.user?.user_id;
 
@@ -160,24 +161,15 @@ export const rateLimitRating = (() => {
   const RESET_TIME = 60 * 60 * 1000; // 1 hour in milliseconds
 
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-          const email = req.params.userId;
-      // lookup the user
-      const userRepo = new UserRepository();
-      const user = await userRepo.retrieveUser(email);
+    const userIdParam = req.params.userId;
+    
+    // Parse the userId parameter as a number
+    const userId = parseInt(userIdParam, 10);
 
-      if (!user) {
-        res.status(404).json({ success: false, message: `User with email ${email} not found` });
-        return;
-      }
-
-      // now you have numeric id for the rest of the function
-      const userId = user.user_id;
-
-
-    if (!userId) {
-      res.status(401).json({
+    if (isNaN(userId) || userId <= 0) {
+      res.status(400).json({
         success: false,
-        message: 'Unauthorized: User not authenticated'
+        message: 'Valid user ID is required'
       });
       return;
     }
