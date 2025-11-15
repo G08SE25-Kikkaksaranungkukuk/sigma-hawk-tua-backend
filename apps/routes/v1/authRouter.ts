@@ -51,7 +51,7 @@ export class AuthRouterV1 extends BaseRouter {
             this.authController.whoAmI.bind(this.authController)
         );
         this.router.get(
-            "/check-email",
+            "/email/status",
             this.authController.checkEmail.bind(this.authController)
         );
     }
