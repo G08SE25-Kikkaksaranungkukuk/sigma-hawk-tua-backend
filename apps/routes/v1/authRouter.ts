@@ -24,7 +24,7 @@ export class AuthRouterV1 extends BaseRouter {
         );
 
         this.router.post(
-            "/login", 
+            "/login",
             this.authController.login.bind(this.authController)
         );
 
@@ -49,6 +49,10 @@ export class AuthRouterV1 extends BaseRouter {
             "/whoami",
             authMiddleware,
             this.authController.whoAmI.bind(this.authController)
+        );
+        this.router.get(
+            "/check-email",
+            this.authController.checkEmail.bind(this.authController)
         );
     }
 }
