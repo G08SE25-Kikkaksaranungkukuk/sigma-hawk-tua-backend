@@ -10,7 +10,7 @@ import { ApiVersionManager } from "@/config/apiVersion";
 
 const app = express();
 
-app.use(cors({credentials: true, origin: 'http://localhost:3000'}));
+app.use(cors({credentials: true, origin: 'https://thamroi.duckdns.org/'}));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -46,16 +46,13 @@ app.use((req, res, next) => {
  *                   type: number
  *                   description: Server uptime in seconds
  */
-app.get("/healthz", (_req: Request, res: Response) => {
-    console.log('✅ /healthz endpoint HIT!');
+app.get("/health", (_req: Request, res: Response) => {
     res.json({
         status: "healthy",
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
     });
 });
-
-console.log('✅ /healthz route registered');
 
 // Initialize routing with versioning support
 try {
@@ -87,15 +84,9 @@ app.use((req, res, next) => {
 async function startServer() {
     try {
         const PORT = process.env.PORT || 8080;
-        const HOST = '0.0.0.0'; // Listen on all interfaces for Cloud Run
         
-        console.log('🔧 Starting server with configuration:');
-        console.log(`   - PORT: ${PORT}`);
-        console.log(`   - HOST: ${HOST}`);
-        console.log(`   - NODE_ENV: ${process.env.NODE_ENV || "development"}`);
-        
-        app.listen(Number(PORT), HOST, () => {
-            console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
+        app.listen(Number(PORT), () => {
+            console.log(`🚀 Server is running on http://localhost:${PORT}`);
             console.log(
                 `📚 API Documentation: http://localhost:${PORT}/api-docs`
             );

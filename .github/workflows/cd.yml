@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
 
 env:
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ secrets.GCP_REGION || 'asia-southeast1' }}
-  GAR_REPOSITORY: sigma-hawk-tua-backend-repo
+  GCP_PROJECT_ID: thamroi
+  GCP_REGION: asia-southeast1
+  GAR_REPOSITORY: sigma-hawk-tua-backend-repo-dev
   IMAGE_NAME: sigma-hawk-tua-backend
-  CLOUD_RUN_SERVICE: sigma-hawk-tua-backend-production
+  CLOUD_RUN_SERVICE: sigma-hawk-tua-backend-dev
   DB_BACKUP_BUCKET: ${{ secrets.DB_BACKUP_BUCKET }}
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:17
         env:
           POSTGRES_USER: sigma
           POSTGRES_PASSWORD: strongpassword
@@ -191,8 +191,9 @@ jobs:
         run: |
           IMAGE_URL="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}"
           
-          # Build with multiple tags
+          # Build with multiple tags (force linux/amd64 platform)
           docker build -f Dockerfile.cloudrun \
+            --platform linux/amd64 \
             -t ${IMAGE_URL}:${{ steps.image-tag.outputs.tag }} \
             -t ${IMAGE_URL}:latest \
             -t ${IMAGE_URL}:${{ github.ref_name }} \
@@ -270,15 +271,14 @@ jobs:
           gsutil lifecycle set lifecycle.json gs://${{ env.DB_BACKUP_BUCKET }}
 
       - name: Create database backup
-        if: ${{ secrets.CLOUD_SQL_INSTANCE_NAME }}
         run: |
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           BACKUP_FILE="backup-${TIMESTAMP}.sql"
           
           # Export database from Cloud SQL to Cloud Storage
-          gcloud sql export sql ${{ secrets.CLOUD_SQL_INSTANCE_NAME }} \
+          gcloud sql export sql sigma-hawk-tua-backend-db-dev \
             gs://${{ env.DB_BACKUP_BUCKET }}/backups/${BACKUP_FILE} \
-            --database=${{ secrets.DB_NAME || 'sigmadb' }} \
+            --database=sigmadb_dev \
             --project=${{ env.GCP_PROJECT_ID }}
           
           echo "✅ Database backup created: ${BACKUP_FILE}"
@@ -322,7 +322,7 @@ jobs:
           gsutil ls -lh gs://${{ env.DB_BACKUP_BUCKET }}/schemas/ | tail -n 5
 
   deploy-to-cloud-run:
-    name: Deploy to Cloud Run (Optional)
+    name: Deploy to Cloud Run
     runs-on: ubuntu-latest
     needs: [build-and-push-image, backup-database]
     if: github.ref == 'refs/heads/main'
@@ -345,6 +345,40 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
+      - name: Run database migrations
+        run: |
+          echo "🔄 Running database migrations..."
+          gcloud run jobs create sigma-hawk-tua-backend-migrate-dev \
+            --image=${{ needs.build-and-push-image.outputs.image-url }} \
+            --region=${{ env.GCP_REGION }} \
+            --set-secrets="DATABASE_URL=sigma-hawk-tua-backend-database-url-dev:latest" \
+            --service-account=sigma-run-sa-dev@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --add-cloudsql-instances=${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:sigma-hawk-tua-backend-db-dev \
+            --max-retries=2 \
+            --task-timeout=10m \
+            --command=npx \
+            --args="prisma,migrate,deploy" \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            2>/dev/null || echo "Job already exists"
+          
+          # Update existing job
+          gcloud run jobs update sigma-hawk-tua-backend-migrate-dev \
+            --image=${{ needs.build-and-push-image.outputs.image-url }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }}
+          
+          # Execute the migration
+          gcloud run jobs execute sigma-hawk-tua-backend-migrate-dev \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --wait
+          
+          echo "✅ Migrations completed"
+
+      # Note: Database seeding should be run manually via Cloud Run Jobs
+      # See docs/CLOUD_RUN_JOBS.md for instructions on how to seed the database
+      # Seeding is only needed once during initial setup or after database reset
+
       - name: Deploy to Cloud Run
         id: deploy
         run: |
@@ -353,12 +387,14 @@ jobs:
             --region=${{ env.GCP_REGION }} \
             --platform=managed \
             --allow-unauthenticated \
-            --set-env-vars="NODE_ENV=production" \
-            --set-secrets="DATABASE_URL=DATABASE_URL:latest,ACCESSTOKEN_SECRET=ACCESSTOKEN_SECRET:latest,REFRESHTOKEN_SECRET=REFRESHTOKEN_SECRET:latest" \
+            --set-env-vars="NODE_ENV=dev,PASSWORD_SALT_ROUNDS=10,FILE_SERVER_URL=https://storage.googleapis.com/${{ env.GCP_PROJECT_ID }}-files" \
+            --set-secrets="DATABASE_URL=sigma-hawk-tua-backend-database-url-dev:latest,ACCESSTOKEN_SECRET=sigma-hawk-tua-backend-jwt-access-secret-dev:latest,REFRESHTOKEN_SECRET=sigma-hawk-tua-backend-jwt-refresh-secret-dev:latest" \
+            --service-account=sigma-run-sa-dev@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --add-cloudsql-instances=${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:sigma-hawk-tua-backend-db-dev \
             --cpu=1 \
             --memory=512Mi \
             --min-instances=0 \
-            --max-instances=10 \
+            --max-instances=2 \
             --port=8080 \
             --timeout=300 \
             --project=${{ env.GCP_PROJECT_ID }}
