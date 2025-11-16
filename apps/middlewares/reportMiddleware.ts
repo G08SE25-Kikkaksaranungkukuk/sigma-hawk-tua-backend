@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "@/types/error/AppError";
-import { UserRole } from "@/types/auth/authRequest";
 
 /**
  * Report Middleware
