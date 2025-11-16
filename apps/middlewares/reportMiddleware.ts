@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+import { AppError } from "@/types/error/AppError";
+import { UserRole } from "@/types/auth/authRequest";
 
 /**
  * Report Middleware
@@ -217,9 +219,21 @@ export const validateBlogId = (req: Request, res: Response, next: NextFunction) 
  * TODO: Implement proper admin role checking
  */
 export const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    // For now, just pass through
-    // TODO: Add proper admin role checking when user roles are implemented
-    console.warn("Admin middleware called but not implemented - allowing all authenticated users");
+    // Ensure the user is authenticated
+    if (!req.user) {
+        throw new AppError("Unauthorized: No user found", 401);
+    }
+
+    // Ensure role exists on the user object
+    if (!req.user.role) {
+        throw new AppError("Forbidden: User role not specified", 403);
+    }
+
+    // Allow only ADMIN role
+    if (req.user.role !== "ADMIN") {
+        throw new AppError("Forbidden: Admins only", 403);
+    }
+
     next();
 };
 
