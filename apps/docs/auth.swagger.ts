@@ -186,10 +186,10 @@
 
 /**
  * @swagger
- * /auth/login:
+ * /api/v1/auth/login:
  *   post:
  *     tags:
- *       - Authentication
+ *       - Authentication (v1)
  *     summary: Login user
  *     description: Authenticate user with email and password, returns JWT tokens
  *     requestBody:
