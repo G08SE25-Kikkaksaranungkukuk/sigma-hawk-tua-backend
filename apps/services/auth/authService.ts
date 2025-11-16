@@ -100,6 +100,11 @@ export class AuthService {
         return ret
     }
 
+    async checkEmailExists(email: string): Promise<boolean> {
+        const user = await this.userRepository.findExistingUser(email);
+        return !!user; // Convert to boolean
+    }
+
 
 }
 

@@ -357,3 +357,55 @@
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+
+/**
+ * @swagger
+ * /api/v1/auth/email/status:
+ *   post:
+ *     tags:
+ *       - Authentication (v1)
+ *     summary: Check if email already exists
+ *     description: Check if the provided email is already registered in the system
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "john.doe@example.com"
+ *     responses:
+ *       200:
+ *         description: Email status response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     exists:
+ *                       type: boolean
+ *                       example: true
+ *       400:
+ *         description: Email is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
