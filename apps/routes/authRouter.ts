@@ -1,4 +1,3 @@
-
 import { AuthController } from "@/controllers/auth/authController";
 import { authMiddleware } from "@/middlewares/authMiddleware";
 
