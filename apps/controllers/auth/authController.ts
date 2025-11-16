@@ -103,29 +103,4 @@ export class AuthController extends BaseController {
             this.handleError(error, res);
         }
     }
-
-    async checkEmail(req: Request, res: Response): Promise<void> {
-        try {
-            const { email } = req.query;
-            
-            if (!email || typeof email !== 'string') {
-                throw new AppError("Email parameter is required", 400);
-            }
-
-            const exists = await this.authService.checkEmailExists(email);
-            
-            this.handleSuccess(
-                res, 
-                { 
-                    email, 
-                    exists,
-                    available: !exists 
-                }, 
-                200, 
-                exists ? "Email already exists" : "Email is available"
-            );
-        } catch (error) {
-            this.handleError(error, res);
-        }
-    }
 }
