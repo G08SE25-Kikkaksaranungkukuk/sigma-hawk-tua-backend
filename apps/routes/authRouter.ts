@@ -16,63 +16,7 @@ export class AuthRouter extends BaseRouter {
   }
 
   private setupRoutes(): void {
-    /**
-     * @swagger
-     * /api/v1/auth/check-email:
-     *   get:
-     *     tags:
-     *       - Authentication
-     *     summary: Check if email exists
-     *     description: Check if an email address is already registered in the system
-     *     parameters:
-     *       - in: query
-     *         name: email
-     *         required: true
-     *         schema:
-     *           type: string
-     *           format: email
-     *         description: Email address to check
-     *         example: user@example.com
-     *     responses:
-     *       200:
-     *         description: Email check result
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 success:
-     *                   type: boolean
-     *                   example: true
-     *                 message:
-     *                   type: string
-     *                   example: Email is available
-     *                 data:
-     *                   type: object
-     *                   properties:
-     *                     email:
-     *                       type: string
-     *                       example: user@example.com
-     *                     exists:
-     *                       type: boolean
-     *                       example: false
-     *                     available:
-     *                       type: boolean
-     *                       example: true
-     *       400:
-     *         description: Missing or invalid email parameter
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 success:
-     *                   type: boolean
-     *                   example: false
-     *                 message:
-     *                   type: string
-     *                   example: Email parameter is required
-     */
+    
     this.router.get(
       "/check-email",
       this.authController.checkEmail.bind(this.authController)
