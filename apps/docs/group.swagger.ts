@@ -159,7 +159,7 @@
  *   post:
  *     tags:
  *       - Group (v1)
-     summary: Create a new group
+ *     summary: Create a new group
  *     description: Create a new travel group with optional profile image
  *     security:
  *       - bearerAuth: []

@@ -21,7 +21,7 @@ const options = {
                 description: "Development server",
             },
             {
-                url: "https://api.sigmahawktua.com/api/v1",
+                url: "https://sigma-hawk-tua-backend-dev-1097710273935.asia-southeast1.run.app/api/v1",
                 description: "Production server",
             },
         ],
