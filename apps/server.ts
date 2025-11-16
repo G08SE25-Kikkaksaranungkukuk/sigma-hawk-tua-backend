@@ -27,32 +27,6 @@ app.use(routerManager.getRouter());
 // Setup Swagger documentation
 setupSwagger(app);
 
-/**
- * @swagger
- * /healthz:
- *   get:
- *     tags:
- *       - Health
- *     summary: Health check
- *     description: Check if the server is running and healthy
- *     responses:
- *       '200':
- *         description: Server is healthy
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: healthy
- *                 timestamp:
- *                   type: string
- *                   format: date-time
- *                 uptime:
- *                   type: number
- *                   description: Server uptime in seconds
- */
 app.get("/healthz", (_req: Request, res: Response) => {
     res.json({
         status: "healthy",

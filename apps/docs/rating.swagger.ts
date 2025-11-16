@@ -158,7 +158,7 @@
  *   
  *   post:
  *     tags:
- *       - Rating
+ *       - Rating (v1)
  *     summary: Submit rating for a user
  *     description: Submit or update a rating for a target user. Cannot rate yourself. Rate limited to prevent abuse.
  *     security:
@@ -223,7 +223,7 @@
  *   
  *   put:
  *     tags:
- *       - Rating
+ *       - Rating (v1)
  *     summary: Update existing rating for a user
  *     description: Update an existing rating you've given to a target user. Cannot rate yourself.
  *     security:
@@ -282,7 +282,7 @@
  *   
  *   delete:
  *     tags:
- *       - Rating
+ *       - Rating (v1)
  *     summary: Delete your rating for a user
  *     description: Delete a rating you've previously given to a target user. Cannot delete ratings for yourself.
  *     security:
