@@ -120,7 +120,7 @@ export class ReportService {
     /**
      * Update report
      */
-    async updateReport(reportId: number, user_id: number, updateData: UpdateReportRequest) {
+    async updateReport(reportId: number, user_id: number | undefined, updateData: UpdateReportRequest) {
         try {
             // Check if report exists
             const existingReport = await this.reportRepository.getReportById(reportId);
