@@ -1,0 +1,2163 @@
+openapi: '3.0.3'
+info:
+  title: Sigma Hawk API
+  version: '1.0.0'
+  description: |
+    Complete OpenAPI 3.0 specification for the Sigma Hawk backend.
+    Comprehensive documentation of all Authentication, User, Group, Blog, 
+    Itinerary, Rating, Report, Travel, and System endpoints across base, v1, and v2 APIs.
+servers:
+  - url: http://127.0.0.1:8080/api
+    description: Base server (v1 routes use /v1 prefix, v2 routes use /v2 prefix)
+
+tags:
+  - name: Auth
+    description: Authentication & token management (v1 & base routes)
+  - name: User
+    description: User profile, preferences, media (v1 & base routes)
+  - name: Group
+    description: Group creation, membership, management (v1 & base routes)
+  - name: Blog
+    description: Blog CRUD, media, likes (v1 search, v2 full)
+  - name: Itinerary
+    description: Itinerary CRUD & group assignments (v2)
+  - name: Rating
+    description: User rating submission and retrieval (v1)
+  - name: Report
+    description: Content reporting & moderation (v2, admin)
+  - name: Travel
+    description: Travel history (v2)
+  - name: Health
+    description: System health checks
+  - name: System
+    description: Versioning and API discovery
+
+paths:
+  # ===== HEALTH ROUTES =====
+  /healthz:
+    servers:
+      - url: http://127.0.0.1:8080/
+        description: Health check endpoint
+    get:
+      summary: Health check
+      tags: [Health]
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  # ===== SYSTEM ROUTES =====
+  /versions:
+    servers:
+      - url: http://127.0.0.1:8080/api
+        description: Version discovery
+    get:
+      summary: API version discovery
+      tags: [System]
+      responses:
+        '200':
+          description: Available API versions
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ===== AUTH ROUTES (V1) =====
+  /v1/auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      description: Available at both base and v1 endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/auth/login:
+    post:
+      summary: Login user
+      tags: [Auth]
+      description: Available at both base and v1 endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: HTTP-only cookies with tokens
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/auth/refresh:
+    post:
+      summary: Refresh access tokens
+      tags: [Auth]
+      description: Available at both base and v1 endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Tokens refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/auth/forgot-password:
+    post:
+      summary: Request password reset
+      tags: [Auth]
+      description: Available at both base and v1 endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/auth/logout:
+    post:
+      summary: Logout user (invalidate tokens)
+      tags: [Auth]
+      description: Available at both base and v1 endpoints
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/auth/whoami:
+    get:
+      summary: Get current authenticated user
+      tags: [Auth]
+      description: Available at both base and v1 endpoints
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/auth/email/status:
+    get:
+      summary: Check email status (v1 only)
+      tags: [Auth]
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Email status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+  # ===== USER ROUTES (V1) =====
+  /v1/user:
+    post:
+      summary: Get user profile by email
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update current user profile
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /v1/user/delete:
+    post:
+      summary: Delete user account (protected)
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/user/profile_pic:
+    post:
+      summary: Upload user profile picture
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - profile
+              properties:
+                profile:
+                  type: string
+                  format: binary
+                  description: Profile image file (JPEG, PNG, max 5MB)
+      responses:
+        '200':
+          description: Profile picture uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile_url:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /v1/user/interests/all:
+    get:
+      summary: Get all available interests
+      tags: [User]
+      responses:
+        '200':
+          description: All available interests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  interests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Interest'
+
+  /v1/user/interests:
+    get:
+      summary: Get user's interests
+      tags: [User]
+      responses:
+        '200':
+          description: User interests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  interests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Interest'
+
+    patch:
+      summary: Update user interests
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - interest_ids
+              properties:
+                interest_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Interests updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /v1/user/travel-styles/all:
+    get:
+      summary: Get all available travel styles
+      tags: [User]
+      responses:
+        '200':
+          description: All available travel styles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  travel_styles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TravelStyle'
+
+  /v1/user/travel-styles:
+    get:
+      summary: Get user's travel styles
+      tags: [User]
+      responses:
+        '200':
+          description: User travel styles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  travel_styles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TravelStyle'
+
+    patch:
+      summary: Update user travel styles
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - travel_style_ids
+              properties:
+                travel_style_ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Travel styles updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ===== GROUP ROUTES (V1) =====
+  /v1/group:
+    post:
+      summary: Create a new travel group
+      tags: [Group]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/group/filter:
+    get:
+      summary: Filter and search groups
+      tags: [Group]
+      parameters:
+        - name: interest_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: group_name
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Filtered groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Group'
+                  total:
+                    type: integer
+
+  /v1/group/{groupId}:
+    get:
+      summary: Get group details
+      tags: [Group]
+      parameters:
+        - $ref: '#/components/parameters/groupId'
+      responses:
+        '200':
+          description: Group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/group/{id}/profile:
+    put:
+      summary: Upload group profile image
+      tags: [Group]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - profile
+              properties:
+                profile:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Profile uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile_url:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: Get group profile image
+      tags: [Group]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Group profile image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/group/{id}/member:
+    put:
+      summary: Add member to group
+      tags: [Group]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: integer
+      responses:
+        '200':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    delete:
+      summary: Remove member from group
+      tags: [Group]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: integer
+      responses:
+        '200':
+          description: Member removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/group/{id}/leave:
+    delete:
+      summary: Leave group
+      tags: [Group]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Left group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/group/{id}/members:
+    get:
+      summary: Get group members
+      tags: [Group]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Group members list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GroupMember'
+
+  /v1/group/{id}/owner:
+    patch:
+      summary: Transfer group ownership
+      tags: [Group]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - new_owner_id
+              properties:
+                new_owner_id:
+                  type: integer
+      responses:
+        '200':
+          description: Ownership transferred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/group/my/groups:
+    get:
+      summary: Get user's groups
+      tags: [Group]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User's groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Group'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ===== BLOG ROUTES (V1 + V2) =====
+  /v1/blog/search:
+    get:
+      summary: Search and filter blogs (v1 only)
+      tags: [Blog]
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+        - name: interest_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+        - name: author
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blogs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Blog'
+                  total:
+                    type: integer
+
+  /v2/blogs/media:
+    post:
+      summary: Upload blog media file (v2)
+      tags: [Blog]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - media
+              properties:
+                media:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Media uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  media_url:
+                    type: string
+
+  /v2/blogs:
+    post:
+      summary: Create a new blog (v2)
+      tags: [Blog]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlogRequest'
+      responses:
+        '201':
+          description: Blog created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blog_id:
+                    type: integer
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v2/blogs/{blog_id}:
+    put:
+      summary: Update blog (v2)
+      tags: [Blog]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: blog_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlogRequest'
+      responses:
+        '200':
+          description: Blog updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete blog (v2)
+      tags: [Blog]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: blog_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blog deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v2/blogs/{blog_id}/manifest:
+    get:
+      summary: Get blog manifest (v2)
+      tags: [Blog]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: blog_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blog manifest data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blog'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v2/blogs/{blog_id}/content:
+    get:
+      summary: Get public blog content (v2)
+      tags: [Blog]
+      parameters:
+        - name: blog_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blog content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blog'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v2/blogs/{blog_id}/banner:
+    get:
+      summary: Get blog banner image (v2)
+      tags: [Blog]
+      parameters:
+        - name: blog_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blog banner image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v2/blogs/{blog_id}/likes:
+    get:
+      summary: Get blog likes (v2)
+      tags: [Blog]
+      parameters:
+        - name: blog_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blog likes information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likes_count:
+                    type: integer
+                  liked_by_user:
+                    type: boolean
+
+    post:
+      summary: Like blog (v2)
+      tags: [Blog]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: blog_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blog liked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      summary: Unlike blog (v2)
+      tags: [Blog]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: blog_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blog unliked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v2/blogs/list/me:
+    get:
+      summary: Get user's blogs (v2)
+      tags: [Blog]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User's blogs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blogs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Blog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ===== ITINERARY ROUTES (V2) =====
+  /v2/itineraries:
+    post:
+      summary: Create itinerary (v2)
+      tags: [Itinerary]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItineraryRequest'
+      responses:
+        '201':
+          description: Itinerary created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: Get all itineraries (v2)
+      tags: [Itinerary]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: group_id
+          in: query
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: All itineraries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  itineraries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ItineraryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v2/itineraries/{itinerary_id}:
+    get:
+      summary: Get itinerary by ID (v2)
+      tags: [Itinerary]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itinerary_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Itinerary details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update itinerary (v2)
+      tags: [Itinerary]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itinerary_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItineraryRequest'
+      responses:
+        '200':
+          description: Itinerary updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItineraryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete itinerary (v2)
+      tags: [Itinerary]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itinerary_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Itinerary deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v2/itineraries/{group_id}/itineraries:
+    get:
+      summary: Get group itineraries (v2)
+      tags: [Itinerary]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Group itineraries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  itineraries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ItineraryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v2/itineraries/{group_id}/itineraries/assign:
+    post:
+      summary: Assign itinerary to group (v2)
+      tags: [Itinerary]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - itinerary_id
+              properties:
+                itinerary_id:
+                  type: integer
+      responses:
+        '200':
+          description: Itinerary assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /v2/itineraries/{group_id}/itineraries/{itinerary_id}:
+    delete:
+      summary: Remove itinerary from group (v2)
+      tags: [Itinerary]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itinerary_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Itinerary removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ===== RATING ROUTES (V1) =====
+  /v1/rating/user/{userId}/rating:
+    get:
+      summary: Get user ratings (v1)
+      tags: [Rating]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User ratings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ratings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Rating'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      summary: Submit or update rating (v1)
+      tags: [Rating]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitRatingRequest'
+      responses:
+        '201':
+          description: Rating submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Too many rating requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update rating (v1)
+      tags: [Rating]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitRatingRequest'
+      responses:
+        '200':
+          description: Rating updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete rating (v1)
+      tags: [Rating]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Rating deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ===== REPORT ROUTES (V2) =====
+  /v2/reports:
+    post:
+      summary: Create a report (v2)
+      tags: [Report]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+      responses:
+        '201':
+          description: Report created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_id:
+                    type: integer
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: Get all reports (v2, admin only)
+      tags: [Report]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: All reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Report'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v2/reports/reasons:
+    get:
+      summary: Get report reasons (v2)
+      tags: [Report]
+      responses:
+        '200':
+          description: Available report reasons
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reasons:
+                    type: array
+                    items:
+                      type: string
+
+  /v2/reports/{id}:
+    get:
+      summary: Get report by ID (v2)
+      tags: [Report]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Report details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update report (v2)
+      tags: [Report]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReportRequest'
+      responses:
+        '200':
+          description: Report updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete report (v2, admin only)
+      tags: [Report]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Report deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - admin access required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ===== TRAVEL ROUTES (V2) =====
+  /v2/travel/me:
+    get:
+      summary: Get travel history (v2)
+      tags: [Travel]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User travel history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  travel_history:
+                    type: array
+                    items:
+                      type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token in Authorization header
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
+      description: JWT access token in HTTP-only cookie
+
+  parameters:
+    groupId:
+      name: groupId
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: Unique group identifier
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters or body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication required or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ===== RESPONSE SCHEMAS =====
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation completed successfully
+        data:
+          type: object
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error:
+          type: string
+        details:
+          type: object
+          nullable: true
+
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    # ===== REQUEST SCHEMAS =====
+    RegisterRequest:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - birth_date
+        - sex
+        - phone
+        - email
+        - password
+        - interests
+        - travel_styles
+      properties:
+        first_name:
+          type: string
+          minLength: 1
+        middle_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+          minLength: 1
+        birth_date:
+          type: string
+          format: date
+        sex:
+          type: string
+        phone:
+          type: string
+          pattern: '^0\d{9}$'
+          description: Thai phone format (10 digits starting with 0)
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          description: 'Password must contain: uppercase, lowercase, digit, special character'
+        interests:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        travel_styles:
+          type: array
+          items:
+            type: string
+          minItems: 1
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+        middle_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+        birth_date:
+          type: string
+          format: date
+        sex:
+          type: string
+        phone:
+          type: string
+        interests:
+          type: array
+          items:
+            type: integer
+        travel_styles:
+          type: array
+          items:
+            type: integer
+
+    CreateGroupRequest:
+      type: object
+      required:
+        - group_name
+        - group_leader_id
+      properties:
+        group_name:
+          type: string
+          minLength: 1
+        group_leader_id:
+          type: integer
+          minimum: 1
+        description:
+          type: string
+          nullable: true
+        profile:
+          type: string
+          format: binary
+          description: Profile image file (max 10MB for v1)
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+        interest_fields:
+          type: array
+          items:
+            type: string
+            enum: [SEA, MOUNTAIN, WATERFALL, NATIONAL_PARK, ISLAND, TEMPLE, SHOPPING_MALL, MARKET, CAFE, HISTORICAL, AMUSEMENT_PARK, ZOO, FESTIVAL, MUSEUM, FOOD_STREET, BEACH_BAR, THEATRE]
+          nullable: true
+
+    UpdateGroupRequest:
+      type: object
+      properties:
+        group_name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        profile:
+          type: string
+          format: binary
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 100
+        interest_fields:
+          type: array
+          items:
+            type: string
+        user_id:
+          type: integer
+
+    CreateBlogRequest:
+      type: object
+      required:
+        - title
+        - interest_id
+        - description
+        - json_config
+        - html_output
+      properties:
+        title:
+          type: string
+          minLength: 1
+        interest_id:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+        description:
+          type: string
+        json_config:
+          type: string
+          description: JSON configuration for the blog
+        html_output:
+          type: string
+          description: HTML output of the blog
+
+    CreateItineraryRequest:
+      type: object
+      required:
+        - title
+        - start_date
+        - end_date
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+          nullable: true
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        place_links:
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+
+    CreateReportRequest:
+      type: object
+      required:
+        - title
+        - reason
+      properties:
+        title:
+          type: string
+          minLength: 1
+        reason:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    UpdateReportRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        reason:
+          type: string
+        description:
+          type: string
+
+    SubmitRatingRequest:
+      type: object
+      required:
+        - cleanliness
+        - reliability
+        - communication
+        - friendliness
+      properties:
+        cleanliness:
+          type: number
+          minimum: 1
+          maximum: 5
+        reliability:
+          type: number
+          minimum: 1
+          maximum: 5
+        communication:
+          type: number
+          minimum: 1
+          maximum: 5
+        friendliness:
+          type: number
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+
+    # ===== DATA SCHEMAS =====
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    User:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        middle_name:
+          type: string
+          nullable: true
+        last_name:
+          type: string
+        birth_date:
+          type: string
+          format: date-time
+        sex:
+          type: string
+        phone:
+          type: string
+        profile_url:
+          type: string
+          nullable: true
+        interests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interest'
+        travel_styles:
+          type: array
+          items:
+            $ref: '#/components/schemas/TravelStyle'
+        role:
+          type: string
+          enum: [admin, user]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Interest:
+      type: object
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        label:
+          type: string
+        emoji:
+          type: string
+        color:
+          type: string
+
+    TravelStyle:
+      type: object
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        label:
+          type: string
+        emoji:
+          type: string
+
+    Group:
+      type: object
+      properties:
+        group_id:
+          type: integer
+        group_name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        group_leader_id:
+          type: integer
+        profile_url:
+          type: string
+          nullable: true
+        max_members:
+          type: integer
+        current_members:
+          type: integer
+        interests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interest'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    GroupMember:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        profile_url:
+          type: string
+          nullable: true
+        joined_at:
+          type: string
+          format: date-time
+
+    Blog:
+      type: object
+      properties:
+        blog_id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        author_id:
+          type: integer
+        author_name:
+          type: string
+        interests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Interest'
+        json_config:
+          type: string
+        html_output:
+          type: string
+        likes_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ItineraryResponse:
+      type: object
+      properties:
+        itinerary_id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        place_links:
+          type: array
+          items:
+            type: string
+        groups_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Rating:
+      type: object
+      properties:
+        rating_id:
+          type: integer
+        rater_id:
+          type: integer
+        rater_name:
+          type: string
+        target_user_id:
+          type: integer
+        cleanliness:
+          type: number
+        reliability:
+          type: number
+        communication:
+          type: number
+        friendliness:
+          type: number
+        comment:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Report:
+      type: object
+      properties:
+        report_id:
+          type: integer
+        title:
+          type: string
+        reason:
+          type: string
+        description:
+          type: string
+          nullable: true
+        reporter_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, resolved, dismissed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
