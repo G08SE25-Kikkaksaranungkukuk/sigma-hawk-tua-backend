@@ -15,21 +15,15 @@ export class RatingController {
    */
   submitRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = parseInt(req.params.userId);
+      // Parse user ID directly from params (middleware already validated it)
+      const userId = parseInt(req.params.userId, 10);
+
       const raterId = req.user?.user_id; // From JWT middleware
 
       if (!raterId) {
         res.status(401).json({
           success: false,
           message: 'Unauthorized: User not authenticated'
-        });
-        return;
-      }
-
-      if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID'
         });
         return;
       }
@@ -57,15 +51,8 @@ export class RatingController {
    */
   getUserRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = parseInt(req.params.userId);
-
-      if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID'
-        });
-        return;
-      }
+      // Parse user ID directly from params (middleware already validated it)
+      const userId = parseInt(req.params.userId, 10);
 
       const result = await this.ratingService.getSimpleUserRatings(userId);
       res.status(200).json(result);
@@ -83,21 +70,15 @@ export class RatingController {
    */
   updateRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = parseInt(req.params.userId);
+      // Parse user ID directly from params (middleware already validated it)
+      const userId = parseInt(req.params.userId, 10);
+
       const raterId = req.user?.user_id; // From JWT middleware
 
       if (!raterId) {
         res.status(401).json({
           success: false,
           message: 'Unauthorized: User not authenticated'
-        });
-        return;
-      }
-
-      if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID'
         });
         return;
       }
@@ -124,21 +105,15 @@ export class RatingController {
    */
   deleteRating = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = parseInt(req.params.userId);
+      // Parse user ID directly from params (middleware already validated it)
+      const userId = parseInt(req.params.userId, 10);
+
       const raterId = req.user?.user_id; // From JWT middleware
 
       if (!raterId) {
         res.status(401).json({
           success: false,
           message: 'Unauthorized: User not authenticated'
-        });
-        return;
-      }
-
-      if (isNaN(userId)) {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid user ID'
         });
         return;
       }

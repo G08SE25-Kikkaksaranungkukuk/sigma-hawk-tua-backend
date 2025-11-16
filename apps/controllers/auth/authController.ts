@@ -25,10 +25,10 @@ export class AuthController extends BaseController {
     async login(req: Request, res: Response): Promise<void> {
         try {
             const tokens = await this.authService.login(req.body);
-            
+
             // Set secure cookies for tokens
             this.setAuthCookies(res, tokens);
-            
+
             this.handleSuccess(res, tokens, 200, "Login successful");
         } catch (error) {
             this.handleError(error, res);
@@ -38,12 +38,12 @@ export class AuthController extends BaseController {
     async forgotPassword(req: Request, res: Response): Promise<void> {
         try {
             const result = await this.authService.forgotPassword(req.body);
-            
+
             if (result) {
                 this.handleSuccess(
-                    res, 
-                    null, 
-                    200, 
+                    res,
+                    null,
+                    200,
                     "Password reset instructions have been sent"
                 );
             }
@@ -56,7 +56,7 @@ export class AuthController extends BaseController {
         try {
             // Clear authentication cookies
             this.clearAuthCookies(res);
-            
+
             this.handleSuccess(res, null, 200, "Logged out successfully");
         } catch (error) {
             this.handleError(error, res);
@@ -73,21 +73,34 @@ export class AuthController extends BaseController {
             const refreshToken = authHeader.split(" ")[1];
 
             const tokens = await this.authService.refreshTokens(refreshToken);
-            
+
             // Update cookies with new tokens
             this.setAuthCookies(res, tokens);
-            
+
             this.handleSuccess(res, tokens, 200, "Tokens refreshed successfully");
         } catch (error) {
             this.handleError(error, res);
         }
     }
-    async whoAmI(req : Request, res : Response) : Promise<void> {
+    async whoAmI(req: Request, res: Response): Promise<void> {
         try {
             // const userData = await this.authService.whoami(req.cookies.accessToken);
-            this.handleSuccess(res,req.user,200,"Individual Verified");
+            this.handleSuccess(res, req.user, 200, "Individual Verified");
         } catch (error) {
-            this.handleError(error,res);
+            this.handleError(error, res);
+        }
+    }
+
+    async checkEmail(req: Request, res: Response): Promise<void> {
+        try {
+            const email = req.query.email as string;
+            if (!email) {
+                return this.handleError(new Error("Email is required"), res);
+            }
+            const exists = await this.authService.isEmailExists(email);
+            this.handleSuccess(res, { exists }, 200);
+        } catch (error) {
+            this.handleError(error, res);
         }
     }
 }
