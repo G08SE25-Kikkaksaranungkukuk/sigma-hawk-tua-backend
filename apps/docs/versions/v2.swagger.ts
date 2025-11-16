@@ -96,7 +96,7 @@ For migration guidance from v1 to v2, see [Migration Guide](/api-docs/migration/
         description: "Development server"
       },
       {
-        url: "https://api.thamroi.com",
+        url: "https://sigma-hawk-tua-backend-dev-1097710273935.asia-southeast1.run.app",
         description: "Production server"
       }
     ],
