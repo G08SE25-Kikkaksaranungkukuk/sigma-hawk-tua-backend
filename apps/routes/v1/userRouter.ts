@@ -28,11 +28,13 @@ export class UserRouterV1 extends BaseRouter {
         // Profile management
         this.router.post(
             "/",
+            userMiddleware,
             this.userController.getUser.bind(this.userController)
         );
 
         this.router.patch(
             "/",
+            userMiddleware,
             this.userController.updateUser.bind(this.userController)
         );
 
