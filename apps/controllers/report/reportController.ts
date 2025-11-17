@@ -135,7 +135,10 @@ export class ReportController extends BaseController {
     async updateReport(req: Request, res: Response) {
         try {
             const userId = req.user?.user_id;
-            if (!userId) {
+            const role = req.user?.role;
+
+            // Allow request only if user is authenticated or has ADMIN role
+            if (!userId && role !== "ADMIN") {
                 return res.status(401).json({ success: false, message: "Unauthorized" });
             }
 
@@ -163,7 +166,11 @@ export class ReportController extends BaseController {
                 return res.status(400).json({ success: false, message: "No fields to update" });
             }
 
-            const result = await this.reportService.updateReport(reportId, userId, updateData);
+            // If the caller is an admin, pass undefined so the service/repository
+            // will skip ownership enforcement. Otherwise pass the user's id.
+            const actingUserId = role === "ADMIN" ? undefined : userId;
+
+            const result = await this.reportService.updateReport(reportId, actingUserId as any, updateData);
 
             if (result.success) {
                 return this.handleSuccess(res, result.report, 200, result.message);

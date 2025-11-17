@@ -1,7 +1,5 @@
-import { PrismaClient } from '../../../generated/prisma';
 import { CreateRatingRequest, UpdateRatingRequest, UserRatingStats, SCORE_WEIGHTS } from '../../types/rating/ratingTypes';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/config/prismaClient';
 
 export class RatingRepository {
   /**

@@ -167,7 +167,7 @@ export class ReportRepository {
     /**
      * Update report (can update title, reason, description)
      */
-    async updateReport(reportId: number, user_id: number, payload: UpdateReportRequest) {
+    async updateReport(reportId: number, user_id: number | undefined, payload: UpdateReportRequest) {
         try {
             const { reason, ...updateData } = payload as any;
 
@@ -176,7 +176,8 @@ export class ReportRepository {
             if (!existing) {
                 throw new Error('Report not found');
             }
-            if (existing.user_id !== user_id) {
+            // If a user_id is provided, enforce ownership; if undefined, caller is treated as admin
+            if (user_id !== undefined && existing.user_id !== user_id) {
                 throw new Error('Unauthorized to update this report');
             }
 
