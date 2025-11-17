@@ -20,18 +20,30 @@ resource "google_sql_database_instance" "postgres" {
       }
     }
 
+    # tfsec:ignore:google-sql-encrypt-in-transit-data SSL enforced via ssl_mode
     ip_configuration {
       ipv4_enabled    = false  # Disable public IP for security - use Cloud SQL Proxy only
       private_network = null
-      ssl_mode        = "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"  # Enforce SSL/TLS for all connections
+      # SSL/TLS is enforced via ssl_mode (require_ssl attribute not available in provider)
+      ssl_mode        = "ENCRYPTED_ONLY"  # All connections must use SSL/TLS
 
-      # Note: With ipv4_enabled=false, authorized_networks is not needed
+      # With ipv4_enabled=false, authorized_networks is not needed
       # Cloud Run connects via Unix socket using Cloud SQL connection
     }
 
     database_flags {
       name  = "max_connections"
       value = var.max_connections
+    }
+
+    database_flags {
+      name  = "log_connections"
+      value = "on"  # Enable connection logging for audit trail
+    }
+
+    database_flags {
+      name  = "log_disconnections"
+      value = "on"  # Enable disconnection logging
     }
 
     insights_config {
