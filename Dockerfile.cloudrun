@@ -47,8 +47,16 @@ COPY --from=builder /app/prisma ./prisma
 # Copy tsconfig for runtime path resolution
 COPY --from=builder /app/tsconfig.runtime.json ./tsconfig.json
 
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
 # Set environment
 ENV NODE_ENV=production
+
+# Switch to non-root user
+USER nodejs
 
 # Expose port (Cloud Run will override PORT automatically)
 EXPOSE 8080
