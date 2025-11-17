@@ -10,7 +10,7 @@ import { ApiVersionManager } from "@/config/apiVersion";
 
 const app = express();
 
-app.use(cors({credentials: true, origin: 'https://thamroi.duckdns.org/'}));
+app.use(cors({credentials: true, origin: process.env.FRONTEND_URL }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
