@@ -203,36 +203,6 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Run database migrations
-        run: |
-          echo "🔄 Running database migrations..."
-          gcloud run jobs create sigma-hawk-tua-backend-migrate-dev \
-            --image=${{ needs.build-and-push-image.outputs.image-url }} \
-            --region=${{ env.GCP_REGION }} \
-            --set-secrets="DATABASE_URL=sigma-hawk-tua-backend-database-url-dev:latest" \
-            --service-account=sigma-run-sa-dev@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
-            --add-cloudsql-instances=${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:sigma-hawk-tua-backend-db-dev \
-            --max-retries=2 \
-            --task-timeout=10m \
-            --command=npx \
-            --args="prisma,migrate,deploy" \
-            --project=${{ env.GCP_PROJECT_ID }} \
-            2>/dev/null || echo "Job already exists"
-          
-          # Update existing job
-          gcloud run jobs update sigma-hawk-tua-backend-migrate-dev \
-            --image=${{ needs.build-and-push-image.outputs.image-url }} \
-            --region=${{ env.GCP_REGION }} \
-            --project=${{ env.GCP_PROJECT_ID }}
-          
-          # Execute the migration
-          gcloud run jobs execute sigma-hawk-tua-backend-migrate-dev \
-            --region=${{ env.GCP_REGION }} \
-            --project=${{ env.GCP_PROJECT_ID }} \
-            --wait
-          
-          echo "✅ Migrations completed"
-
       - name: Deploy to Cloud Run
         id: deploy
         run: |
