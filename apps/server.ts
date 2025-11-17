@@ -10,7 +10,14 @@ import { ApiVersionManager } from "@/config/apiVersion";
 
 const app = express();
 
-app.use(cors({credentials: true, origin: '*'}));
+// Simple CORS configuration
+app.use(cors({
+    credentials: true, 
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+
 app.use(bodyParser.json());
 app.use(cookieParser());
 

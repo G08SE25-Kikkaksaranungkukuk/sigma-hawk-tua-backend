@@ -1,14 +1,18 @@
-openapi: '3.0.3'
+openapi: "3.0.3"
 info:
   title: Sigma Hawk API
-  version: '1.0.0'
+  version: "1.0.0"
   description: |
     Complete OpenAPI 3.0 specification for the Sigma Hawk backend.
     Comprehensive documentation of all Authentication, User, Group, Blog, 
     Itinerary, Rating, Report, Travel, and System endpoints across base, v1, and v2 APIs.
 servers:
-  - url: http://127.0.0.1:8080/api
-    description: Base server (v1 routes use /v1 prefix, v2 routes use /v2 prefix)
+  - url: http://localhost:8080
+    description: Development server (localhost)
+  - url: http://127.0.0.1:8080
+    description: Development server (127.0.0.1)
+  - url: https://sigma-hawk-tua-backend-dev-1097710273935.asia-southeast1.run.app
+    description: Production server
 
 tags:
   - name: Auth
@@ -35,30 +39,24 @@ tags:
 paths:
   # ===== HEALTH ROUTES =====
   /healthz:
-    servers:
-      - url: http://127.0.0.1:8080/
-        description: Health check endpoint
     get:
       summary: Health check
       tags: [Health]
       responses:
-        '200':
+        "200":
           description: Server is healthy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                $ref: "#/components/schemas/HealthResponse"
 
   # ===== SYSTEM ROUTES =====
-  /versions:
-    servers:
-      - url: http://127.0.0.1:8080/api
-        description: Version discovery
+  /api/versions:
     get:
       summary: API version discovery
       tags: [System]
       responses:
-        '200':
+        "200":
           description: Available API versions
           content:
             application/json:
@@ -66,7 +64,7 @@ paths:
                 type: object
 
   # ===== AUTH ROUTES (V1) =====
-  /v1/auth/register:
+  /api/v1/auth/register:
     post:
       summary: Register a new user
       tags: [Auth]
@@ -76,24 +74,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterRequest'
+              $ref: "#/components/schemas/RegisterRequest"
       responses:
-        '201':
+        "201":
           description: User created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
           description: Email already exists
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
-  /v1/auth/login:
+  /api/v1/auth/login:
     post:
       summary: Login user
       tags: [Auth]
@@ -103,9 +101,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: Login successful
           headers:
             Set-Cookie:
@@ -115,11 +113,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v1/auth/refresh:
+  /api/v1/auth/refresh:
     post:
       summary: Refresh access tokens
       tags: [Auth]
@@ -134,16 +132,16 @@ paths:
                 refreshToken:
                   type: string
       responses:
-        '200':
+        "200":
           description: Tokens refreshed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/TokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v1/auth/forgot-password:
+  /api/v1/auth/forgot-password:
     post:
       summary: Request password reset
       tags: [Auth]
@@ -161,20 +159,20 @@ paths:
                   type: string
                   format: email
       responses:
-        '200':
+        "200":
           description: Password reset email sent
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '404':
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
           description: User not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
-  /v1/auth/logout:
+  /api/v1/auth/logout:
     post:
       summary: Logout user (invalidate tokens)
       tags: [Auth]
@@ -183,16 +181,16 @@ paths:
         - bearerAuth: []
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Logged out successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v1/auth/whoami:
+  /api/v1/auth/whoami:
     get:
       summary: Get current authenticated user
       tags: [Auth]
@@ -201,16 +199,16 @@ paths:
         - bearerAuth: []
         - cookieAuth: []
       responses:
-        '200':
+        "200":
           description: Current user profile
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v1/auth/email/status:
+  /api/v1/auth/email/status:
     get:
       summary: Check email status (v1 only)
       tags: [Auth]
@@ -222,7 +220,7 @@ paths:
             type: string
             format: email
       responses:
-        '200':
+        "200":
           description: Email status
           content:
             application/json:
@@ -233,7 +231,7 @@ paths:
                     type: string
 
   # ===== USER ROUTES (V1) =====
-  /v1/user:
+  /api/v1/user:
     post:
       summary: Get user profile by email
       tags: [User]
@@ -250,18 +248,18 @@ paths:
                   type: string
                   format: email
       responses:
-        '200':
+        "200":
           description: User profile retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '404':
+                $ref: "#/components/schemas/User"
+        "404":
           description: User not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
     patch:
       summary: Update current user profile
@@ -271,34 +269,34 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateUserRequest'
+              $ref: "#/components/schemas/UpdateUserRequest"
       responses:
-        '200':
+        "200":
           description: User profile updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
-  /v1/user/delete:
+  /api/v1/user/delete:
     post:
       summary: Delete user account (protected)
       tags: [User]
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: User deleted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v1/user/profile_pic:
+  /api/v1/user/profile_pic:
     post:
       summary: Upload user profile picture
       tags: [User]
@@ -316,7 +314,7 @@ paths:
                   format: binary
                   description: Profile image file (JPEG, PNG, max 5MB)
       responses:
-        '200':
+        "200":
           description: Profile picture uploaded
           content:
             application/json:
@@ -325,15 +323,15 @@ paths:
                 properties:
                   profile_url:
                     type: string
-        '400':
-          $ref: '#/components/responses/BadRequest'
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
-  /v1/user/interests/all:
+  /api/v1/user/interests/all:
     get:
       summary: Get all available interests
       tags: [User]
       responses:
-        '200':
+        "200":
           description: All available interests
           content:
             application/json:
@@ -343,14 +341,14 @@ paths:
                   interests:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Interest'
+                      $ref: "#/components/schemas/Interest"
 
-  /v1/user/interests:
+  /api/v1/user/interests:
     get:
       summary: Get user's interests
       tags: [User]
       responses:
-        '200':
+        "200":
           description: User interests
           content:
             application/json:
@@ -360,7 +358,7 @@ paths:
                   interests:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Interest'
+                      $ref: "#/components/schemas/Interest"
 
     patch:
       summary: Update user interests
@@ -379,21 +377,21 @@ paths:
                   items:
                     type: integer
       responses:
-        '200':
+        "200":
           description: Interests updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
-  /v1/user/travel-styles/all:
+  /api/v1/user/travel-styles/all:
     get:
       summary: Get all available travel styles
       tags: [User]
       responses:
-        '200':
+        "200":
           description: All available travel styles
           content:
             application/json:
@@ -403,14 +401,14 @@ paths:
                   travel_styles:
                     type: array
                     items:
-                      $ref: '#/components/schemas/TravelStyle'
+                      $ref: "#/components/schemas/TravelStyle"
 
-  /v1/user/travel-styles:
+  /api/v1/user/travel-styles:
     get:
       summary: Get user's travel styles
       tags: [User]
       responses:
-        '200':
+        "200":
           description: User travel styles
           content:
             application/json:
@@ -420,7 +418,7 @@ paths:
                   travel_styles:
                     type: array
                     items:
-                      $ref: '#/components/schemas/TravelStyle'
+                      $ref: "#/components/schemas/TravelStyle"
 
     patch:
       summary: Update user travel styles
@@ -439,17 +437,17 @@ paths:
                   items:
                     type: integer
       responses:
-        '200':
+        "200":
           description: Travel styles updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
   # ===== GROUP ROUTES (V1) =====
-  /v1/group:
+  /api/v1/group:
     post:
       summary: Create a new travel group
       tags: [Group]
@@ -460,7 +458,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateGroupRequest'
+              $ref: "#/components/schemas/CreateGroupRequest"
             example:
               group_name: "Weekend Hikers"
               group_leader_id: 123
@@ -470,18 +468,18 @@ paths:
                 - MOUNTAIN
                 - NATIONAL_PARK
       responses:
-        '201':
+        "201":
           description: Group created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Group'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/Group"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v1/group/filter:
+  /api/v1/group/filter:
     get:
       summary: Filter and search groups
       tags: [Group]
@@ -507,7 +505,7 @@ paths:
             type: integer
             minimum: 1
       responses:
-        '200':
+        "200":
           description: Filtered groups
           content:
             application/json:
@@ -517,37 +515,37 @@ paths:
                   groups:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Group'
+                      $ref: "#/components/schemas/Group"
                   total:
                     type: integer
 
-  /v1/group/{groupId}:
+  /api/v1/group/{groupId}:
     get:
       summary: Get group details
       tags: [Group]
       parameters:
-        - $ref: '#/components/parameters/groupId'
+        - $ref: "#/components/parameters/groupId"
       responses:
-        '200':
+        "200":
           description: Group details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Group'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Group"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       summary: Update group details
       tags: [Group]
       parameters:
-        - $ref: '#/components/parameters/groupId'
+        - $ref: "#/components/parameters/groupId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateGroupRequest'
+              $ref: "#/components/schemas/UpdateGroupRequest"
             example:
               group_name: "Weekend Hikers"
               group_leader_id: 123
@@ -558,16 +556,16 @@ paths:
                 - NATIONAL_PARK
 
       responses:
-        '200':
+        "200":
           description: Group details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Group'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Group"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
-  /v1/group/{id}/profile:
+  /api/v1/group/{id}/profile:
     put:
       summary: Upload group profile image
       tags: [Group]
@@ -592,7 +590,7 @@ paths:
                   type: string
                   format: binary
       responses:
-        '200':
+        "200":
           description: Profile uploaded
           content:
             application/json:
@@ -601,8 +599,8 @@ paths:
                 properties:
                   profile_url:
                     type: string
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
     get:
       summary: Get group profile image
@@ -614,17 +612,17 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Group profile image
           content:
             image/jpeg:
               schema:
                 type: string
                 format: binary
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "404":
+          $ref: "#/components/responses/NotFound"
 
-  /v1/group/{id}/member:
+  /api/v1/group/{id}/member:
     put:
       summary: Add member to group
       tags: [Group]
@@ -648,16 +646,16 @@ paths:
                 user_id:
                   type: integer
       responses:
-        '200':
+        "200":
           description: Member added
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
     delete:
       summary: Remove member from group
@@ -682,16 +680,16 @@ paths:
                 user_id:
                   type: integer
       responses:
-        '200':
+        "200":
           description: Member removed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v1/group/{id}/leave:
+  /api/v1/group/{id}/leave:
     delete:
       summary: Leave group
       tags: [Group]
@@ -704,16 +702,16 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Left group
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v1/group/{id}/members:
+  /api/v1/group/{id}/members:
     get:
       summary: Get group members
       tags: [Group]
@@ -724,7 +722,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Group members list
           content:
             application/json:
@@ -734,9 +732,9 @@ paths:
                   members:
                     type: array
                     items:
-                      $ref: '#/components/schemas/GroupMember'
+                      $ref: "#/components/schemas/GroupMember"
 
-  /v1/group/{id}/owner:
+  /api/v1/group/{id}/owner:
     patch:
       summary: Transfer group ownership
       tags: [Group]
@@ -760,23 +758,23 @@ paths:
                 new_owner_id:
                   type: integer
       responses:
-        '200':
+        "200":
           description: Ownership transferred
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v1/group/my/groups:
+  /api/v1/group/my/groups:
     get:
       summary: Get user's groups
       tags: [Group]
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: User's groups
           content:
             application/json:
@@ -786,12 +784,12 @@ paths:
                   groups:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Group'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                      $ref: "#/components/schemas/Group"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   # ===== BLOG ROUTES (V1 + V2) =====
-  /v1/blog/search:
+  /api/v1/blog/search:
     get:
       summary: Search and filter blogs (v1 only)
       tags: [Blog]
@@ -823,7 +821,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Search results
           content:
             application/json:
@@ -833,11 +831,11 @@ paths:
                   blogs:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Blog'
+                      $ref: "#/components/schemas/Blog"
                   total:
                     type: integer
 
-  /v2/blogs/media:
+  /api/v2/blogs/media:
     post:
       summary: Upload blog media file (v2)
       tags: [Blog]
@@ -854,7 +852,7 @@ paths:
                   type: string
                   format: binary
       responses:
-        '200':
+        "200":
           description: Media uploaded
           content:
             application/json:
@@ -864,7 +862,7 @@ paths:
                   media_url:
                     type: string
 
-  /v2/blogs:
+  /api/v2/blogs:
     post:
       summary: Create a new blog (v2)
       tags: [Blog]
@@ -875,9 +873,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateBlogRequest'
+              $ref: "#/components/schemas/CreateBlogRequest"
       responses:
-        '201':
+        "201":
           description: Blog created
           content:
             application/json:
@@ -888,12 +886,12 @@ paths:
                     type: integer
                   message:
                     type: string
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v2/blogs/{blog_id}:
+  /api/v2/blogs/{blog_id}:
     put:
       summary: Update blog (v2)
       tags: [Blog]
@@ -910,18 +908,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateBlogRequest'
+              $ref: "#/components/schemas/CreateBlogRequest"
       responses:
-        '200':
+        "200":
           description: Blog updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     delete:
       summary: Delete blog (v2)
@@ -935,18 +933,18 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Blog deleted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
-  /v2/blogs/{blog_id}/manifest:
+  /api/v2/blogs/{blog_id}/manifest:
     get:
       summary: Get blog manifest (v2)
       tags: [Blog]
@@ -959,16 +957,16 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Blog manifest data
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Blog'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Blog"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
-  /v2/blogs/{blog_id}/content:
+  /api/v2/blogs/{blog_id}/content:
     get:
       summary: Get public blog content (v2)
       tags: [Blog]
@@ -979,16 +977,16 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Blog content
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Blog'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Blog"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
-  /v2/blogs/{blog_id}/banner:
+  /api/v2/blogs/{blog_id}/banner:
     get:
       summary: Get blog banner image (v2)
       tags: [Blog]
@@ -999,17 +997,17 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Blog banner image
           content:
             image/jpeg:
               schema:
                 type: string
                 format: binary
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "404":
+          $ref: "#/components/responses/NotFound"
 
-  /v2/blogs/{blog_id}/likes:
+  /api/v2/blogs/{blog_id}/likes:
     get:
       summary: Get blog likes (v2)
       tags: [Blog]
@@ -1020,7 +1018,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Blog likes information
           content:
             application/json:
@@ -1044,14 +1042,14 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Blog liked
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
     delete:
       summary: Unlike blog (v2)
@@ -1065,23 +1063,23 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Blog unliked
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v2/blogs/list/me:
+  /api/v2/blogs/list/me:
     get:
       summary: Get user's blogs (v2)
       tags: [Blog]
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: User's blogs
           content:
             application/json:
@@ -1091,12 +1089,12 @@ paths:
                   blogs:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Blog'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                      $ref: "#/components/schemas/Blog"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   # ===== ITINERARY ROUTES (V2) =====
-  /v2/itineraries:
+  /api/v2/itineraries:
     post:
       summary: Create itinerary (v2)
       tags: [Itinerary]
@@ -1107,18 +1105,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateItineraryRequest'
+              $ref: "#/components/schemas/CreateItineraryRequest"
       responses:
-        '201':
+        "201":
           description: Itinerary created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ItineraryResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/ItineraryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
     get:
       summary: Get all itineraries (v2)
@@ -1133,7 +1131,7 @@ paths:
             type: string
 
       responses:
-        '200':
+        "200":
           description: All itineraries
           content:
             application/json:
@@ -1143,11 +1141,11 @@ paths:
                   itineraries:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ItineraryResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                      $ref: "#/components/schemas/ItineraryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v2/itineraries/{itinerary_id}:
+  /api/v2/itineraries/{itinerary_id}:
     get:
       summary: Get itinerary by ID (v2)
       tags: [Itinerary]
@@ -1160,16 +1158,16 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Itinerary details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ItineraryResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ItineraryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       summary: Update itinerary (v2)
@@ -1187,18 +1185,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateItineraryRequest'
+              $ref: "#/components/schemas/CreateItineraryRequest"
       responses:
-        '200':
+        "200":
           description: Itinerary updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ItineraryResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ItineraryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     delete:
       summary: Delete itinerary (v2)
@@ -1212,18 +1210,18 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Itinerary deleted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
-  /v2/groups/{group_id}/itineraries:
+  /api/v2/groups/{group_id}/itineraries:
     get:
       summary: Get group itineraries (v2)
       tags: [Itinerary]
@@ -1236,7 +1234,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Group itineraries
           content:
             application/json:
@@ -1246,11 +1244,11 @@ paths:
                   itineraries:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ItineraryResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                      $ref: "#/components/schemas/ItineraryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /v2/groups/{group_id}/itineraries/assign:
+  /api/v2/groups/{group_id}/itineraries/assign:
     post:
       summary: Assign itinerary to group (v2)
       tags: [Itinerary]
@@ -1274,18 +1272,18 @@ paths:
                 itinerary_id:
                   type: integer
       responses:
-        '200':
+        "200":
           description: Itinerary assigned
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
-  /v2/groups/{group_id}/itineraries/{itinerary_id}:
+  /api/v2/groups/{group_id}/itineraries/{itinerary_id}:
     delete:
       summary: Remove itinerary from group (v2)
       tags: [Itinerary]
@@ -1303,17 +1301,17 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Itinerary removed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   # ===== RATING ROUTES (V1) =====
-  /v1/rating/user/{userId}/rating:
+  /api/v1/rating/user/{userId}/rating:
     get:
       summary: Get user ratings (v1)
       tags: [Rating]
@@ -1324,7 +1322,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: User ratings
           content:
             application/json:
@@ -1334,9 +1332,9 @@ paths:
                   ratings:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Rating'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                      $ref: "#/components/schemas/Rating"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     post:
       summary: Submit or update rating (v1)
@@ -1354,24 +1352,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SubmitRatingRequest'
+              $ref: "#/components/schemas/SubmitRatingRequest"
       responses:
-        '201':
+        "201":
           description: Rating submitted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Rating'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
+                $ref: "#/components/schemas/Rating"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
           description: Too many rating requests
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
     put:
       summary: Update rating (v1)
@@ -1389,18 +1387,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SubmitRatingRequest'
+              $ref: "#/components/schemas/SubmitRatingRequest"
       responses:
-        '200':
+        "200":
           description: Rating updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Rating'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Rating"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     delete:
       summary: Delete rating (v1)
@@ -1414,17 +1412,17 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Rating deleted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   # ===== REPORT ROUTES (V2) =====
-  /v2/reports:
+  /api/v2/reports:
     post:
       summary: Create a report (v2)
       tags: [Report]
@@ -1435,9 +1433,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReportRequest'
+              $ref: "#/components/schemas/CreateReportRequest"
       responses:
-        '201':
+        "201":
           description: Report created
           content:
             application/json:
@@ -1448,10 +1446,10 @@ paths:
                     type: integer
                   message:
                     type: string
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
     get:
       summary: Get all reports (v2, admin only)
@@ -1471,7 +1469,7 @@ paths:
             minimum: 1
             maximum: 100
       responses:
-        '200':
+        "200":
           description: All reports
           content:
             application/json:
@@ -1481,24 +1479,24 @@ paths:
                   reports:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Report'
+                      $ref: "#/components/schemas/Report"
                   pagination:
-                    $ref: '#/components/schemas/Pagination'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
+                    $ref: "#/components/schemas/Pagination"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
           description: Forbidden - admin access required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
-  /v2/reports/reasons:
+  /api/v2/reports/reasons:
     get:
       summary: Get report reasons (v2)
       tags: [Report]
       responses:
-        '200':
+        "200":
           description: Available report reasons
           content:
             application/json:
@@ -1510,7 +1508,7 @@ paths:
                     items:
                       type: string
 
-  /v2/reports/{id}:
+  /api/v2/reports/{id}:
     get:
       summary: Get report by ID (v2)
       tags: [Report]
@@ -1523,16 +1521,16 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Report details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Report'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Report"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       summary: Update report (v2)
@@ -1550,18 +1548,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateReportRequest'
+              $ref: "#/components/schemas/UpdateReportRequest"
       responses:
-        '200':
+        "200":
           description: Report updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Report'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Report"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     delete:
       summary: Delete report (v2, admin only)
@@ -1575,30 +1573,30 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Report deleted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
           description: Forbidden - admin access required
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   # ===== TRAVEL ROUTES (V2) =====
-  /v2/travel/me:
+  /api/v2/travel/me:
     get:
       summary: Get travel history (v2)
       tags: [Travel]
       security:
         - bearerAuth: []
       responses:
-        '200':
+        "200":
           description: User travel history
           content:
             application/json:
@@ -1609,8 +1607,8 @@ paths:
                     type: array
                     items:
                       type: object
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
 components:
   securitySchemes:
@@ -1640,19 +1638,62 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            validationError:
+              summary: Validation Error Example
+              value:
+                success: false
+                message: "Validation failed"
+                error: "VALIDATION_ERROR"
+                details:
+                  field: "email"
+                  issue: "Invalid email format"
+            missingField:
+              summary: Missing Required Field
+              value:
+                success: false
+                message: "Missing required fields"
+                error: "MISSING_FIELDS"
+                details:
+                  missing: ["first_name", "password"]
     Unauthorized:
       description: Authentication required or invalid credentials
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            invalidCredentials:
+              summary: Invalid Login Credentials
+              value:
+                success: false
+                message: "Invalid email or password"
+                error: "INVALID_CREDENTIALS"
+                details: null
+            expiredToken:
+              summary: Expired Token
+              value:
+                success: false
+                message: "Token has expired"
+                error: "EXPIRED_TOKEN"
+                details:
+                  expiredAt: "2025-11-17T10:00:00Z"
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            userNotFound:
+              summary: User Not Found
+              value:
+                success: false
+                message: "User with ID 123 not found"
+                error: "USER_NOT_FOUND"
+                details:
+                  userId: 123
 
   schemas:
     # ===== RESPONSE SCHEMAS =====
@@ -1683,17 +1724,35 @@ components:
 
     ErrorResponse:
       type: object
+      required:
+        - success
+        - message
       properties:
         success:
           type: boolean
           example: false
+          description: Always false for error responses
         message:
           type: string
+          example: "Validation error"
+          description: Human-readable error message
         error:
           type: string
+          example: "VALIDATION_ERROR"
+          description: Error code for programmatic handling
         details:
           type: object
           nullable: true
+          example:
+            field: "email"
+            issue: "Invalid email format"
+          description: Additional error details
+      example:
+        success: false
+        message: "Email already exists"
+        error: "DUPLICATE_EMAIL"
+        details:
+          email: "user@example.com"
 
     TokenResponse:
       type: object
@@ -1755,7 +1814,7 @@ components:
         password:
           type: string
           minLength: 8
-          description: 'Password must contain: uppercase, lowercase, digit, special character'
+          description: "Password must contain: uppercase, lowercase, digit, special character"
         interests:
           type: array
           items:
@@ -1833,7 +1892,26 @@ components:
           type: array
           items:
             type: string
-            enum: [SEA, MOUNTAIN, WATERFALL, NATIONAL_PARK, ISLAND, TEMPLE, SHOPPING_MALL, MARKET, CAFE, HISTORICAL, AMUSEMENT_PARK, ZOO, FESTIVAL, MUSEUM, FOOD_STREET, BEACH_BAR, THEATRE]
+            enum:
+              [
+                SEA,
+                MOUNTAIN,
+                WATERFALL,
+                NATIONAL_PARK,
+                ISLAND,
+                TEMPLE,
+                SHOPPING_MALL,
+                MARKET,
+                CAFE,
+                HISTORICAL,
+                AMUSEMENT_PARK,
+                ZOO,
+                FESTIVAL,
+                MUSEUM,
+                FOOD_STREET,
+                BEACH_BAR,
+                THEATRE,
+              ]
           nullable: true
 
     UpdateGroupRequest:
@@ -1968,7 +2046,7 @@ components:
       type: object
       properties:
         user:
-          $ref: '#/components/schemas/User'
+          $ref: "#/components/schemas/User"
         accessToken:
           type: string
         refreshToken:
@@ -2002,11 +2080,11 @@ components:
         interests:
           type: array
           items:
-            $ref: '#/components/schemas/Interest'
+            $ref: "#/components/schemas/Interest"
         travel_styles:
           type: array
           items:
-            $ref: '#/components/schemas/TravelStyle'
+            $ref: "#/components/schemas/TravelStyle"
         role:
           type: string
           enum: [admin, user]
@@ -2065,7 +2143,7 @@ components:
         interests:
           type: array
           items:
-            $ref: '#/components/schemas/Interest'
+            $ref: "#/components/schemas/Interest"
         created_at:
           type: string
           format: date-time
@@ -2107,7 +2185,7 @@ components:
         interests:
           type: array
           items:
-            $ref: '#/components/schemas/Interest'
+            $ref: "#/components/schemas/Interest"
         json_config:
           type: string
         html_output:

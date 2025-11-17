@@ -1,101 +1,41 @@
-import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
+import rateLimit from "express-rate-limit";
 import { Express } from "express";
+import path from "path";
 
-const options = {
-    definition: {
-        openapi: "3.0.0",
-        info: {
-            title: "Sigma Hawk Tua Backend API",
-            version: "1.0.0",
-            description:
-                "API documentation for the Sigma Hawk Tua travel backend project with JWT authentication. All endpoints are prefixed with /api/v1.",
-            contact: {
-                name: "API Support",
-                email: "support@sigmahawktua.com"
-            },
-        },
-        servers: [
-            {
-                url: `http://localhost:${process.env.PORT || 8080}/api/v1`,
-                description: "Development server",
-            },
-            {
-                url: "https://sigma-hawk-tua-backend-dev-1097710273935.asia-southeast1.run.app/api/v1",
-                description: "Production server",
-            },
-        ],
-        tags: [
-            {
-                name: "Authentication (v1)",
-                description: "User authentication and authorization endpoints (API v1)"
-            },
-            {
-                name: "User (v1)",
-                description: "User profile and preferences management (API v1)"
-            },
-            {
-                name: "Group (v1)",
-                description: "Travel group creation and management (API v1)"
-            },
-            {
-                name: "Blog (v1)",
-                description: "Travel blog search (API v1)"
-            },
-            {
-                name: "Blog (v2)",
-                description: "Complete blog management including CRUD, likes, and media upload (API v2)"
-            },
-            {
-                name: "Rating (v1)",
-                description: "User rating and review system (API v1)"
-            },
-            {
-                name: "Itinerary (v2)",
-                description: "Trip itinerary planning and management (API v2)"
-            },
-            {
-                name: "Group Itinerary (v2)",
-                description: "Group itinerary collaboration (API v2)"
-            },
-            {
-                name: "Report (v2)",
-                description: "Content reporting and moderation (API v2)"
-            },
-            {
-                name: "Travel (v2)",
-                description: "Travel-related features and recommendations (API v2)"
-            },
-            {
-                name: "Health (Global)",
-                description: "Server health check endpoints"
-            }
-        ],
+// Serve the user's OpenAPI YAML as the source for Swagger UI.
+// The YAML file should live at the repository root: `openapi-spec.yml`.
+const SPEC_PATH = path.join(process.cwd(), "openapi-spec.yml");
+
+// Rate limiting for the OpenAPI spec endpoint to prevent DoS attacks
+const specRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: {
+        error: "Too many requests for OpenAPI spec",
+        message: "Please try again later"
     },
-    apis: [
-        "./apps/docs/*.swagger.ts",
-        "./apps/routes/*.ts",
-        "./apps/server.ts"
-    ],
-};
-
-const swaggerSpec = swaggerJsdoc(options);
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 export const setupSwagger = (app: Express) => {
-    app.use(
-        "/api-docs",
-        swaggerUi.serve,
-        swaggerUi.setup(swaggerSpec, {
-            customCss: ".swagger-ui .topbar { display: none }",
-            customSiteTitle: "Sigma Hawk Tua API Documentation",
-            swaggerOptions: {
-                persistAuthorization: true,
-                displayRequestDuration: true,
-                docExpansion: "none",
-                filter: true,
-                showExtensions: true,
-                showCommonExtensions: true,
-            },
-        })
-    );
+    // expose the raw OpenAPI file so swagger-ui can fetch it
+    app.get('/openapi-spec.yml', specRateLimit, (req, res) => {
+        res.sendFile(SPEC_PATH, (err) => {
+            if (err) {
+                // if file can't be found/served, return 404
+                res.status(404).end();
+            }
+        });
+    });
+
+    // Configure swagger-ui to load the YAML from the above route
+    app.use('/api-docs', swaggerUi.serve);
+    app.get('/api-docs', swaggerUi.setup(undefined, {
+        customSiteTitle: "Sigma Hawk Tua API Documentation",
+        swaggerOptions: {
+            url: '/openapi-spec.yml',
+        },
+    }));
 };
