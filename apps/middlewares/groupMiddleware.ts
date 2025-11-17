@@ -23,13 +23,18 @@ export function groupMiddleware(
   const authHeader = req.headers.authorization;
   const { accessToken } = req.cookies
 
+  // Log for debugging
+  console.log(`[Auth Debug] Method: ${req.method}, Path: ${req.path}`);
+  console.log(`[Auth Debug] Has Cookie: ${!!accessToken}, Has Header: ${!!authHeader}`);
+  console.log(`[Auth Debug] Origin: ${req.headers.origin}`);
+
   if (accessToken) { // if accesstoken does exist , calculate the accessToken first
     try {
       const decoded_jwt = verifyJwt(accessToken, config.ACCESSTOKEN_SECRET);
       req.user = decoded_jwt;
       next()
     } catch (error: unknown) {
-      console.error("JWT berification error:", error);
+      console.error("JWT verification error:", error);
       throw new AppError("Unauthorized: Invalid token", 401);
     }
   }
@@ -45,6 +50,7 @@ export function groupMiddleware(
     }
   }
   else { // else , unAuthorized
+    console.error("[Auth Error] No token provided - Cookie and Authorization header both missing");
     throw new AppError("Unauthorized: No token provided", 401);
   }
 }

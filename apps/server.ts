@@ -9,7 +9,45 @@ import { setupSwagger } from "@/docs/swagger";
 
 const app = express();
 
-app.use(cors({credentials: true, origin: true})); 
+// Configure CORS - allow frontend domain
+const allowedOrigins = [
+    'https://thamroi.duckdns.org',
+];
+
+// Handle preflight requests globally
+app.options('*', cors({
+    credentials: true,
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(null, false);
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie']
+}));
+
+app.use(cors({
+    credentials: true,
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, Postman, or curl)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn(`CORS blocked origin: ${origin}`);
+            callback(null, false);
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie']
+}));
+
 app.use(bodyParser.json());
 app.use(cookieParser());
 
