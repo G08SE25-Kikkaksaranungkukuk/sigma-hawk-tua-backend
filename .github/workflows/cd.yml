@@ -213,7 +213,7 @@ jobs:
             --region=${{ env.GCP_REGION }} \
             --platform=managed \
             --allow-unauthenticated \
-            --set-env-vars="NODE_ENV=development,PASSWORD_SALT_ROUNDS=12,FILE_SERVER_URL=https://thamroidufs.duckdns.org,FRONTEND_URL=https://thamroi.duckdns.org/" \
+            --set-env-vars="NODE_ENV=development,PASSWORD_SALT_ROUNDS=12,FILE_SERVER_URL=https://thamroidufs.duckdns.org,FRONTEND_URL=https://thamroi.duckdns.org" \
             --set-secrets="DATABASE_URL=sigma-hawk-tua-backend-database-url-dev:latest,ACCESSTOKEN_SECRET=sigma-hawk-tua-backend-jwt-access-secret-dev:latest,REFRESHTOKEN_SECRET=sigma-hawk-tua-backend-jwt-refresh-secret-dev:latest" \
             --service-account=1097710273935-compute@developer.gserviceaccount.com \
             --add-cloudsql-instances=${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:sigma-hawk-tua-backend-db-dev \

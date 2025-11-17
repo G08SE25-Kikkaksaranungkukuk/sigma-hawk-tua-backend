@@ -6,11 +6,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { RouterManager } from "@/routes/RouterManager";
 import { setupSwagger } from "@/docs/swagger";
-import { ApiVersionManager } from "@/config/apiVersion";
 
 const app = express();
 
-app.use(cors({credentials: true, origin: "*" }));
+app.use(cors({credentials: true, origin: true})); 
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -19,6 +18,13 @@ app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
     next();
 });
+
+// Initialize routing with versioning support
+const routerManager = new RouterManager();
+app.use(routerManager.getRouter());
+
+// Setup Swagger documentation
+setupSwagger(app);
 
 /**
  * @swagger
