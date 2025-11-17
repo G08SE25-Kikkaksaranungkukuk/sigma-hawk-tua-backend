@@ -9,7 +9,6 @@ env:
   GAR_REPOSITORY: sigma-hawk-tua-backend-repo-dev
   IMAGE_NAME: sigma-hawk-tua-backend
   CLOUD_RUN_SERVICE: sigma-hawk-tua-backend-dev
-  DB_BACKUP_BUCKET: ${{ secrets.DB_BACKUP_BUCKET }}
 
 jobs:
   build-test:
@@ -180,85 +179,10 @@ jobs:
           echo "🏷️  Tag: ${{ steps.image-tag.outputs.tag }}"
           echo "🔗 Also tagged as: latest, ${{ github.ref_name }}"
 
-  backup-database:
-    name: Backup Database to Cloud Storage
-    runs-on: ubuntu-latest
-    needs: [build-test]
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
-
-      - name: Create database backup
-        run: |
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          BACKUP_FILE="backup-${TIMESTAMP}.sql"
-          
-          # Export database from Cloud SQL to Cloud Storage
-          gcloud sql export sql sigma-hawk-tua-backend-db-dev \
-            gs://${{ env.DB_BACKUP_BUCKET }}/backups/${BACKUP_FILE} \
-            --database=sigmadb_dev \
-            --project=${{ env.GCP_PROJECT_ID }}
-          
-          echo "✅ Database backup created: ${BACKUP_FILE}"
-          echo "📦 Location: gs://${{ env.DB_BACKUP_BUCKET }}/backups/${BACKUP_FILE}"
-
-      - name: Backup Prisma schema
-        run: |
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          SCHEMA_FILE="schema-${TIMESTAMP}.prisma"
-          
-          # Upload schema to Cloud Storage
-          gsutil cp prisma/schema.prisma \
-            gs://${{ env.DB_BACKUP_BUCKET }}/schemas/${SCHEMA_FILE}
-          
-          # Also keep latest schema
-          gsutil cp prisma/schema.prisma \
-            gs://${{ env.DB_BACKUP_BUCKET }}/schemas/latest.prisma
-          
-          echo "✅ Prisma schema backed up: ${SCHEMA_FILE}"
-
-      - name: Backup migrations
-        run: |
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          MIGRATIONS_ARCHIVE="migrations-${TIMESTAMP}.tar.gz"
-          
-          # Create archive of migrations
-          tar -czf ${MIGRATIONS_ARCHIVE} prisma/migrations/
-          
-          # Upload to Cloud Storage
-          gsutil cp ${MIGRATIONS_ARCHIVE} \
-            gs://${{ env.DB_BACKUP_BUCKET }}/migrations/${MIGRATIONS_ARCHIVE}
-          
-          echo "✅ Migrations backed up: ${MIGRATIONS_ARCHIVE}"
-
-      - name: List recent backups
-        run: |
-          echo "📋 Recent database backups:"
-          gsutil ls -lh gs://${{ env.DB_BACKUP_BUCKET }}/backups/ | tail -n 5
-          echo ""
-          echo "📋 Recent schema backups:"
-          gsutil ls -lh gs://${{ env.DB_BACKUP_BUCKET }}/schemas/ | tail -n 5
-
   deploy-to-cloud-run:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
-    needs: [build-and-push-image, backup-database]
+    needs: [build-and-push-image]
     if: github.ref == 'refs/heads/main'
     permissions:
       contents: read
