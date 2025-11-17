@@ -204,39 +204,6 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Check if Cloud Storage bucket exists
-        id: check-bucket
-        run: |
-          if gsutil ls -b gs://${{ env.DB_BACKUP_BUCKET }} &>/dev/null; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create Cloud Storage bucket if not exists
-        if: steps.check-bucket.outputs.exists == 'false'
-        run: |
-          gsutil mb -p ${{ env.GCP_PROJECT_ID }} \
-            -l ${{ env.GCP_REGION }} \
-            -b on \
-            gs://${{ env.DB_BACKUP_BUCKET }}
-          
-          # Enable versioning
-          gsutil versioning set on gs://${{ env.DB_BACKUP_BUCKET }}
-          
-          # Set lifecycle rule (delete backups older than 30 days)
-          echo '{
-            "lifecycle": {
-              "rule": [
-                {
-                  "action": {"type": "Delete"},
-                  "condition": {"age": 30}
-                }
-              ]
-            }
-          }' > lifecycle.json
-          gsutil lifecycle set lifecycle.json gs://${{ env.DB_BACKUP_BUCKET }}
-
       - name: Create database backup
         run: |
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
