@@ -23,7 +23,7 @@ resource "google_sql_database_instance" "postgres" {
     ip_configuration {
       ipv4_enabled    = false  # Disable public IP for security - use Cloud SQL Proxy only
       private_network = null
-      ssl_mode        = "ENCRYPTED_ONLY"  # Enforce SSL/TLS for all connections
+      ssl_mode        = "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"  # Enforce SSL/TLS for all connections
 
       # Note: With ipv4_enabled=false, authorized_networks is not needed
       # Cloud Run connects via Unix socket using Cloud SQL connection
