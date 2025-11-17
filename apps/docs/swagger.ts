@@ -13,18 +13,27 @@ const options = {
         },
         servers: [
             {
-                url: `http://localhost:${process.env.PORT || 8080}`,
-                description: "Development server",
+                url: process.env.NODE_ENV === 'production' 
+                    ? 'https://sigma-hawk-tua-backend-prod-1097710273935.asia-southeast1.run.app'
+                    : `http://localhost:${process.env.PORT || 8080}`,
+                description: process.env.NODE_ENV === 'production' ? "Production server" : "Development server",
             },
         ],
     },
     apis: [
-        "./dist/apps/docs/*.js",
-        "./dist/apps/routes/*.js",
-        "./dist/apps/server.js",
-        "./apps/docs/*.swagger.ts",
-        "./apps/routes/*.ts",
-        "./apps/server.ts"
+        // Use different paths based on environment
+        ...(process.env.NODE_ENV === 'production' 
+            ? [
+                "./dist/apps/docs/*.js",
+                "./dist/apps/routes/**/*.js",
+                "./dist/apps/server.js"
+              ]
+            : [
+                "./apps/docs/*.swagger.ts",
+                "./apps/routes/**/*.ts",
+                "./apps/server.ts"
+              ]
+        )
     ],
 };
 
