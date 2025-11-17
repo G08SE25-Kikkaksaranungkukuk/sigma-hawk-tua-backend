@@ -12,8 +12,10 @@ RUN npm install -g pnpm@latest
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
-COPY . .
+# Copy source code (specific files only for security)
+COPY tsconfig.json tsconfig.runtime.json ./
+COPY apps/ ./apps/
+COPY prisma/ ./prisma/
 
 # Generate Prisma Client
 RUN pnpm db:generate
