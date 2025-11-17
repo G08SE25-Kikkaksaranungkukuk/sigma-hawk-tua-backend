@@ -45,36 +45,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Proxy route for serving public files from file server
-app.get('/public/*', async (req, res) => {
-    try {
-        const fileServerUrl = process.env.FILE_SERVER_URL || 'https://thamroidufs.duckdns.org';
-        const filePath = req.path;
-        
-        console.log(`[File Proxy] Fetching: ${fileServerUrl}${filePath}`);
-        
-        const axios = require('axios');
-        const response = await axios.get(`${fileServerUrl}${filePath}`, {
-            responseType: 'arraybuffer',
-            validateStatus: (status: number) => status < 500 // Accept 404s
-        });
-        
-        if (response.status === 404) {
-            res.status(404).json({ error: 'File not found' });
-            return;
-        }
-        
-        // Forward the content type from file server
-        const contentType = response.headers['content-type'] || 'application/octet-stream';
-        res.set('Content-Type', contentType);
-        res.set('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-        res.send(Buffer.from(response.data));
-    } catch (error: any) {
-        console.error(`[File Proxy] Error fetching file:`, error.message);
-        res.status(404).json({ error: 'File not found' });
-    }
-});
-
 // Initialize routing with versioning support
 const routerManager = new RouterManager();
 app.use(routerManager.getRouter());
