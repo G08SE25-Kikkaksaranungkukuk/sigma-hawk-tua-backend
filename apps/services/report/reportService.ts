@@ -22,13 +22,20 @@ export class ReportService {
     /**
      * Create a new report
      */
-    async createReport(reportData: CreateReportRequest): Promise<CreateReportResponse> {
+    async createReport(user_id: number, reportData: CreateReportRequest): Promise<CreateReportResponse> {
         try {
             // Validate report data
-            if (!reportData.title.trim() || !reportData.reason.trim()) {
+            if (!reportData.title.trim()) {
                 return {
                     success: false,
-                    message: "Title and reason are required"
+                    message: "Title is required"
+                };
+            }
+
+            if (!reportData.reason?.trim()) {
+                return {
+                    success: false,
+                    message: "Reason is required"
                 };
             }
 
@@ -39,13 +46,6 @@ export class ReportService {
                 };
             }
 
-            if (reportData.reason.length > 100) {
-                return {
-                    success: false,
-                    message: "Reason must be less than 100 characters"
-                };
-            }
-
             if (reportData.description && reportData.description.length > 500) {
                 return {
                     success: false,
@@ -53,11 +53,7 @@ export class ReportService {
                 };
             }
 
-            const report = await this.reportRepository.createReport({
-                title: reportData.title.trim(),
-                reason: reportData.reason.trim(),
-                description: reportData.description?.trim() || ""
-            });
+            const report = await this.reportRepository.createReport(user_id, reportData);
 
             return {
                 success: true,
@@ -124,7 +120,7 @@ export class ReportService {
     /**
      * Update report
      */
-    async updateReport(reportId: number, updateData: UpdateReportRequest) {
+    async updateReport(reportId: number, user_id: number | undefined, updateData: UpdateReportRequest) {
         try {
             // Check if report exists
             const existingReport = await this.reportRepository.getReportById(reportId);
@@ -143,13 +139,6 @@ export class ReportService {
                 };
             }
 
-            if (updateData.reason && updateData.reason.length > 100) {
-                return {
-                    success: false,
-                    message: "Reason must be less than 100 characters"
-                };
-            }
-
             if (updateData.description && updateData.description.length > 500) {
                 return {
                     success: false,
@@ -157,7 +146,7 @@ export class ReportService {
                 };
             }
 
-            const updatedReport = await this.reportRepository.updateReport(reportId, updateData);
+            const updatedReport = await this.reportRepository.updateReport(reportId, user_id, updateData);
 
             return {
                 success: true,
@@ -250,6 +239,19 @@ export class ReportService {
                     total_reports: 0
                 }
             };
+        }
+    }
+
+    /**
+     * Get all available report reasons/tags
+     */
+    async getAllReportReasons() {
+        try {
+            const tags = await this.reportRepository.getAllReportReason();
+            return { success: true, reasons: tags };
+        } catch (error) {
+            console.error('Error in getAllReportReasons service:', error);
+            return { success: false, reasons: [] };
         }
     }
 }

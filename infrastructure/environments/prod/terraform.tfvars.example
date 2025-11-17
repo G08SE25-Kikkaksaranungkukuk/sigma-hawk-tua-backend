@@ -1,0 +1,42 @@
+# Production Environment Configuration
+# Copy this file to terraform.tfvars and fill in your values
+
+project_id = "your-gcp-project-id"
+region     = "asia-southeast1"
+
+# Database configuration
+db_name      = "sigmadb"
+db_user      = "sigma"
+db_password  = "CHANGE_ME_STRONG_PASSWORD"  # Use very strong password for production
+db_tier      = "db-g1-small"
+db_disk_size = 20
+
+# Restrict database access (optional - empty list allows all)
+authorized_networks = [
+  # {
+  #   name  = "office"
+  #   value = "YOUR_OFFICE_IP/32"
+  # }
+]
+
+# Cloud Run configuration
+cloud_run_cpu    = "1"
+cloud_run_memory = "512Mi"
+min_instances    = "1"   # Keep 1 instance warm (faster response, higher cost)
+max_instances    = "10"
+
+# Application configuration
+image_tag          = "latest"
+allow_public_access = true
+enable_health_check = true
+
+# Secrets (generate strong random strings, DO NOT commit)
+jwt_access_secret  = "CHANGE_ME_ACCESS_SECRET_32_CHARS_MIN"
+jwt_refresh_secret = "CHANGE_ME_REFRESH_SECRET_32_CHARS_MIN"
+
+# Optional
+file_server_url = ""
+
+# GitHub configuration
+github_owner = "G08SE25-Kikkaksaranungkukuk"
+github_repo  = "sigma-hawk-tua-backend"

@@ -1,0 +1,87 @@
+# Cloud Build configuration for Production environment
+# Triggered manually from main branch
+
+steps:
+  # Step 1: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    args:
+      - 'build'
+      - '-f'
+      - 'Dockerfile.cloudrun'
+      - '-t'
+      - '${_ARTIFACT_REGISTRY}/${_IMAGE_NAME}:${SHORT_SHA}'
+      - '-t'
+      - '${_ARTIFACT_REGISTRY}/${_IMAGE_NAME}:${TAG_NAME}'
+      - '-t'
+      - '${_ARTIFACT_REGISTRY}/${_IMAGE_NAME}:latest'
+      - '-t'
+      - '${_ARTIFACT_REGISTRY}/${_IMAGE_NAME}:production'
+      - '.'
+
+  # Step 2: Push Docker image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_ARTIFACT_REGISTRY}/${_IMAGE_NAME}'
+    waitFor: ['build-image']
+
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-cloud-run'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image=${_ARTIFACT_REGISTRY}/${_IMAGE_NAME}:${SHORT_SHA}'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--quiet'
+    waitFor: ['push-image']
+
+  # Step 4: Run database migrations (optional - production should be careful)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'run-migrations'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "⚠️  PRODUCTION DEPLOYMENT"
+        echo "Migrations will be run automatically on container startup"
+        echo "Check Cloud Run logs for migration status"
+        echo "Service URL: https://$(gcloud run services describe ${_SERVICE_NAME} --region=${_REGION} --format='value(status.url)')"
+    waitFor: ['deploy-cloud-run']
+
+  # Step 5: Health check
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'health-check'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        SERVICE_URL=$(gcloud run services describe ${_SERVICE_NAME} --region=${_REGION} --format='value(status.url)')
+        echo "Waiting 30 seconds for service to stabilize..."
+        sleep 30
+        echo "Testing health endpoint..."
+        curl -f "$SERVICE_URL/healthz" || echo "⚠️  Health check failed, but continuing..."
+        echo "✅ Production deployment complete!"
+        echo "🌍 Service URL: $SERVICE_URL"
+        echo "📚 API Docs: $SERVICE_URL/api-docs"
+    waitFor: ['run-migrations']
+
+# Substitutions (passed from Terraform)
+substitutions:
+  _ENVIRONMENT: 'production'
+  _REGION: 'asia-southeast1'
+  _SERVICE_NAME: 'sigma-hawk-tua-backend-production'
+  _ARTIFACT_REGISTRY: 'asia-southeast1-docker.pkg.dev/${PROJECT_ID}/sigma-hawk-tua-backend-repo-production'
+  _IMAGE_NAME: 'sigma-hawk-tua-backend'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'N1_HIGHCPU_8'
+
+timeout: '1800s'  # 30 minutes

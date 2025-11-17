@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { AppError } from "@/types/error/AppError";
 
 /**
  * Report Middleware
@@ -56,13 +57,13 @@ export const validateCreateReport = (req: Request, res: Response, next: NextFunc
  * Validates report update data
  */
 export const validateUpdateReport = (req: Request, res: Response, next: NextFunction) => {
-    const { title, reason, description } = req.body;
+    const { title, reason, description, is_resolved } = req.body;
 
     // At least one field must be provided
-    if (!title && !reason && description === undefined) {
+    if (!title && !reason && description === undefined && is_resolved === undefined) {
         return res.status(400).json({
             success: false,
-            message: "At least one field (title, reason, description) must be provided for update"
+            message: "At least one field (title, reason, description, is_resolved) must be provided for update"
         });
     }
 
@@ -111,6 +112,15 @@ export const validateUpdateReport = (req: Request, res: Response, next: NextFunc
             return res.status(400).json({
                 success: false,
                 message: "description must be less than 500 characters"
+            });
+        }
+    }
+
+    if (is_resolved !== undefined) {
+        if (typeof is_resolved !== 'boolean') {
+            return res.status(400).json({
+                success: false,
+                message: "is_resolved must be a boolean"
             });
         }
     }
@@ -208,9 +218,21 @@ export const validateBlogId = (req: Request, res: Response, next: NextFunction) 
  * TODO: Implement proper admin role checking
  */
 export const adminMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    // For now, just pass through
-    // TODO: Add proper admin role checking when user roles are implemented
-    console.warn("Admin middleware called but not implemented - allowing all authenticated users");
+    // Ensure the user is authenticated
+    if (!req.user) {
+        throw new AppError("Unauthorized: No user found", 401);
+    }
+
+    // Ensure role exists on the user object
+    if (!req.user.role) {
+        throw new AppError("Forbidden: User role not specified", 403);
+    }
+
+    // Allow only ADMIN role
+    if (req.user.role !== "ADMIN") {
+        throw new AppError("Forbidden: Admins only", 403);
+    }
+
     next();
 };
 
