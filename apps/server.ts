@@ -45,6 +45,13 @@ app.use((req, res, next) => {
     next();
 });
 
+// Initialize routing with versioning support
+const routerManager = new RouterManager();
+app.use(routerManager.getRouter());
+
+// Setup Swagger documentation
+setupSwagger(app);
+
 /**
  * @swagger
  * /healthz:
