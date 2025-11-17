@@ -12,27 +12,12 @@ const app = express();
 // Configure CORS - allow frontend domain
 const allowedOrigins = [
     'https://thamroi.duckdns.org',
+    'http://localhost:3000',
 ];
 
-// Handle preflight requests globally
-app.options('*', cors({
+const corsOptions = {
     credentials: true,
-    origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(null, false);
-        }
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    exposedHeaders: ['Set-Cookie']
-}));
-
-app.use(cors({
-    credentials: true,
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
         // Allow requests with no origin (like mobile apps, Postman, or curl)
         if (!origin) return callback(null, true);
         
@@ -46,7 +31,10 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
     exposedHeaders: ['Set-Cookie']
-}));
+};
+
+// Apply CORS globally (this handles both preflight and regular requests)
+app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -56,13 +44,6 @@ app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
     next();
 });
-
-// Initialize routing with versioning support
-const routerManager = new RouterManager();
-app.use(routerManager.getRouter());
-
-// Setup Swagger documentation
-setupSwagger(app);
 
 /**
  * @swagger
