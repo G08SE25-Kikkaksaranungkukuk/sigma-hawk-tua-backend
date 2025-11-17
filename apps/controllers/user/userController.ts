@@ -16,9 +16,12 @@ export class UserController extends BaseController {
     async getUser(req: Request, res: Response): Promise<void> {
         try {
             const email = req.body.email;
+            console.log(`[UserController] Fetching user profile for: ${email}`);
             const user = await this.service.getUser(email);
+            console.log(`[UserController] Successfully fetched user profile for: ${email}, has profile_url: ${!!user.profile_url}`);
             this.handleSuccess(res, user, 200);
         } catch (error) {
+            console.error(`[UserController] Error fetching user profile:`, error);
             this.handleError(error, res);
         }
     }
@@ -135,13 +138,13 @@ export class UserController extends BaseController {
 
     async uploadUserProfile(req: Request, res: Response): Promise<void> {
         try {
-            const { accessToken } = req.cookies;
-            const userInfo: Partial<User> = verifyJwt(
-                accessToken,
-                config.ACCESSTOKEN_SECRET
-            );
-            this.service.uploadProfilePicture(userInfo.email ?? "", req.file);
-            this.handleSuccess(res, null, 200, "uploaded");
+            // Get user info from middleware (set by userMiddleware)
+            if (!req.user?.email) {
+                throw new Error("User not authenticated");
+            }
+            
+            await this.service.uploadProfilePicture(req.user.email, req.file);
+            this.handleSuccess(res, { message: "Profile picture uploaded successfully" }, 200);
         } catch (error) {
             this.handleError(error, res);
         }

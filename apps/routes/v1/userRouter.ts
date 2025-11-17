@@ -45,6 +45,7 @@ export class UserRouterV1 extends BaseRouter {
         // Profile picture management
         this.router.post(
             "/profile_pic",
+            userMiddleware,
             upload.single("profile"),
             this.userController.uploadUserProfile.bind(this.userController)
         );
