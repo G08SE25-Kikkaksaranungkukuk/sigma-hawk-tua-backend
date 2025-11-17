@@ -164,11 +164,13 @@ jobs:
           
           docker build -f Dockerfile.cloudrun \
             --platform linux/amd64 \
+            -t ${IMAGE_URL}:${{ steps.image-tag.outputs.tag }} \
             -t ${IMAGE_URL}:latest \
             .
             
           # Push all tags
           docker push ${IMAGE_URL}:latest
+          docker push ${IMAGE_URL}:${{ steps.image-tag.outputs.tag }}
           
           echo "image=${IMAGE_URL}:${{ steps.image-tag.outputs.tag }}" >> $GITHUB_OUTPUT
 
