@@ -23,3 +23,22 @@ nodemon.json
 terraform
 *.test.ts
 *.spec.ts
+
+# Additional security
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.csr
+*.sql
+*.db
+*.sqlite
+*.tfvars
+*.tfstate
+*.backup
+.nyc_output
+tmp/
+temp/
+*.swp
+*.swo
