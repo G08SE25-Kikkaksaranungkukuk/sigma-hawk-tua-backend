@@ -1,0 +1,26 @@
+# Development Environment Configuration
+# Copy this file to terraform.tfvars and fill in your values
+
+project_id = "your-gcp-project-id"
+region     = "asia-southeast1"
+
+# Database configuration
+db_name     = "sigmadb_dev"
+db_user     = "sigma"
+db_password = "CHANGE_ME_STRONG_PASSWORD"  # Use strong password
+db_tier     = "db-g1-small"
+db_disk_size = 10
+
+# Application configuration
+image_tag   = "latest"
+
+# Secrets (generate strong random strings)
+jwt_access_secret  = "CHANGE_ME_ACCESS_SECRET_32_CHARS_MIN"
+jwt_refresh_secret = "CHANGE_ME_REFRESH_SECRET_32_CHARS_MIN"
+
+# Optional
+file_server_url = ""
+
+# GitHub configuration
+github_owner = "G08SE25-Kikkaksaranungkukuk"
+github_repo  = "sigma-hawk-tua-backend"

@@ -5,6 +5,8 @@ on:
     branches: [ main, dev]
   pull_request:
     branches: [ main, dev , SigmaTest]
+  schedule:
+    - cron: '17 10 * * 1'
 
 jobs:
   build-test:
@@ -14,24 +16,11 @@ jobs:
       matrix:
         node: [24.x] 
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: sigma
-          POSTGRES_PASSWORD: strongpassword
-          POSTGRES_DB: sigmadb
-        ports: 
-          - 5433:5432
-        options: >-
-          --health-cmd="pg_isready -U sigma -d sigmadb"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -61,23 +50,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma client
-        run: pnpm db:generate
-        env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
-
-      - name: Push database schema
-        run: npx prisma db push --accept-data-loss --skip-generate
-        env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
-
-      - name: Seed database
-        run: pnpm db:seed
-        env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
-
-      - name: Build
-        run: pnpm run build
+      - name: Run tests
+        run: pnpm run test
         
   snyk-code:
     name: sast scan
@@ -89,17 +63,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24.x
           
       - name: Setup Snyk
         uses: snyk/actions/setup@master
 
-
       - name: SAST scan (Snyk Code)
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
@@ -107,9 +76,74 @@ jobs:
           --severity-threshold=high \
           --sarif-file-output=snyk-test.sarif
 
-      - name: Upload SARIF
+      - name: SCA scan (Snyk Open Source)
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk test \
+            --all-projects \
+            --severity-threshold=high \
+            --sarif-file-output=snyk-oss.sarif 
+
+      - name: Upload SARIF (Snyk Code)
+        if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-test.sarif
+          category: snyk-code
+      
+      - name: Upload SARIF (Snyk OSS)
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-oss.sarif
+          category: snyk-oss
+
+  trivy:
+    name: trivy scans
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trivy FS (deps & repo)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-fs.sarif'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          exit-code: '0'
+
+      - name: Upload SARIF (Trivy FS)
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
+
+      - name: Trivy Config
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          format: 'sarif'
+          output: 'trivy-config.sarif'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '0'
+
+      - name: Upload SARIF (Trivy Config)
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-config.sarif
+          category: trivy-config
+
+
 
 

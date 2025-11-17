@@ -1,0 +1,44 @@
+# .dockerignore for Cloud Run
+node_modules
+dist
+.git
+.github
+.vscode
+.env
+.env.*
+*.log
+coverage
+.DS_Store
+*.md
+tests
+docs
+postman
+.gitignore
+.prettierrc
+.eslintrc
+# tsconfig.json - needed for TypeScript build
+jest.config.cjs
+nodemon.json
+# pnpm-lock.yaml - needed for production builds
+terraform
+*.test.ts
+*.spec.ts
+
+# Additional security
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.csr
+*.sql
+*.db
+*.sqlite
+*.tfvars
+*.tfstate
+*.backup
+.nyc_output
+tmp/
+temp/
+*.swp
+*.swo

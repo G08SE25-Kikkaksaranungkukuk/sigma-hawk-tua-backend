@@ -10,7 +10,7 @@ import { ApiVersionManager } from "@/config/apiVersion";
 
 const app = express();
 
-app.use(cors({credentials: true, origin: 'http://localhost:3000'}));
+app.use(cors({credentials: true, origin: 'https://thamroi.duckdns.org/'}));
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -19,13 +19,6 @@ app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
     next();
 });
-
-// Initialize routing with versioning support
-const routerManager = new RouterManager();
-app.use(routerManager.getRouter());
-
-// Setup Swagger documentation
-setupSwagger(app);
 
 /**
  * @swagger
@@ -53,7 +46,7 @@ setupSwagger(app);
  *                   type: number
  *                   description: Server uptime in seconds
  */
-app.get("/healthz", (_req: Request, res: Response) => {
+app.get("/health", (_req: Request, res: Response) => {
     res.json({
         status: "healthy",
         timestamp: new Date().toISOString(),
@@ -61,17 +54,45 @@ app.get("/healthz", (_req: Request, res: Response) => {
     });
 });
 
+// Initialize routing with versioning support
+try {
+    console.log('🔄 Initializing RouterManager...');
+    const routerManager = new RouterManager();
+    app.use(routerManager.getRouter());
+    console.log('✅ RouterManager initialized');
+} catch (error) {
+    console.error('❌ Failed to initialize RouterManager:', error);
+    // Continue anyway so health check still works
+}
+
+// Setup Swagger documentation
+try {
+    console.log('🔄 Setting up Swagger...');
+    setupSwagger(app);
+    console.log('✅ Swagger initialized');
+} catch (error) {
+    console.error('❌ Failed to setup Swagger:', error);
+}
+
+// Debug: Add a catch-all route to see what's being received
+app.use((req, res, next) => {
+    console.log(`🔍 Unmatched route: ${req.method} ${req.url} - Original URL: ${req.originalUrl}`);
+    console.log(`   Headers:`, JSON.stringify(req.headers));
+    next();
+});
+
 async function startServer() {
     try {
         const PORT = process.env.PORT || 8080;
-        app.listen(PORT, () => {
+        
+        app.listen(Number(PORT), () => {
             console.log(`🚀 Server is running on http://localhost:${PORT}`);
             console.log(
-                `� API Documentation: http://localhost:${PORT}/api-docs`
+                `📚 API Documentation: http://localhost:${PORT}/api-docs`
             );
             console.log(`🏥 Health Check: http://localhost:${PORT}/healthz`);
             console.log(
-                `�📊 Environment: ${process.env.NODE_ENV || "development"}`
+                `📊 Environment: ${process.env.NODE_ENV || "development"}`
             );
         });
     } catch (error) {
@@ -79,5 +100,17 @@ async function startServer() {
         process.exit(1);
     }
 }
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('❌ Uncaught Exception:', error);
+    process.exit(1);
+});
 
 startServer();

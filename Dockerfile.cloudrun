@@ -1,0 +1,71 @@
+# Dockerfile for Cloud Run deployment
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Install pnpm
+RUN npm install -g pnpm@latest
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code (specific files only for security)
+COPY tsconfig.json tsconfig.runtime.json ./
+COPY apps/ ./apps/
+COPY prisma/ ./prisma/
+
+# Generate Prisma Client
+RUN pnpm db:generate
+
+# Build TypeScript
+RUN pnpm build
+
+# Production stage
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@latest
+
+# Copy package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Install only production dependencies
+RUN pnpm install --prod --frozen-lockfile
+
+# Copy generated Prisma Client from builder (includes the @prisma/client package)
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/.pnpm ./node_modules/.pnpm
+
+# Copy built application from builder  
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/generated ./generated
+COPY --from=builder /app/prisma ./prisma
+
+# Copy tsconfig for runtime path resolution
+COPY --from=builder /app/tsconfig.runtime.json ./tsconfig.json
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
+# Set environment
+ENV NODE_ENV=production
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port (Cloud Run will override PORT automatically)
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8080) + '/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# Start server with tsconfig-paths to resolve path aliases
+CMD ["node", "-r", "tsconfig-paths/register", "dist/apps/server.js"]

@@ -1,0 +1,19 @@
+output "service_name" {
+  description = "The name of the Cloud Run service"
+  value       = google_cloud_run_service.service.name
+}
+
+output "service_url" {
+  description = "The URL of the Cloud Run service"
+  value       = google_cloud_run_service.service.status[0].url
+}
+
+output "service_account_email" {
+  description = "The service account email"
+  value       = google_service_account.cloud_run_sa.email
+}
+
+output "service_id" {
+  description = "The ID of the Cloud Run service"
+  value       = google_cloud_run_service.service.id
+}

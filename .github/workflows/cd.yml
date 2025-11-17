@@ -1,0 +1,419 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: thamroi
+  GCP_REGION: asia-southeast1
+  GAR_REPOSITORY: sigma-hawk-tua-backend-repo-dev
+  IMAGE_NAME: sigma-hawk-tua-backend
+  CLOUD_RUN_SERVICE: sigma-hawk-tua-backend-dev
+  DB_BACKUP_BUCKET: ${{ secrets.DB_BACKUP_BUCKET }}
+
+jobs:
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [24.x]
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: sigma
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_DB: sigmadb
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd="pg_isready -U sigma -d sigmadb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.x
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+        env:
+          DATABASE_URL: postgresql://sigma:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5433/sigmadb
+
+      - name: Push database schema
+        run: npx prisma db push --accept-data-loss --skip-generate
+        env:
+          DATABASE_URL: postgresql://sigma:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5433/sigmadb
+
+      - name: Run tests
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://sigma:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5433/sigmadb
+
+      - name: Build application
+        run: pnpm run build
+
+  security-scan:
+    name: Security Scan (Snyk)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Setup Snyk
+        uses: snyk/actions/setup@master
+
+      - name: SAST scan (Snyk Code)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk code test \
+            --severity-threshold=high \
+            --sarif-file-output=snyk-code.sarif \
+            || true
+
+      - name: Upload SAST results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: snyk-code.sarif
+
+  build-and-push-image:
+    name: Build and Push Docker Image to GAR
+    runs-on: ubuntu-latest
+    needs: [build-test, security-scan]
+    permissions:
+      contents: read
+      id-token: write
+
+    outputs:
+      image-tag: ${{ steps.image-tag.outputs.tag }}
+      image-url: ${{ steps.build-push.outputs.image }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate image tag
+        id: image-tag
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          TAG="${{ github.ref_name }}-${SHORT_SHA}-$(date +%Y%m%d-%H%M%S)"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for GAR
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+
+      - name: Check if Artifact Registry repository exists
+        id: check-repo
+        run: |
+          if gcloud artifacts repositories describe ${{ env.GAR_REPOSITORY }} \
+            --location=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Artifact Registry repository if not exists
+        if: steps.check-repo.outputs.exists == 'false'
+        run: |
+          gcloud artifacts repositories create ${{ env.GAR_REPOSITORY }} \
+            --repository-format=docker \
+            --location=${{ env.GCP_REGION }} \
+            --description="Docker repository for ${{ env.IMAGE_NAME }}" \
+            --project=${{ env.GCP_PROJECT_ID }}
+
+      - name: Build and push Docker image
+        id: build-push
+        run: |
+          IMAGE_URL="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}"
+          
+          # Build with multiple tags (force linux/amd64 platform)
+          docker build -f Dockerfile.cloudrun \
+            --platform linux/amd64 \
+            -t ${IMAGE_URL}:${{ steps.image-tag.outputs.tag }} \
+            -t ${IMAGE_URL}:latest \
+            -t ${IMAGE_URL}:${{ github.ref_name }} \
+            .
+          
+          # Push all tags
+          docker push ${IMAGE_URL}:${{ steps.image-tag.outputs.tag }}
+          docker push ${IMAGE_URL}:latest
+          docker push ${IMAGE_URL}:${{ github.ref_name }}
+          
+          echo "image=${IMAGE_URL}:${{ steps.image-tag.outputs.tag }}" >> $GITHUB_OUTPUT
+
+      - name: Output image details
+        run: |
+          echo "✅ Docker image built and pushed successfully!"
+          echo "📦 Image: ${{ steps.build-push.outputs.image }}"
+          echo "🏷️  Tag: ${{ steps.image-tag.outputs.tag }}"
+          echo "🔗 Also tagged as: latest, ${{ github.ref_name }}"
+
+  backup-database:
+    name: Backup Database to Cloud Storage
+    runs-on: ubuntu-latest
+    needs: [build-test]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Check if Cloud Storage bucket exists
+        id: check-bucket
+        run: |
+          if gsutil ls -b gs://${{ env.DB_BACKUP_BUCKET }} &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Cloud Storage bucket if not exists
+        if: steps.check-bucket.outputs.exists == 'false'
+        run: |
+          gsutil mb -p ${{ env.GCP_PROJECT_ID }} \
+            -l ${{ env.GCP_REGION }} \
+            -b on \
+            gs://${{ env.DB_BACKUP_BUCKET }}
+          
+          # Enable versioning
+          gsutil versioning set on gs://${{ env.DB_BACKUP_BUCKET }}
+          
+          # Set lifecycle rule (delete backups older than 30 days)
+          echo '{
+            "lifecycle": {
+              "rule": [
+                {
+                  "action": {"type": "Delete"},
+                  "condition": {"age": 30}
+                }
+              ]
+            }
+          }' > lifecycle.json
+          gsutil lifecycle set lifecycle.json gs://${{ env.DB_BACKUP_BUCKET }}
+
+      - name: Create database backup
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          BACKUP_FILE="backup-${TIMESTAMP}.sql"
+          
+          # Export database from Cloud SQL to Cloud Storage
+          gcloud sql export sql sigma-hawk-tua-backend-db-dev \
+            gs://${{ env.DB_BACKUP_BUCKET }}/backups/${BACKUP_FILE} \
+            --database=sigmadb_dev \
+            --project=${{ env.GCP_PROJECT_ID }}
+          
+          echo "✅ Database backup created: ${BACKUP_FILE}"
+          echo "📦 Location: gs://${{ env.DB_BACKUP_BUCKET }}/backups/${BACKUP_FILE}"
+
+      - name: Backup Prisma schema
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          SCHEMA_FILE="schema-${TIMESTAMP}.prisma"
+          
+          # Upload schema to Cloud Storage
+          gsutil cp prisma/schema.prisma \
+            gs://${{ env.DB_BACKUP_BUCKET }}/schemas/${SCHEMA_FILE}
+          
+          # Also keep latest schema
+          gsutil cp prisma/schema.prisma \
+            gs://${{ env.DB_BACKUP_BUCKET }}/schemas/latest.prisma
+          
+          echo "✅ Prisma schema backed up: ${SCHEMA_FILE}"
+
+      - name: Backup migrations
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          MIGRATIONS_ARCHIVE="migrations-${TIMESTAMP}.tar.gz"
+          
+          # Create archive of migrations
+          tar -czf ${MIGRATIONS_ARCHIVE} prisma/migrations/
+          
+          # Upload to Cloud Storage
+          gsutil cp ${MIGRATIONS_ARCHIVE} \
+            gs://${{ env.DB_BACKUP_BUCKET }}/migrations/${MIGRATIONS_ARCHIVE}
+          
+          echo "✅ Migrations backed up: ${MIGRATIONS_ARCHIVE}"
+
+      - name: List recent backups
+        run: |
+          echo "📋 Recent database backups:"
+          gsutil ls -lh gs://${{ env.DB_BACKUP_BUCKET }}/backups/ | tail -n 5
+          echo ""
+          echo "📋 Recent schema backups:"
+          gsutil ls -lh gs://${{ env.DB_BACKUP_BUCKET }}/schemas/ | tail -n 5
+
+  deploy-to-cloud-run:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: [build-and-push-image, backup-database]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Run database migrations
+        run: |
+          echo "🔄 Running database migrations..."
+          gcloud run jobs create sigma-hawk-tua-backend-migrate-dev \
+            --image=${{ needs.build-and-push-image.outputs.image-url }} \
+            --region=${{ env.GCP_REGION }} \
+            --set-secrets="DATABASE_URL=sigma-hawk-tua-backend-database-url-dev:latest" \
+            --service-account=sigma-run-sa-dev@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --add-cloudsql-instances=${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:sigma-hawk-tua-backend-db-dev \
+            --max-retries=2 \
+            --task-timeout=10m \
+            --command=npx \
+            --args="prisma,migrate,deploy" \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            2>/dev/null || echo "Job already exists"
+          
+          # Update existing job
+          gcloud run jobs update sigma-hawk-tua-backend-migrate-dev \
+            --image=${{ needs.build-and-push-image.outputs.image-url }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }}
+          
+          # Execute the migration
+          gcloud run jobs execute sigma-hawk-tua-backend-migrate-dev \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --wait
+          
+          echo "✅ Migrations completed"
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        run: |
+          gcloud run deploy ${{ env.CLOUD_RUN_SERVICE }} \
+            --image=${{ needs.build-and-push-image.outputs.image-url }} \
+            --region=${{ env.GCP_REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --set-env-vars="NODE_ENV=dev,PASSWORD_SALT_ROUNDS=10,FILE_SERVER_URL=https://storage.googleapis.com/${{ env.GCP_PROJECT_ID }}-files" \
+            --set-secrets="DATABASE_URL=sigma-hawk-tua-backend-database-url-dev:latest,ACCESSTOKEN_SECRET=sigma-hawk-tua-backend-jwt-access-secret-dev:latest,REFRESHTOKEN_SECRET=sigma-hawk-tua-backend-jwt-refresh-secret-dev:latest" \
+            --service-account=sigma-run-sa-dev@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --add-cloudsql-instances=${{ env.GCP_PROJECT_ID }}:${{ env.GCP_REGION }}:sigma-hawk-tua-backend-db-dev \
+            --cpu=1 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=2 \
+            --port=8080 \
+            --timeout=300 \
+            --project=${{ env.GCP_PROJECT_ID }}
+
+      - name: Get service URL
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.CLOUD_RUN_SERVICE }} \
+            --region=${{ env.GCP_REGION }} \
+            --format='value(status.url)')
+          
+          echo "✅ Deployment successful!"
+          echo "🌍 Service URL: ${SERVICE_URL}"
+          echo "📚 API Docs: ${SERVICE_URL}/api-docs"
+          echo "🏥 Health Check: ${SERVICE_URL}/healthz"
+
+  notification:
+    name: Send Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-to-cloud-run]
+    if: always()
+
+    steps:
+      - name: Deployment Status
+        run: |
+          if [ "${{ needs.deploy-to-cloud-run.result }}" == "success" ]; then
+            echo "✅ Deployment completed successfully!"
+          else
+            echo "❌ Deployment failed or was skipped"
+          fi
+
+

@@ -19,6 +19,9 @@ const options = {
         ],
     },
     apis: [
+        "./dist/apps/docs/*.js",
+        "./dist/apps/routes/*.js",
+        "./dist/apps/server.js",
         "./apps/docs/*.swagger.ts",
         "./apps/routes/*.ts",
         "./apps/server.ts"
