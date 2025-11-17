@@ -84,7 +84,6 @@ export class AuthController extends BaseController {
     }
     async whoAmI(req: Request, res: Response): Promise<void> {
         try {
-            // const userData = await this.authService.whoami(req.cookies.accessToken);
             this.handleSuccess(res, req.user, 200, "Individual Verified");
         } catch (error) {
             this.handleError(error, res);
@@ -99,31 +98,6 @@ export class AuthController extends BaseController {
             }
             const exists = await this.authService.isEmailExists(email);
             this.handleSuccess(res, { exists }, 200);
-        } catch (error) {
-            this.handleError(error, res);
-        }
-    }
-
-    async checkEmail(req: Request, res: Response): Promise<void> {
-        try {
-            const { email } = req.query;
-            
-            if (!email || typeof email !== 'string') {
-                throw new AppError("Email parameter is required", 400);
-            }
-
-            const exists = await this.authService.checkEmailExists(email);
-            
-            this.handleSuccess(
-                res, 
-                { 
-                    email, 
-                    exists,
-                    available: !exists 
-                }, 
-                200, 
-                exists ? "Email already exists" : "Email is available"
-            );
         } catch (error) {
             this.handleError(error, res);
         }

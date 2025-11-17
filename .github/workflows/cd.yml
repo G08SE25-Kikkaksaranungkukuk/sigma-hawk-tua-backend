@@ -28,7 +28,7 @@ jobs:
         image: postgres:17
         env:
           POSTGRES_USER: sigma
-          POSTGRES_PASSWORD: strongpassword
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
           POSTGRES_DB: sigmadb
         ports:
           - 5433:5432
@@ -73,22 +73,17 @@ jobs:
       - name: Generate Prisma client
         run: pnpm db:generate
         env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
+          DATABASE_URL: postgresql://sigma:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5433/sigmadb
 
       - name: Push database schema
         run: npx prisma db push --accept-data-loss --skip-generate
         env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
-
-      - name: Seed database
-        run: pnpm db:seed
-        env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
+          DATABASE_URL: postgresql://sigma:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5433/sigmadb
 
       - name: Run tests
         run: pnpm test
         env:
-          DATABASE_URL: postgresql://sigma:strongpassword@localhost:5433/sigmadb
+          DATABASE_URL: postgresql://sigma:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5433/sigmadb
 
       - name: Build application
         run: pnpm run build
@@ -374,10 +369,6 @@ jobs:
             --wait
           
           echo "✅ Migrations completed"
-
-      # Note: Database seeding should be run manually via Cloud Run Jobs
-      # See docs/CLOUD_RUN_JOBS.md for instructions on how to seed the database
-      # Seeding is only needed once during initial setup or after database reset
 
       - name: Deploy to Cloud Run
         id: deploy
