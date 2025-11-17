@@ -461,6 +461,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateGroupRequest'
+            example:
+              group_name: "Weekend Hikers"
+              group_leader_id: 123
+              description: "Group for weekend hiking trips"
+              max_members: 20
+              interest_fields:
+                - MOUNTAIN
+                - NATIONAL_PARK
       responses:
         '201':
           description: Group created
@@ -519,6 +527,36 @@ paths:
       tags: [Group]
       parameters:
         - $ref: '#/components/parameters/groupId'
+      responses:
+        '200':
+          description: Group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update group details
+      tags: [Group]
+      parameters:
+        - $ref: '#/components/parameters/groupId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGroupRequest'
+            example:
+              group_name: "Weekend Hikers"
+              group_leader_id: 123
+              description: "Group for weekend hiking trips"
+              max_members: 20
+              interest_fields:
+                - MOUNTAIN
+                - NATIONAL_PARK
+
       responses:
         '200':
           description: Group details
@@ -1185,7 +1223,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /v2/itineraries/{group_id}/itineraries:
+  /v2/groups/{group_id}/itineraries:
     get:
       summary: Get group itineraries (v2)
       tags: [Itinerary]
@@ -1212,7 +1250,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /v2/itineraries/{group_id}/itineraries/assign:
+  /v2/groups/{group_id}/itineraries/assign:
     post:
       summary: Assign itinerary to group (v2)
       tags: [Itinerary]
@@ -1247,7 +1285,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /v2/itineraries/{group_id}/itineraries/{itinerary_id}:
+  /v2/groups/{group_id}/itineraries/{itinerary_id}:
     delete:
       summary: Remove itinerary from group (v2)
       tags: [Itinerary]
