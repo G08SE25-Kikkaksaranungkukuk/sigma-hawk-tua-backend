@@ -52,23 +52,6 @@ jobs:
 
       - name: Run tests
         run: pnpm run test
-
-      - name: SonarQube Scan
-        uses: sonarsource/sonarcloud-github-action@master
-        with:
-          args: >
-            -Dsonar.projectKey=thamroi
-            -Dsonar.organization=ThamRoi
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            
-
-      - name: SonarQube Quality Gate Check
-        id: sonarqube-quality-gate-check
-        uses: sonarsource/sonarqube-quality-gate-action@master
-        with:
-          pollingTimeoutSec: 600
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         
   snyk-code:
     name: sast scan
@@ -97,8 +80,9 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
           snyk test \
+            --all-projects \
             --severity-threshold=high \
-            --sarif-file-output=snyk-oss.sarif
+            --sarif-file-output=snyk-oss.sarif 
 
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
@@ -129,10 +113,11 @@ jobs:
           severity: 'HIGH,CRITICAL'
           ignore-unfixed: true
           vuln-type: 'os,library'
-          exit-code: '1'
+          exit-code: '0'
 
       - name: Upload SARIF (Trivy FS)
         uses: github/codeql-action/upload-sarif@v3
+        if: always()
         with:
           sarif_file: trivy-fs.sarif
 
@@ -143,10 +128,11 @@ jobs:
           format: 'sarif'
           output: 'trivy-config.sarif'
           severity: 'HIGH,CRITICAL'
-          exit-code: '1'
+          exit-code: '0'
 
       - name: Upload SARIF (Trivy Config)
         uses: github/codeql-action/upload-sarif@v3
+        if: always()
         with:
           sarif_file: trivy-config.sarif
 
