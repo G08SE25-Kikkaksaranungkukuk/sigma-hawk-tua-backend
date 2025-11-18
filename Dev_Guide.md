@@ -101,10 +101,26 @@
 
 ---
 
-## 📝 Summary
+## �️ Database & Deployment
+- **Migrations**: ใช้ Prisma Migrate (`prisma migrate dev` สำหรับ dev)
+- **Seeding**: รัน `pnpm db:seed` เพื่อเพิ่มข้อมูลเริ่มต้น
+- **Cloud Deployment**: 
+  - Production database ใช้ Cloud SQL
+  - รัน migrations/seed ผ่าน Cloud Run Jobs
+  - ดูคู่มือใน `docs/CLOUD_RUN_JOBS.md`
+
+### Quick Links:
+- [Cloud Run Jobs Guide](./docs/CLOUD_RUN_JOBS.md) - คู่มือฉบับเต็ม
+- [Jobs Quick Start](./docs/JOBS_QUICK_START.md) - ข้อมูลที่ต้องใช้
+- [Scripts README](./scripts/README.md) - วิธีใช้ shell scripts
+
+---
+
+## �📝 Summary
 - ห้าม push ลง `main` โดยตรง
 - ทุกงานต้องผ่าน PR + Review
 - ทุก Feature ต้องมี Test
 - รักษา Code Quality, Security, Documentation
+- Database changes ต้องผ่าน Migrations เสมอ
 
 ---

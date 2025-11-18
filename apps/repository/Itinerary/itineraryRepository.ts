@@ -1,16 +1,16 @@
-import { PrismaClient, Itinerary, GroupItinerary, Group } from "@/prisma/index";
+import { Itinerary, GroupItinerary, Group } from "@/prisma/index";
 import { ItineraryCreateRequest, ItineraryUpdateRequest } from "@/types/itinerary/itineraryRequest";
 import { AppError } from "@/types/error/AppError";
+import { prisma } from "@/config/prismaClient";
 
 /**
  * Itinerary Repository
  * Handles all database operations for itineraries and group itineraries
  */
 export class ItineraryRepository {
-    private prisma: PrismaClient;
+    private prisma = prisma;
 
-    constructor(prisma?: PrismaClient) {
-        this.prisma = prisma || new PrismaClient();
+    constructor() {
     }
 
     /**
