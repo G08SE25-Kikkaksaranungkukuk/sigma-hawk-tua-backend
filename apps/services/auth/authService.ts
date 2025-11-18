@@ -22,6 +22,7 @@ export class AuthService {
 
     async register(req: authRegisterReq) {
         //validate input
+        console.log("Registering user with email:", req.email, req.phone, req.password);
         if (validateRegisterInput(req.phone, req.email, req.password).isValid == false) {
             throw new AppError("Validation error", 400);
         }
